@@ -1,4 +1,11 @@
-import { createBrowserRouter, useLocation } from 'react-router-dom';
+import React, { ReactNode, useEffect } from 'react';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
+import {
+  CorporateLayout,
+  DashboardLayout,
+  UserAccountLayout
+} from '../layouts';
+import { TournamentLayout } from '../layouts/tournament/index.tsx';
 import {
   AccountDeactivePage,
   BiddingDashboardPage,
@@ -16,7 +23,8 @@ import {
   Error500Page,
   Error503Page,
   ErrorPage,
-  HomePage,
+  LearningDashboardPage,
+  LogisticsDashboardPage,
   MarketingDashboardPage,
   PasswordResetPage,
   ProjectsDashboardPage,
@@ -33,22 +41,12 @@ import {
   UserProfilePreferencesPage,
   UserProfileSecurityPage,
   VerifyEmailPage,
-  WelcomePage,
-  LearningDashboardPage,
-  LogisticsDashboardPage,
+  WelcomePage
 } from '../pages';
-import {
-  CorporateLayout,
-  DashboardLayout,
-  GuestLayout,
-  UserAccountLayout,
-} from '../layouts';
-import React, { ReactNode, useEffect } from 'react';
 import { AboutPage } from '../pages/About.tsx';
-import { TournamentLayout } from '../layouts/tournament/index.tsx';
 import { OverviewPage } from '../pages/tournament/OverviewPage.tsx';
-import { SchedulePage } from '../pages/tournament/SchedulePage.tsx';
 import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
+import { SchedulePage } from '../pages/tournament/SchedulePage.tsx';
 import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
 
 // Custom scroll restoration function
@@ -84,15 +82,7 @@ const PageWrapper = ({ children }: PageProps) => {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <PageWrapper children={<GuestLayout />} />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        index: true,
-        path: '',
-        element: <HomePage />,
-      },
-    ],
+    element: <Navigate to="/auth/signin" replace />,
   },
   {
     path: '/dashboards',
