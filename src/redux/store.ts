@@ -2,15 +2,18 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import themeReducer, { ThemeState } from './theme/themeSlice';
 import { persistReducer, persistStore, PersistConfig } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import authencationReducer, { AuthState } from './authencation/slice';
 
 // Define the state shape
 interface RootState {
   theme: ThemeState;
+  authencation: AuthState;
 }
 
 // Combine reducers
 const rootReducer = combineReducers({
   theme: themeReducer,
+  authencation: authencationReducer,
 });
 
 // Persist config with RootState

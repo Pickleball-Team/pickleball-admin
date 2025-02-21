@@ -21,12 +21,13 @@ import { useMediaQuery } from 'react-responsive';
 import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useLogin } from '../../modules/User/hooks/useLogin';
 
 const { Title, Text, Link } = Typography;
 
 type FieldType = {
-  email?: string;
-  password?: string;
+  email: string;
+  password: string;
   remember?: boolean;
 };
 
@@ -37,19 +38,35 @@ export const SignInPage = () => {
   const isMobile = useMediaQuery({ maxWidth: 769 });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { mutate: login } = useLogin();
 
-  const onFinish = (values: any) => {
+  const onFinish = (values: FieldType) => {
     console.log('Success:', values);
     setLoading(true);
 
-    message.open({
-      type: 'success',
-      content: 'Login successful',
-    });
+    login(
+      {
+        email: values.email,
+        password: values.password,
+      },
+      {
+        onSuccess: () => {
+          message.open({
+            type: 'success',
+            content: 'Login successful',
+          });
 
-    setTimeout(() => {
-      navigate(PATH_DASHBOARD.default);
-    }, 5000);
+          navigate(PATH_DASHBOARD.default);
+        },
+        onError: (error) => {
+          message.open({
+            type: 'error',
+            content: 'Login failed',
+          });
+          setLoading(false);
+        },
+      }
+    );
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -95,8 +112,8 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'demo@email.com',
-              password: 'demo123',
+              email: 'john.doe@example.com',
+              password: 'hashed_password',
               remember: true,
             }}
             onFinish={onFinish}

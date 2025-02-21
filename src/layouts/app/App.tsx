@@ -10,6 +10,8 @@ import {
   theme,
   Tooltip,
   Switch,
+  Typography,
+  Space,
 } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ReactNode, useEffect, useRef, useState } from 'react';
@@ -40,6 +42,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../../redux/theme/themeSlice.ts';
 import { RootState } from '../../redux/store.ts';
 const { Content } = Layout;
+const { Text } = Typography;
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -59,6 +62,11 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const floatBtnRef = useRef(null);
   const dispatch = useDispatch();
   const { mytheme } = useSelector((state: RootState) => state.theme);
+  const user = useSelector((state: RootState) => state.authencation.user);
+  const islogin = useSelector(
+    (state: RootState) => state.authencation.isAuthenticated
+  );
+
   const items: MenuProps['items'] = [
     {
       key: 'user-profile-link',
@@ -134,8 +142,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             transition: 'all .2s',
           }}
         />
-        <Layout
-        >
+        <Layout>
           <HeaderNav
             style={{
               marginLeft: collapsed ? 0 : '200px',
@@ -193,8 +200,12 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                   onClick={() => dispatch(toggleTheme())}
                 />
               </Tooltip>
+              <Text>
+                {user?.firstName} {user?.lastName}
+              </Text>
+              <Space direction="vertical" size={0}></Space>
               <Dropdown menu={{ items }} trigger={['click']}>
-                <Flex>
+                <Flex align="center" gap="small">
                   <img
                     src="/me.jpg"
                     alt="user profile photo"

@@ -1,18 +1,18 @@
 import { HomeOutlined, TrophyOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { PageHeader } from '../../components';
-import { TOURNAMENT_ITEMS } from '../../constants/index.ts';
+import { PageHeader } from '../../components/index.ts';
 import { AppLayout } from '../index.ts';
+import { AUTHENTICATION_SYS_ITEMS } from '../../constants/index.ts';
 
 // todo: review
-export const TournamentLayout = () => {
+export const AuthenticationLayout = () => {
   const { pathname } = useLocation();
   return (
     <>
       <AppLayout>
         <PageHeader
-          title="tournament"
+          title="Authentication"
           breadcrumbs={[
             {
               title: (
@@ -27,11 +27,11 @@ export const TournamentLayout = () => {
               title: (
                 <>
                   <TrophyOutlined />
-                  <span>tournament</span>
+                  <span>Authentication</span>
                 </>
               ),
               menu: {
-                items: TOURNAMENT_ITEMS.map((d) => ({
+                items: AUTHENTICATION_SYS_ITEMS.map((d) => ({
                   key: d.title,
                   title: <Link to={d.path}>{d.title}</Link>,
                 })),

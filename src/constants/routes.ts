@@ -24,6 +24,7 @@ const ROOTS_CALENDAR = '/calendar';
 const ROOTS_ERRORS = '/errors';
 const ROOTS_ABOUT = '/about';
 const ROOTS_TOURNAMENT = '/tournament';
+const ROOTS_AUTHENCATION = '/authencation';
 
 export const PATH_LANDING = {
   root: ROOTS_LANDING,
@@ -237,4 +238,13 @@ export const PATH_TOURNAMENT = {
   teams: path(ROOTS_TOURNAMENT, '/teams'),
   results: path(ROOTS_TOURNAMENT, '/results'),
   standings: path(ROOTS_TOURNAMENT, '/standings'),
+};
+
+export const PATH_AUTHENTICATION = {
+  root: ROOTS_AUTHENCATION,
+  managerSponsor: path(ROOTS_AUTHENCATION, '/manager-sponsor'),
+  blockUser: path(ROOTS_AUTHENCATION, '/block-user'),
+  managerPlayer: path(ROOTS_AUTHENCATION, '/manager-player'),
+  sponsorDetails: path(ROOTS_AUTHENCATION, `/manager-sponsor/:id`),
+  playerDetails:  path(ROOTS_AUTHENCATION, `/manager-player/:id`),
 };

@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import {
   CorporateLayout,
   DashboardLayout,
-  UserAccountLayout
+  UserAccountLayout,
 } from '../layouts';
 import { TournamentLayout } from '../layouts/tournament/index.tsx';
 import {
@@ -41,13 +41,17 @@ import {
   UserProfilePreferencesPage,
   UserProfileSecurityPage,
   VerifyEmailPage,
-  WelcomePage
+  WelcomePage,
 } from '../pages';
 import { AboutPage } from '../pages/About.tsx';
 import { OverviewPage } from '../pages/tournament/OverviewPage.tsx';
 import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
 import { SchedulePage } from '../pages/tournament/SchedulePage.tsx';
 import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
+import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
+import SponnerPage from '../pages/authentication/SponnerPage.tsx';
+import BackList from '../pages/authentication/BackList.tsx';
+import PlayerPage from '../pages/authentication/PlayerPage.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -158,7 +162,26 @@ const router = createBrowserRouter([
         path: 'results',
         element: <ResultsPage />,
       },
-      
+    ],
+  },
+  {
+    path: '/authencation',
+    element: <PageWrapper children={<AuthenticationLayout />} />, // Use AuthenticationLayout if it exists
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        path: 'manager-sponsor',
+        element: <SponnerPage />,
+      },
+      {
+        path: 'block-user',
+        element: <BackList />,
+      },
+      {
+        path: 'manager-player',
+        element: <PlayerPage />,
+      },
     ],
   },
   {

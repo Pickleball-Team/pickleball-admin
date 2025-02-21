@@ -4,6 +4,7 @@ import {
   PieChartOutlined,
   SnippetsOutlined,
   TrophyOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { ConfigProvider, Layout, Menu, MenuProps, SiderProps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
@@ -16,7 +17,7 @@ import {
   PATH_ERROR,
   PATH_LANDING,
 } from '../../constants';
-import { PATH_TOURNAMENT } from '../../constants/routes.ts';
+import { PATH_AUTHENTICATION, PATH_TOURNAMENT } from '../../constants/routes.ts';
 
 const { Sider } = Layout;
 
@@ -39,6 +40,24 @@ const getItem = (
 };
 
 const items: MenuProps['items'] = [
+  getItem('Authentication', 'authentication', <UserOutlined />, [
+    getItem(
+      <Link to={PATH_AUTHENTICATION.managerSponsor}>Manager Sponsor</Link>,
+      'managerSponsor',
+      null
+    ),
+    getItem(
+      <Link to={PATH_AUTHENTICATION.blockUser}>Block User</Link>,
+      'blockUser',
+      null
+    ),
+    getItem(
+      <Link to={PATH_AUTHENTICATION.managerPlayer}>Manager Player</Link>,
+      'managerPlayer',
+      null
+    ),
+  ]),
+
   getItem('Dashboards', 'dashboards', <PieChartOutlined />, [
     getItem(<Link to={PATH_DASHBOARD.default}>Default</Link>, 'default', null),
     getItem(

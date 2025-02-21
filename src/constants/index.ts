@@ -25,7 +25,8 @@ import {
   PATH_SITEMAP,
   PATH_SOCIALS,
   PATH_ABOUT,
-  PATH_TOURNAMENT, // Import PATH_TOURNAMENT
+  PATH_TOURNAMENT,
+  PATH_AUTHENTICATION, // Import PATH_TOURNAMENT
 } from './routes.ts';
 
 const DASHBOARD_ITEMS = [
@@ -84,6 +85,14 @@ const TOURNAMENT_ITEMS = [
   { title: 'standings', path: PATH_TOURNAMENT.standings },
 ];
 
+const AUTHENTICATION_SYS_ITEMS = [
+  { title: 'manager sponsor', path: PATH_AUTHENTICATION.managerSponsor },
+  { title: 'block user', path: PATH_AUTHENTICATION.blockUser },
+  { title: 'manager player', path: PATH_AUTHENTICATION.managerPlayer },
+  { title: 'sponsor details', path: PATH_AUTHENTICATION.sponsorDetails },
+  { title: 'player details', path: PATH_AUTHENTICATION.playerDetails },
+];
+
 export {
   PATH_CALENDAR,
   PATH_USER_MGMT,
@@ -116,5 +125,6 @@ export {
   AUTHENTICATION_ITEMS,
   ERROR_ITEMS,
   PATH_ABOUT,
-  TOURNAMENT_ITEMS, // Export TOURNAMENT_ITEMS
+  TOURNAMENT_ITEMS,
+  AUTHENTICATION_SYS_ITEMS,
 };
