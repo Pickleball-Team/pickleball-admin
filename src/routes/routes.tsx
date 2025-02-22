@@ -48,6 +48,7 @@ import { OverviewPage } from '../pages/tournament/OverviewPage.tsx';
 import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
 import { SchedulePage } from '../pages/tournament/SchedulePage.tsx';
 import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
+import TournamentDetail from '../pages/tournament/Detail.tsx';
 import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
 import SponnerPage from '../pages/authentication/SponnerPage.tsx';
 import BackList from '../pages/authentication/BackList.tsx';
@@ -161,6 +162,10 @@ const router = createBrowserRouter([
       {
         path: 'results',
         element: <ResultsPage />,
+      },
+      {
+        path: ':id',
+        element: <TournamentDetail />,
       },
     ],
   },

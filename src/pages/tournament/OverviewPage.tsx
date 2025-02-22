@@ -97,14 +97,26 @@ export const OverviewPage = () => {
       ),
   });
 
-  const handleAccept = (id: number) => {
-    // Implement accept logic here
-    console.log(`Accepted tournament with id: ${id}`);
+  const handleAccept = async (id: number) => {
+    try {
+      // Implement accept logic here, e.g., send a request to the server
+      console.log(`Accepted tournament with id: ${id}`);
+      // Optionally refetch data after accepting
+      await refetch();
+    } catch (error) {
+      console.error('Error accepting tournament:', error);
+    }
   };
 
-  const handleReject = (id: number) => {
-    // Implement reject logic here
-    console.log(`Rejected tournament with id: ${id}`);
+  const handleReject = async (id: number) => {
+    try {
+      // Implement reject logic here, e.g., send a request to the server
+      console.log(`Rejected tournament with id: ${id}`);
+      // Optionally refetch data after rejecting
+      await refetch();
+    } catch (error) {
+      console.error('Error rejecting tournament:', error);
+    }
   };
 
   const columns: ColumnsType<any> = [

@@ -14,6 +14,8 @@ export type ResponseMetadata = {
 }
 
 export type ApiResponse<T = undefined> = {
+    touramentDetails: any
+  tokenString(arg0: string, tokenString: any): unknown
 	metadata: ResponseMetadata
 	data: T
 }
