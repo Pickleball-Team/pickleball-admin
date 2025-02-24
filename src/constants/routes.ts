@@ -247,4 +247,5 @@ export const PATH_AUTHENTICATION = {
   managerPlayer: path(ROOTS_AUTHENCATION, '/manager-player'),
   sponsorDetails: path(ROOTS_AUTHENCATION, `/manager-sponsor/:id`),
   playerDetails:  path(ROOTS_AUTHENCATION, `/manager-player/:id`),
+  referees: path(ROOTS_AUTHENCATION, '/referees'),
 };

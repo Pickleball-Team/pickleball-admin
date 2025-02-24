@@ -20,7 +20,7 @@ type TournamentMatchesProps = {
   details: TournamentMatchDetail[];
 };
 
-const TournamentMatches = ({ details }: TournamentMatchesProps) => {
+const TournamentMatches = ({ details = [] }: TournamentMatchesProps) => {
   const [userDetails, setUserDetails] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filteredDetails, setFilteredDetails] = useState<TournamentMatchDetail[]>(details);
@@ -28,12 +28,12 @@ const TournamentMatches = ({ details }: TournamentMatchesProps) => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const userIds = details.flatMap(detail => [
+      const userIds = details.map(detail => [
         detail.playerId1,
         detail.playerId2,
         detail.playerId3,
         detail.playerId4,
-      ]).filter(id => id !== 0);
+      ]).flat().filter(id => id !== 0);
 
       const userPromises = userIds.map(id => fetchUserById(id));
       const users = await Promise.all(userPromises);

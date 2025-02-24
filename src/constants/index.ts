@@ -91,6 +91,7 @@ const AUTHENTICATION_SYS_ITEMS = [
   { title: 'manager player', path: PATH_AUTHENTICATION.managerPlayer },
   { title: 'sponsor details', path: PATH_AUTHENTICATION.sponsorDetails },
   { title: 'player details', path: PATH_AUTHENTICATION.playerDetails },
+  { title: 'referees', path: PATH_AUTHENTICATION.referees },
 ];
 
 export {

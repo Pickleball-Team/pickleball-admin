@@ -4,6 +4,7 @@ import { useGetTournamentById } from '../../modules/Tournaments/hooks/useGetTour
 import PlayersTable from './containers/PlayerRegistration';
 import TournamentInfoForm from './containers/TournamentInfoForm';
 import TournamentMatches from './containers/TournamentMatches';
+import MatchRoom from './containers/MatchRoom';
 
 const { TabPane } = Tabs;
 
@@ -39,13 +40,16 @@ const TournamentDetail = () => {
         Back
       </Button>
       <Tabs defaultActiveKey="1">
-      <TabPane tab="Players" key="2">
+        <TabPane tab="Room" key="1">
+         <MatchRoom id={data.id}/> 
+        </TabPane>
+        <TabPane tab="Players" key="2">
           <PlayersTable registrations={data.registrationDetails} />
         </TabPane>
-        <TabPane tab="Tournament Matches" key="1">
+        <TabPane tab="Historys" key="3">
           <TournamentMatches details={data.touramentDetails} />
         </TabPane>
-        <TabPane tab="Tournament Info" key="3">
+        <TabPane tab="Tournament Info" key="4">
           <Card title="Tournament Info" bordered={false}>
             <TournamentInfoForm data={data} onSave={handleSave} />
           </Card>

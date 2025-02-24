@@ -56,6 +56,11 @@ const items: MenuProps['items'] = [
       'managerPlayer',
       null
     ),
+    getItem(
+      <Link to={PATH_AUTHENTICATION.referees}>Referees</Link>,
+      'referees',
+      null
+    ),
   ]),
 
   getItem('Dashboards', 'dashboards', <PieChartOutlined />, [

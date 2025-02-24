@@ -53,6 +53,7 @@ import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
 import SponnerPage from '../pages/authentication/SponnerPage.tsx';
 import BackList from '../pages/authentication/BackList.tsx';
 import PlayerPage from '../pages/authentication/PlayerPage.tsx';
+import RefereesPage from '../pages/authentication/RefereesPage.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -176,8 +177,12 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        path: 'manager-sponsor',
+        path: 'manager-sponso',
         element: <SponnerPage />,
+      },
+      {
+        path: 'referees',
+        element: <RefereesPage/>,
       },
       {
         path: 'block-user',

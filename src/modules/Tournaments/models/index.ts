@@ -52,3 +52,33 @@ export enum TournamentType {
   Singles = 'Singles',
   Doubles = 'Doubles',
 }
+
+export interface Member {
+  id: number;
+  playerId: number;
+  teamId: number;
+  joinedAt: string;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  captainId: number | null;
+  matchingId: number;
+  members: Member[];
+}
+
+export interface Match {
+  id: number;
+  title: string;
+  description: string;
+  matchDate: string;
+  venueId: number | null;
+  status: number;
+  matchCategory: number;
+  matchFormat: number;
+  winScore: number;
+  isPublic: boolean;
+  refereeId: number | null;
+  teams: Team[];
+}

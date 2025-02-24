@@ -1,8 +1,18 @@
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  Button,
+  Input,
+  Space,
+  Table,
+  Tag,
+  Typography,
+  Row,
+  Col,
+  Card,
+} from 'antd';
 import { SearchOutlined, UserOutlined, UserAddOutlined, UserDeleteOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
-import { Button, Input, Space, Table, Tag, Typography, Row, Col, Card } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
-import { useRef, useState } from 'react';
 import { RegistrationDetail } from '../../../modules/Tournaments/models';
 import { Pie } from '@ant-design/plots';
 
@@ -14,8 +24,8 @@ type PlayersTableProps = {
   registrations: RegistrationDetail[];
 };
 
-const PlayersTable = ({ registrations }: PlayersTableProps) => {
-  const [searchText, setSearchText] = useState<string>('');
+const PlayersTable = ({ registrations = [] }: PlayersTableProps) => {
+  const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
@@ -127,7 +137,7 @@ const PlayersTable = ({ registrations }: PlayersTableProps) => {
       dataIndex: ['playerDetails', 'firstName'],
       key: 'firstName',
       ...getColumnSearchProps('firstName'),
-      render: (text: string, record: RegistrationDetail) => (
+      render: (_: string, record: RegistrationDetail) => (
         <span>
           {record.playerDetails?.firstName} {record.playerDetails?.lastName}
         </span>
@@ -164,7 +174,7 @@ const PlayersTable = ({ registrations }: PlayersTableProps) => {
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => (
+      render: (_, record) => (
         <Space>
           <Button type="primary" onClick={() => onAccept(record.id)}>
             Accept
@@ -177,7 +187,7 @@ const PlayersTable = ({ registrations }: PlayersTableProps) => {
     },
   ];
 
-  const totalPlayers = registrations.length;
+  const totalPlayers = registrations?.length || 0;
   const approvedPlayers = registrations.filter((r) => r.isApproved).length;
   const notApprovedPlayers = totalPlayers - approvedPlayers;
 
@@ -220,9 +230,8 @@ const PlayersTable = ({ registrations }: PlayersTableProps) => {
   return (
     <div>
       <Row gutter={8} style={{ marginBottom: 16 }}>
-      <Col span={6}>
-        <Pie {...config} />
-        
+        <Col span={6}>
+          <Pie {...config} />
         </Col>
         <Col span={6}>
           <Card title="Total Players" bordered={false} style={{ height: 150 }}>
@@ -231,18 +240,29 @@ const PlayersTable = ({ registrations }: PlayersTableProps) => {
           </Card>
         </Col>
         <Col span={6}>
-          <Card title="Approved Players" bordered={false} style={{ height: 150 }}>
+          <Card
+            title="Approved Players"
+            bordered={false}
+            style={{ height: 150 }}
+          >
             <UserAddOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>{approvedPlayers}</Text>
+            <Text style={{ fontSize: 24, marginLeft: 8 }}>
+              {approvedPlayers}
+            </Text>
           </Card>
         </Col>
         <Col span={6}>
-          <Card title="Not Approved Players" bordered={false} style={{ height: 150 }}>
+          <Card
+            title="Not Approved Players"
+            bordered={false}
+            style={{ height: 150 }}
+          >
             <UserDeleteOutlined style={{ fontSize: 24, color: '#f5222d' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>{notApprovedPlayers}</Text>
+            <Text style={{ fontSize: 24, marginLeft: 8 }}>
+              {notApprovedPlayers}
+            </Text>
           </Card>
         </Col>
-       
       </Row>
       <Table columns={columns} dataSource={registrations} rowKey="id" />
     </div>
