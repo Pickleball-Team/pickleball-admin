@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
 import Api from '../../../configs/api/api';
+import { isAuth } from '../../../redux/authencation/slice';
 import { LoginRequest, LoginResponse } from '../models';
-import { isAuth, setUser } from '../../../redux/authencation/slice';
 
 // integration with redux for login user
 const login = async (request: LoginRequest): Promise<LoginResponse> => {

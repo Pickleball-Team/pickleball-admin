@@ -187,4 +187,4 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
   );
 };
 
-export default TournamentInfoForm;
+export default React.memo(TournamentInfoForm);

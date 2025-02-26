@@ -1,5 +1,4 @@
 import { HomeOutlined, TrophyOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../components/index.ts';
 import { AppLayout } from '../index.ts';

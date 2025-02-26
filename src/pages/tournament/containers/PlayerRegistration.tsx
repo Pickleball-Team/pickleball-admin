@@ -1,20 +1,20 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { SearchOutlined, UserAddOutlined, UserDeleteOutlined, UserOutlined } from '@ant-design/icons';
+import { Pie } from '@ant-design/plots';
+import type { InputRef } from 'antd';
 import {
   Button,
+  Card,
+  Col,
   Input,
+  Row,
   Space,
   Table,
   Tag,
   Typography,
-  Row,
-  Col,
-  Card,
 } from 'antd';
-import { SearchOutlined, UserOutlined, UserAddOutlined, UserDeleteOutlined } from '@ant-design/icons';
-import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import { useRef, useState } from 'react';
 import { RegistrationDetail } from '../../../modules/Tournaments/models';
-import { Pie } from '@ant-design/plots';
 
 const { Text } = Typography;
 

@@ -1,30 +1,25 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  Card,
-  Typography,
-  Tag,
-  Spin,
-  Row,
-  Col,
-  Select,
-  Avatar,
-  Table,
-  Input,
-  Button,
-  Space,
-} from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { fetchUserById } from '../../../modules/User/hooks/useGetUserById';
-import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
-import { Match, Member, Team } from '../../../modules/Tournaments/models';
-import { User } from '../../../modules/User/models';
-import { Loading } from '../../../components/NotificationsCard/Notifications.stories';
-import { Link } from 'react-router-dom';
 import type { InputRef } from 'antd';
+import {
+  Avatar,
+  Button,
+  Card,
+  Input,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography
+} from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import { useEffect, useRef, useState } from 'react';
+import { IMatch } from '../../../modules/Macths/models';
+import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
+import { Match, Member } from '../../../modules/Tournaments/models';
+import { fetchUserById } from '../../../modules/User/hooks/useGetUserById';
+import { User } from '../../../modules/User/models';
 import AddMatchModal from './AddMatchModal';
 import UpdateMatchModal from './UpdateMatchModal';
-import { IMatch } from '../../../modules/Macths/models';
 const { Text } = Typography;
 const { Option } = Select;
 

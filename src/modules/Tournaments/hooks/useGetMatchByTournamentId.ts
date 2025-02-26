@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { Match, Tournament } from '../models';
-import api from '../../../configs/api/api';
-import { GET_TOURNAMENT_BY_ID, GET_TOURNAMENT_MATCH_BY_ID } from '../constants';
-import { ApiResponse } from '../../../configs/api/apiResponses';
+import { GET_TOURNAMENT_MATCH_BY_ID } from '../constants';
+import { Match } from '../models';
 
 const fetchTournamenMatchtById = async (id: number): Promise<Match[]> => {
   try {
     // const response = await api.get(`/Match/GetMatchByTouramentId/${id}`);
     // return response.data as Tournament;
-
+    console.log(id);
+    
     return mockMatches;
   } catch (error) {
     throw new Error('Error fetching tournament by ID');

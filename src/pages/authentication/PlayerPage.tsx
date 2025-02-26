@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 const PlayerPage = () => {
   return (
@@ -7,4 +6,4 @@ const PlayerPage = () => {
   )
 }
 
-export default PlayerPage
+export default React.memo(PlayerPage)

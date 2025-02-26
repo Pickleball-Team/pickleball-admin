@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { Tournament } from '../models';
 import api from '../../../configs/api/api';
 import { GET_TOURNAMENT_BY_ID } from '../constants';
-import { ApiResponse } from '../../../configs/api/apiResponses';
+import { Tournament } from '../models';
 
 const fetchTournamentById = async (id: number) => {
   try {

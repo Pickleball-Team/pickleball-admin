@@ -1,12 +1,12 @@
-import React, { useRef, useState } from 'react';
-import { Table, Tag, Button, Space, Input, DatePicker, InputRef } from 'antd';
-import { Sponsor } from '../../modules/Sponsor/models';
-import { useGetAllSponsors } from '../../modules/Sponsor/hooks/useGetAllSponner';
-import { useAcceptSponsor } from '../../modules/Sponsor/hooks/useAcceptSponsor';
 import { SearchOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Input, InputRef, Space, Table, Tag } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import moment from 'moment';
+import React, { useRef, useState } from 'react';
+import { useAcceptSponsor } from '../../modules/Sponsor/hooks/useAcceptSponsor';
+import { useGetAllSponsors } from '../../modules/Sponsor/hooks/useGetAllSponner';
+import { Sponsor } from '../../modules/Sponsor/models';
 
 type DataIndex = keyof Sponsor;
 

@@ -13,3 +13,5 @@ export const ResultsPage = () => {
     </div>
   );
 };
+
+export default React.memo(ResultsPage);

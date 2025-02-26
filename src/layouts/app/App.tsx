@@ -63,9 +63,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const dispatch = useDispatch();
   const { mytheme } = useSelector((state: RootState) => state.theme);
   const user = useSelector((state: RootState) => state.authencation.user);
-  const islogin = useSelector(
-    (state: RootState) => state.authencation.isAuthenticated
-  );
 
   const items: MenuProps['items'] = [
     {

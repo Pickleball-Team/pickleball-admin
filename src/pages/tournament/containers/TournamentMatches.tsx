@@ -138,4 +138,4 @@ const TournamentMatches = ({ details = [] }: TournamentMatchesProps) => {
   );
 };
 
-export default TournamentMatches;
+export default React.memo(TournamentMatches);

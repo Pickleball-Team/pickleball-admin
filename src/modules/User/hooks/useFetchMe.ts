@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { User } from '../models';
 import Api from '../../../configs/api/api';
 import { FETCH_ME } from '../constants';
 

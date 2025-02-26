@@ -1,11 +1,11 @@
-import React, { useRef, useState } from 'react';
-import { Table, Tag, Button, Space, Input, DatePicker, InputRef } from 'antd';
-import { User } from '../../modules/User/models';
-import { useFetchAllUser } from '../../modules/User/hooks/useFetchAllUser';
 import { SearchOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Input, InputRef, Space, Table, Tag } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import moment from 'moment';
+import React, { useRef, useState } from 'react';
+import { useFetchAllUser } from '../../modules/User/hooks/useFetchAllUser';
+import { User } from '../../modules/User/models';
 
 type DataIndex = keyof User;
 

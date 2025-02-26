@@ -13,3 +13,5 @@ export const TeamsPage = () => {
     </div>
   );
 };
+
+export default React.memo(TeamsPage);

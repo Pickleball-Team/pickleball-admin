@@ -10,12 +10,15 @@ import { useUpdateTournament } from '../../modules/Tournaments/hooks/useUpdateTo
 type DataIndex = string;
 
 export const OverviewPage = () => {
-  const { data, isLoading, error, refetch } = useGetAllTournaments();
+  const { data, isLoading, refetch } = useGetAllTournaments();
   const { mutate: updateTournament } = useUpdateTournament();
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
+  // todo: remove this
+  console.log(searchText);
+  
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,

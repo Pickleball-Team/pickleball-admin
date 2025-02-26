@@ -1,4 +1,9 @@
 import {
+  FacebookFilled,
+  GoogleOutlined,
+  TwitterOutlined,
+} from '@ant-design/icons';
+import {
   Button,
   Checkbox,
   Col,
@@ -11,16 +16,11 @@ import {
   theme,
   Typography,
 } from 'antd';
-import {
-  FacebookFilled,
-  GoogleOutlined,
-  TwitterOutlined,
-} from '@ant-design/icons';
-import { Logo } from '../../components';
-import { useMediaQuery } from 'react-responsive';
-import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
-import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { useNavigate } from 'react-router-dom';
+import { Logo } from '../../components';
+import { PATH_AUTH, PATH_DASHBOARD } from '../../constants';
 import { useLogin } from '../../modules/User/hooks/useLogin';
 
 const { Title, Text, Link } = Typography;
