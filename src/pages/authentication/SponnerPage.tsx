@@ -13,7 +13,7 @@ type DataIndex = keyof Sponsor;
 const SponnerPage: React.FC = () => {
   const { data, isLoading, error } = useGetAllSponsors();
   const { mutate: acceptSponsor } = useAcceptSponsor();
-  const [searchText, setSearchText] = useState<string>('');
+  const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
@@ -64,8 +64,8 @@ const SponnerPage: React.FC = () => {
     ),
     filterIcon: (filtered: boolean) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
     onFilter: (value, record) =>
-      record[dataIndex]
-        ? record[dataIndex].toString().toLowerCase().includes((value as string).toLowerCase())
+      record[dataIndex] != null && record[dataIndex] !== undefined
+        ? record[dataIndex]!.toString().toLowerCase().includes((value as string).toLowerCase())
         : false,
     onFilterDropdownVisibleChange: visible => {
       if (visible) {
@@ -167,7 +167,7 @@ const SponnerPage: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (text: string, record: Sponsor) => (
+      render: (_: string, record: Sponsor) => (
         <Space>
           {record.isAccept ? (
             <Button danger onClick={() => handleAccept(record.sponsorId, false)}>

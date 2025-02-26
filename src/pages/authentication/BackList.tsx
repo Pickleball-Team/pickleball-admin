@@ -11,7 +11,7 @@ type DataIndex = keyof User;
 
 const BackList: React.FC = () => {
   const { data, isLoading, error } = useFetchAllUser();
-  const [searchText, setSearchText] = useState<string>('');
+  const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
@@ -73,8 +73,8 @@ const BackList: React.FC = () => {
       <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
     ),
     onFilter: (value, record) =>
-      record[dataIndex]
-        ? record[dataIndex]
+      record[dataIndex] !== undefined
+        ? record[dataIndex]!
             .toString()
             .toLowerCase()
             .includes((value as string).toLowerCase())
@@ -204,7 +204,7 @@ const BackList: React.FC = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (text: string, record: User) => (
+      render: (record: User) => (
         <Button
           type="primary"
           danger={record.status}
