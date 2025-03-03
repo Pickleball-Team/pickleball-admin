@@ -234,7 +234,7 @@ export const PATH_ABOUT = {
 export const PATH_TOURNAMENT = {
   root: ROOTS_TOURNAMENT,
   overview: path(ROOTS_TOURNAMENT, '/overview'),
-  schedule: path(ROOTS_TOURNAMENT, '/schedule'),
+  vennues: path(ROOTS_TOURNAMENT, '/vennues'),
   teams: path(ROOTS_TOURNAMENT, '/teams'),
   results: path(ROOTS_TOURNAMENT, '/results'),
   standings: path(ROOTS_TOURNAMENT, '/standings'),

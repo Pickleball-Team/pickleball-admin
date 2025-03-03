@@ -65,7 +65,6 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
         maxPlayer: data?.maxPlayer,
         totalPrize: data?.totalPrize,
         status: data?.status,
-        type: data?.type,
         startDate: data?.startDate ? moment(data?.startDate) : null,
         endDate: data?.endDate ? moment(data?.endDate) : null,
         note: data?.note,
@@ -134,14 +133,11 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
         </Col>
         <Col span={12}>
           <Form.Item
-            name="type"
-            label="Type"
-            rules={[{ required: true, message: 'Please select the type!' }]}
+            name="banner"
+            label="Banner"
+            rules={[{ required: true, message: 'Please input the banner URL!' }]}
           >
-            <Select>
-              <Option value={TournamentType.Singles}>Singles</Option>
-              <Option value={TournamentType.Doubles}>Doubles</Option>
-            </Select>
+            <Input />
           </Form.Item>
         </Col>
       </Row>
@@ -170,16 +166,8 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
       <Form.Item name="note" label="Note">
         <TextArea rows={4} />
       </Form.Item>
-      <Form.Item
-        name="banner"
-        label="Banner"
-        rules={[{ required: true, message: 'Please input the banner URL!' }]}
-      >
-        <Input />
-      </Form.Item>
-
       <Form.Item>
-        <Button type="primary" htmlType="submit">
+        <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
           Save
         </Button>
       </Form.Item>

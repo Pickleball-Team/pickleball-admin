@@ -87,7 +87,7 @@ const items: MenuProps['items'] = [
       null
     ),
     getItem(
-      <Link to={PATH_TOURNAMENT.schedule}>Schedule</Link>,
+      <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
       'schedule',
       null
     ),

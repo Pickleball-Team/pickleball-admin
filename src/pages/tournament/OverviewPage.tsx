@@ -1,11 +1,13 @@
 import { SearchOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
-import { Button, Card, Col, Input, Row, Space, Table, Tag } from 'antd';
+import { Button, Card, Col, Input, Row, Space, Table, Tag, Select } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGetAllTournaments } from '../../modules/Tournaments/hooks/useGetAllTournaments';
 import { useUpdateTournament } from '../../modules/Tournaments/hooks/useUpdateTournamen';
+
+const { Option } = Select;
 
 type DataIndex = string;
 
@@ -16,9 +18,6 @@ export const OverviewPage = () => {
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
-  // todo: remove this
-  console.log(searchText);
-  
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,
@@ -166,9 +165,34 @@ export const OverviewPage = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'Active' ? 'green' : 'red'}>{status}</Tag>
-      ),
+      render: (status: string) => {
+        let color = '';
+        let label = '';
+    
+        switch (status) {
+          case 'Scheduled':
+            color = 'blue';
+            label = 'Scheduled';
+            break;
+          case 'Ongoing':
+            color = 'orange';
+            label = 'Ongoing';
+            break;
+          case 'Completed':
+            color = 'green';
+            label = 'Completed';
+            break;
+          case 'Disable':
+            color = 'red';
+            label = 'Disable';
+            break;
+          default:
+            color = 'default';
+            label = status;
+        }
+    
+        return <Tag color={color}>{label}</Tag>;
+      },
     },
     {
       title: 'Type',
@@ -197,15 +221,12 @@ export const OverviewPage = () => {
           <Tag color="green">Accepted</Tag>
         ) : (
           <Space>
-            {isAccept  ? (
-              <Button danger onClick={() => handleReject(record.id)}>
-                Reject
-              </Button>
-            ) : (
-              <Button type="primary" onClick={() => handleAccept(record.id)}>
-                Accept
-              </Button>
-            )}
+            <Button type="primary" onClick={() => handleAccept(record.id)}>
+              Accept
+            </Button>
+            <Button danger onClick={() => handleReject(record.id)}>
+              Reject
+            </Button>
           </Space>
         ),
     },

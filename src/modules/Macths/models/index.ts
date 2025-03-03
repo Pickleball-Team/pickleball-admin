@@ -1,4 +1,5 @@
 export interface IMatch {
+  teamResponse: any;
   id: number;
   title: string;
   description: string;
@@ -11,4 +12,6 @@ export interface IMatch {
   isPublic: boolean;
   refereeId: number;
   touramentId: number;
+  team1Score?: number,
+  team2Score?: number,
 }

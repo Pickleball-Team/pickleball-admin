@@ -54,6 +54,7 @@ export enum TournamentType {
 }
 
 export interface Member {
+  playerDetails: any;
   id: number;
   playerId: number;
   teamId: number;
@@ -80,5 +81,24 @@ export interface Match {
   winScore: number;
   isPublic: boolean;
   refereeId: number | null;
-  teams: Team[];
+  teamResponse: Team[];
+}
+
+export interface MatchRequest {
+  title: string;
+  description: string;
+  matchDate: string;
+  venueId?: number;
+  status: number;
+  matchCategory: number;
+  matchFormat: number;
+  winScore: number;
+  isPublic: boolean;
+  roomOnwer: number; // Note the typo here
+  player1Id: number;
+  player2Id?: number;
+  player3Id?: number;
+  player4Id?: number;
+  refereeId?: number;
+  tournamentId?: number;
 }

@@ -45,7 +45,7 @@ import {
 } from '../pages';
 import { AboutPage } from '../pages/About.tsx';
 import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
-import { SchedulePage } from '../pages/tournament/SchedulePage.tsx';
+import { VenusPage } from '../pages/tournament/VenusPage.tsx';
 import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
 import TournamentDetail from '../pages/tournament/Detail.tsx';
 import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
@@ -153,8 +153,8 @@ const router = createBrowserRouter([
         element: <OverviewPage />,
       },
       {
-        path: 'schedule',
-        element: <SchedulePage />,
+        path: 'vennues',
+        element: <VenusPage/>,
       },
       {
         path: 'teams',
