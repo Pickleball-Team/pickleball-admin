@@ -16,7 +16,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import { useStylesContext } from '../../context';
-import * as dayjs from 'dayjs';
+
 
 const SOCIALS = [
   'Facebook',
@@ -231,7 +231,7 @@ export const UserProfileInformationPage = () => {
             name="user-profile-birhday-form"
             layout="vertical"
             initialValues={{
-              dob: dayjs('1996/04/27'),
+             
             }}
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
