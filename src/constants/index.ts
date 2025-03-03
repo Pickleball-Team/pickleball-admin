@@ -79,7 +79,7 @@ const ERROR_ITEMS = [
 
 const TOURNAMENT_ITEMS = [
   { title: 'overview', path: PATH_TOURNAMENT.overview },
-  { title: 'schedule', path: PATH_TOURNAMENT.schedule },
+  { title: 'venus', path: PATH_TOURNAMENT.vennues },
   { title: 'teams', path: PATH_TOURNAMENT.teams },
   { title: 'results', path: PATH_TOURNAMENT.results },
   { title: 'standings', path: PATH_TOURNAMENT.standings },
