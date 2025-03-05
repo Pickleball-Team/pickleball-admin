@@ -1,4 +1,4 @@
-import { LockFilled, MailOutlined, SearchOutlined } from '@ant-design/icons';
+import { LockFilled, MailFilled, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
   Avatar,
@@ -9,7 +9,6 @@ import {
   Space,
   Table,
   Tag,
-  TimePicker,
   Typography,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
@@ -25,6 +24,7 @@ import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees
 import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import Title from 'antd/es/typography/Title';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -235,20 +235,44 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: 'Venue',
+      title: 'Venue & Referee',
       dataIndex: 'venueId',
       key: 'venueId',
-      render: (venueId: number) => {
+      render: (venueId: number, record: Match) => {
         const venue = getVenueById(venueId);
+        const referee = getRefereeById(record?.refereeId || 0);
         return venue ? (
           <Card
             hoverable
-            style={{ width: 240 }}
+            style={{ width: 280 }}
             cover={
-              <img width={100} height={100} alt="venue" src={venue.urlImage} />
+              <img
+                width={100}
+                height={100}
+                alt="venue"
+                style={{ objectFit: 'cover' }}
+                src={venue.urlImage}
+              />
             }
           >
             <Meta title={venue.name} description={venue.address} />
+            {referee && (
+              <div>
+                <Title level={5}>Referee</Title>
+                <div>
+                  <Avatar src={referee.avatarUrl} />
+                  <Text style={{ marginLeft: 8, marginTop: 8 }}>
+                    {referee.firstName} {referee.lastName}
+                  </Text>
+                </div>
+                <div>
+                  <Text>
+                    <MailFilled /> {referee.email}
+                  </Text>
+                  <br />
+                </div>
+              </div>
+            )}
           </Card>
         ) : (
           <Tag color="warning">No venue</Tag>
@@ -256,110 +280,100 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       },
     },
     {
-      title: 'Referee',
-      dataIndex: 'refereeId',
-      key: 'refereeId',
-      render: (refereeId: number) => {
-        const referee = getRefereeById(refereeId);
-        return referee ? (
-          <Card hoverable style={{ width: 240 }}>
-            <Avatar src={referee.avatarUrl} size={40} />
-            <Meta
-              title={`${referee.firstName} ${referee.lastName}`}
-              description={`Email: ${referee.email}`}
-            />
-          </Card>
-        ) : (
-          <Tag color="warning">No referee</Tag>
-        );
-      },
-    },
-    {
-      title: 'Team 1',
-      key: 'team1',
+      title: 'Team',
+      key: 'team',
       render: (text: any, record: Match) => {
         const team1 = record.teamResponse?.[0];
-        return (
-          <Card bordered={true} style={{ backgroundColor: '#f6ffed' }}>
-            {team1 && Array.isArray(team1.members) ? (
-              team1.members.map((member: Member) => {
-                const user = getUserById(member.playerId);
-                return user ? (
-                  <div
-                    key={member.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: 16,
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={user.avatarUrl} />
-                        
-                        <Text style={{ marginLeft: 8, marginTop:8 }}>
-                          {user.firstName} {user.lastName}
-                        </Text>
-                      </div>
-                      <Text>
-                        <MailOutlined /> {user.email}
-                      </Text>
-                      <br />
-                      <Text>
-                        <LockFilled />{' '}
-                        {new Date(user.userDetails?.joinedAt).toLocaleString()}
-                      </Text>
-                    </div>
-                  </div>
-                ) : null;
-              })
-            ) : (
-              <Tag color="warning">No members</Tag>
-            )}
-          </Card>
-        );
-      },
-    },
-    {
-      title: 'Team 2',
-      key: 'team2',
-      render: (text: any, record: any) => {
         const team2 = record?.teamResponse?.[1];
         return (
-          <Card bordered={true} style={{ backgroundColor: '#fffbe6' }}>
-            {team2 && Array.isArray(team2.members) ? (
-              team2.members.map((member: Member) => {
-                const user = getUserById(member.playerId);
-                return user ? (
-                  <div
-                    key={member.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: 16,
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={user.avatarUrl} />
-                        <Text style={{ marginLeft: 8 }}>
-                          {user.firstName} {user.lastName}
-                        </Text>
+          <>
+            <>
+              <Title level={5}><UserOutlined /> Team 1</Title>
+              <div className="">
+                {team1 && Array.isArray(team1.members) ? (
+                  team1.members.map((member: Member) => {
+                    const user = getUserById(member.playerId);
+                    return user ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '5px 10px',
+                          borderRadius: 5,
+                          backgroundColor: '#fff',
+                        }}
+                      >
+                        <div>
+                          <Avatar src={user.avatarUrl} />
+                          <Text style={{ marginLeft: 8, marginTop: 8 }}>
+                            {user.firstName} {user.lastName}
+                          </Text>
+                        </div>
+                        <div>
+                          <Text>
+                            <MailFilled /> {user.email}
+                          </Text>
+                          <br />
+                          <Text>
+                            <LockFilled />{' '}
+                            {new Date(
+                              user.userDetails?.joinedAt
+                            ).toLocaleString()}
+                          </Text>
+                        </div>
                       </div>
-                      <Text>Email: {user.email}</Text>
-                      <br />
-                      <Text>
-                        Joined At:{' '}
-                        {new Date(user.userDetails?.joinedAt).toLocaleString()}
-                      </Text>
-                    </div>
-                  </div>
-                ) : null;
-              })
-            ) : (
-              <Tag color="warning">No members</Tag>
-            )}
-          </Card>
+                    ) : null;
+                  })
+                ) : (
+                  <Tag color="warning">No members</Tag>
+                )}
+              </div>
+            </>
+            <>
+              <Title level={5}><UserOutlined /> Team 2</Title>
+              <div className="">
+                {team2 && Array.isArray(team2.members) ? (
+                  team2.members.map((member: Member) => {
+                    const user = getUserById(member.playerId);
+                    return user ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '5px 10px',
+                          borderRadius: 5,
+                          backgroundColor: '#fff',
+                        }}
+                      >
+                        <div>
+                          <Avatar src={user.avatarUrl} />
+                          <Text style={{ marginLeft: 8, marginTop: 8 }}>
+                            {user.firstName} {user.lastName}
+                          </Text>
+                        </div>
+                        <div>
+                          <Text>
+                            <MailFilled /> {user.email}
+                          </Text>
+                          <br />
+                          <Text>
+                            <LockFilled />{' '}
+                            {new Date(
+                              user.userDetails?.joinedAt
+                            ).toLocaleString()}
+                          </Text>
+                        </div>
+                      </div>
+                    ) : null;
+                  })
+                ) : (
+                  <Tag color="warning">No members</Tag>
+                )}
+              </div>
+            </>
+          </>
         );
       },
     },
@@ -397,7 +411,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       {selectedMatch && (
         <UpdateMatchModal
           visible={isUpdateModalVisible}
-          onClose={() => setIsUpdateModalVisible(false)}
+          onClose={() => {
+            setIsUpdateModalVisible(false);
+            setSelectedMatch(null); 
+          }}
           match={selectedMatch}
           refetch={refetch}
         />

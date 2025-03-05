@@ -1,4 +1,9 @@
-import { SearchOutlined, UserAddOutlined, UserDeleteOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { Pie } from '@ant-design/plots';
 import type { InputRef } from 'antd';
 import {
@@ -11,10 +16,12 @@ import {
   Table,
   Tag,
   Typography,
+  message,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
 import { RegistrationDetail } from '../../../modules/Tournaments/models';
+import { useApprovalPlayerTournament } from '../../../modules/Tournaments/hooks/useApprovalPlayerTournament';
 
 const { Text } = Typography;
 
@@ -22,19 +29,44 @@ type DataIndex = string;
 
 type PlayersTableProps = {
   registrations: RegistrationDetail[];
+  refetch: () => void;
 };
 
-const PlayersTable = ({ registrations = [] }: PlayersTableProps) => {
+const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
   const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
+  const { mutate: approvePlayer, status } = useApprovalPlayerTournament();
+
   const onAccept = (id: number) => {
-    console.log('Accept', id);
+    approvePlayer(
+      { id, isApproved: true },
+      {
+        onSuccess: () => {
+          refetch();
+          message.success('Player approved successfully');
+        },
+        onError: (error) => {
+          message.error(`Error approving player: ${error.message}`);
+        },
+      }
+    );
   };
 
   const onReject = (id: number) => {
-    console.log('Reject', id);
+    approvePlayer(
+      { id, isApproved: false },
+      {
+        onSuccess: () => {
+          refetch();
+          message.success('Player rejected successfully');
+        },
+        onError: (error) => {
+          message.error(`Error rejecting player: ${error.message}`);
+        },
+      }
+    );
   };
 
   const handleSearch = (

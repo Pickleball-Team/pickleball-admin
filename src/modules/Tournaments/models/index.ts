@@ -102,3 +102,8 @@ export interface MatchRequest {
   refereeId?: number;
   tournamentId?: number;
 }
+
+export interface UpdateApprovalDTO {
+  id: number;
+  isApproved: boolean;
+}
