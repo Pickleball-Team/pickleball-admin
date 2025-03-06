@@ -1,0 +1,2 @@
+export const GET_ALL_RULES = 'GET_ALL_RULES';
+export const GET_BLOG_CATEGORIES = 'GET_BLOG_CATEGORIES';

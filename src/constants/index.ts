@@ -29,36 +29,7 @@ import {
   PATH_AUTHENTICATION, // Import PATH_TOURNAMENT
 } from './routes.ts';
 
-const DASHBOARD_ITEMS = [
-  { title: 'default', path: PATH_DASHBOARD.default },
-  { title: 'projects', path: PATH_DASHBOARD.projects },
-  { title: 'ecommerce', path: PATH_DASHBOARD.ecommerce },
-  { title: 'marketing', path: PATH_DASHBOARD.marketing },
-  { title: 'social', path: PATH_DASHBOARD.social },
-  { title: 'bidding', path: PATH_DASHBOARD.bidding },
-  { title: 'learning', path: PATH_DASHBOARD.learning },
-  { title: 'logistics', path: PATH_DASHBOARD.logistics },
-];
-
-const CORPORATE_ITEMS = [
-  { title: 'about', path: PATH_CORPORATE.about },
-  { title: 'team', path: PATH_CORPORATE.team },
-  { title: 'faq', path: PATH_CORPORATE.faqs },
-  { title: 'contact us', path: PATH_CORPORATE.contact },
-  { title: 'pricing', path: PATH_CORPORATE.pricing },
-  { title: 'license', path: PATH_CORPORATE.license },
-];
-
-const USER_PROFILE_ITEMS = [
-  { title: 'details', path: PATH_USER_PROFILE.details },
-  { title: 'preferences', path: PATH_USER_PROFILE.preferences },
-  { title: 'information', path: PATH_USER_PROFILE.personalInformation },
-  { title: 'security', path: PATH_USER_PROFILE.security },
-  { title: 'activity', path: PATH_USER_PROFILE.activity },
-  { title: 'actions', path: PATH_USER_PROFILE.action },
-  { title: 'help', path: PATH_USER_PROFILE.help },
-  { title: 'feedback', path: PATH_USER_PROFILE.feedback },
-];
+const DASHBOARD_ITEMS = [];
 
 const AUTHENTICATION_ITEMS = [
   { title: 'sign in', path: PATH_AUTH.signin },
@@ -94,6 +65,8 @@ const AUTHENTICATION_SYS_ITEMS = [
   { title: 'referees', path: PATH_AUTHENTICATION.referees },
 ];
 
+const BLOG_ITEMS = [{ title: 'Blog list', path: PATH_BLOG.root }];
+
 export {
   PATH_CALENDAR,
   PATH_USER_MGMT,
@@ -120,12 +93,11 @@ export {
   PATH_LANDING,
   PATH_SITEMAP,
   DASHBOARD_ITEMS,
-  CORPORATE_ITEMS,
-  USER_PROFILE_ITEMS,
   PATH_SOCIALS,
   AUTHENTICATION_ITEMS,
   ERROR_ITEMS,
   PATH_ABOUT,
   TOURNAMENT_ITEMS,
   AUTHENTICATION_SYS_ITEMS,
+  BLOG_ITEMS,
 };

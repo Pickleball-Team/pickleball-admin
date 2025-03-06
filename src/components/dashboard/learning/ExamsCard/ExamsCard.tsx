@@ -36,7 +36,7 @@ export const ExamsCard = ({ data, loading, error, ...others }: Props) => {
           size="large"
           pagination={{
             onChange: (page) => {
-              console.log(page);
+
             },
             pageSize: 5,
             align: 'center',

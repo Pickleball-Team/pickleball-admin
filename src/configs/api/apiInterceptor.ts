@@ -53,7 +53,6 @@ export const apiFailureRequestInterceptor = async (error: unknown) => {
 export const apiSuccessResponseInterceptor = async (
   response: AxiosResponse
 ): Promise<AxiosResponse['data']> => {
-  console.log("Response Data:", response.data);
   return response.data;
 };
 

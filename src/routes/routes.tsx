@@ -1,20 +1,12 @@
 import React, { ReactNode, useEffect } from 'react';
 import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
-import {
-  CorporateLayout,
-  DashboardLayout,
-  UserAccountLayout,
-} from '../layouts';
+import { DashboardLayout } from '../layouts';
+import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
+import { BlogLayout } from '../layouts/blog/index.tsx';
 import { TournamentLayout } from '../layouts/tournament/index.tsx';
 import {
   AccountDeactivePage,
   BiddingDashboardPage,
-  CorporateAboutPage,
-  CorporateContactPage,
-  CorporateFaqPage,
-  CorporateLicensePage,
-  CorporatePricingPage,
-  CorporateTeamPage,
   DefaultDashboardPage,
   EcommerceDashboardPage,
   Error400Page,
@@ -32,28 +24,20 @@ import {
   SignUpPage,
   SitemapPage,
   SocialDashboardPage,
-  UserProfileActionsPage,
-  UserProfileActivityPage,
-  UserProfileDetailsPage,
-  UserProfileFeedbackPage,
-  UserProfileHelpPage,
-  UserProfileInformationPage,
-  UserProfilePreferencesPage,
-  UserProfileSecurityPage,
   VerifyEmailPage,
-  WelcomePage,
+  WelcomePage
 } from '../pages';
 import { AboutPage } from '../pages/About.tsx';
-import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
-import { VenusPage } from '../pages/tournament/VenusPage.tsx';
-import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
-import TournamentDetail from '../pages/tournament/Detail.tsx';
-import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
-import SponnerPage from '../pages/authentication/SponnerPage.tsx';
 import BackList from '../pages/authentication/BackList.tsx';
 import PlayerPage from '../pages/authentication/PlayerPage.tsx';
 import RefereesPage from '../pages/authentication/RefereesPage.tsx';
+import SponnerPage from '../pages/authentication/SponnerPage.tsx';
+import ListBlog from '../pages/blog/ListBlog.tsx';
+import TournamentDetail from '../pages/tournament/Detail.tsx';
 import OverviewPage from '../pages/tournament/OverviewPage.tsx';
+import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
+import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
+import { VenusPage } from '../pages/tournament/VenusPage.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -154,7 +138,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'vennues',
-        element: <VenusPage/>,
+        element: <VenusPage />,
       },
       {
         path: 'teams',
@@ -182,7 +166,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'referees',
-        element: <RefereesPage/>,
+        element: <RefereesPage />,
       },
       {
         path: 'block-user',
@@ -195,74 +179,13 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/corporate',
-    element: <PageWrapper children={<CorporateLayout />} />,
+    path: '/blog',
+    element: <PageWrapper children={<BlogLayout />} />,
     errorElement: <ErrorPage />,
     children: [
       {
         index: true,
-        path: 'about',
-        element: <CorporateAboutPage />,
-      },
-      {
-        path: 'team',
-        element: <CorporateTeamPage />,
-      },
-      {
-        path: 'faqs',
-        element: <CorporateFaqPage />,
-      },
-      {
-        path: 'contact',
-        element: <CorporateContactPage />,
-      },
-      {
-        path: 'pricing',
-        element: <CorporatePricingPage />,
-      },
-      {
-        path: 'license',
-        element: <CorporateLicensePage />,
-      },
-    ],
-  },
-  {
-    path: '/user-profile',
-    element: <PageWrapper children={<UserAccountLayout />} />,
-    errorElement: <ErrorPage />,
-    children: [
-      {
-        index: true,
-        path: 'details',
-        element: <UserProfileDetailsPage />,
-      },
-      {
-        path: 'preferences',
-        element: <UserProfilePreferencesPage />,
-      },
-      {
-        path: 'information',
-        element: <UserProfileInformationPage />,
-      },
-      {
-        path: 'security',
-        element: <UserProfileSecurityPage />,
-      },
-      {
-        path: 'activity',
-        element: <UserProfileActivityPage />,
-      },
-      {
-        path: 'actions',
-        element: <UserProfileActionsPage />,
-      },
-      {
-        path: 'help',
-        element: <UserProfileHelpPage />,
-      },
-      {
-        path: 'feedback',
-        element: <UserProfileFeedbackPage />,
+        element: <ListBlog />,
       },
     ],
   },

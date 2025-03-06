@@ -26,6 +26,7 @@ const ROOTS_ABOUT = '/about';
 const ROOTS_TOURNAMENT = '/tournament';
 const ROOTS_AUTHENCATION = '/authencation';
 
+
 export const PATH_LANDING = {
   root: ROOTS_LANDING,
   why: '/why-us',
@@ -92,11 +93,6 @@ export const PATH_SOCIAL = {
   activity: path(ROOTS_SOCIAL, '/activity'),
   followers: path(ROOTS_SOCIAL, '/followers'),
   settings: path(ROOTS_SOCIAL, '/settings'),
-};
-
-export const PATH_BLOG = {
-  root: ROOTS_BLOG,
-  details: (id: string | number): string => path(ROOTS_BLOG, `/view/${id}`),
 };
 
 export const PATH_CAREERS = {
@@ -248,4 +244,8 @@ export const PATH_AUTHENTICATION = {
   sponsorDetails: path(ROOTS_AUTHENCATION, `/manager-sponsor/:id`),
   playerDetails:  path(ROOTS_AUTHENCATION, `/manager-player/:id`),
   referees: path(ROOTS_AUTHENCATION, '/referees'),
+};
+
+export const PATH_BLOG = {
+  root: ROOTS_BLOG
 };

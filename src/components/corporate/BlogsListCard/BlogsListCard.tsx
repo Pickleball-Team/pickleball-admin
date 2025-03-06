@@ -35,7 +35,7 @@ export const BlogsListCard = ({ data, loading, error, ...others }: Props) => {
           size="large"
           pagination={{
             onChange: (page) => {
-              console.log(page);
+        
             },
             pageSize: 3,
             align: 'center',

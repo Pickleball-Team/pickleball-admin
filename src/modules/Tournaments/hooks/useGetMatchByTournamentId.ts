@@ -6,8 +6,6 @@ import Api from '../../../configs/api/api';
 const fetchTournamenMatchtById = async (id: number): Promise<Match[]> => {
   try {
     const response = await Api.get(`/Match/GetMatchByTouramentId/${id}`);
-    console.log(response.data);
-    
     return response.data as Match[];
   } catch (error) {
     throw new Error('Error fetching tournament by ID');

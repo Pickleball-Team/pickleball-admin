@@ -1,5 +1,6 @@
 import {
   AppstoreAddOutlined,
+  BookOutlined,
   BugOutlined,
   PieChartOutlined,
   SnippetsOutlined,
@@ -17,7 +18,11 @@ import {
   PATH_ERROR,
   PATH_LANDING,
 } from '../../constants';
-import { PATH_AUTHENTICATION, PATH_TOURNAMENT } from '../../constants/routes.ts';
+import {
+  PATH_AUTHENTICATION,
+  PATH_BLOG,
+  PATH_TOURNAMENT,
+} from '../../constants/routes.ts';
 
 const { Sider } = Layout;
 
@@ -63,22 +68,6 @@ const items: MenuProps['items'] = [
     ),
   ]),
 
-  getItem('Dashboards', 'dashboards', <PieChartOutlined />, [
-    getItem(<Link to={PATH_DASHBOARD.default}>Default</Link>, 'default', null),
-    getItem(
-      <Link to={PATH_DASHBOARD.projects}>Projects</Link>,
-      'projects',
-      null
-    ),
-  ]),
-
-  getItem('Errors', 'errors', <BugOutlined />, [
-    getItem(<Link to={PATH_ERROR.error400}>400</Link>, '400', null),
-    getItem(<Link to={PATH_ERROR.error403}>403</Link>, '403', null),
-    getItem(<Link to={PATH_ERROR.error404}>404</Link>, '404', null),
-    getItem(<Link to={PATH_ERROR.error500}>500</Link>, '500', null),
-    getItem(<Link to={PATH_ERROR.error503}>503</Link>, '503', null),
-  ]),
   // todo: review
   getItem('Tournament', 'tournament', <TrophyOutlined />, [
     getItem(
@@ -91,13 +80,10 @@ const items: MenuProps['items'] = [
       'schedule',
       null
     ),
-    getItem(<Link to={PATH_TOURNAMENT.teams}>Teams</Link>, 'teams', null),
-    getItem(<Link to={PATH_TOURNAMENT.results}>Results</Link>, 'results', null),
-    getItem(
-      <Link to={PATH_TOURNAMENT.standings}>Standings</Link>,
-      'standings',
-      null
-    ),
+  ]),
+
+  getItem('Blog', 'blog', <BookOutlined />, [
+    getItem(<Link to={PATH_BLOG.root}>List</Link>, 'overview', null),
   ]),
 
   getItem(
@@ -132,7 +118,7 @@ const SideNav = ({ ...others }: SideNavProps) => {
   const [current, setCurrent] = useState('');
 
   const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
+
   };
 
   const onOpenChange: MenuProps['onOpenChange'] = (keys) => {

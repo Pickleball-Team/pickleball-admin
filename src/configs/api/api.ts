@@ -15,7 +15,10 @@ import { ApiResponse } from './apiResponses';
 import { convertObjectToQueryParams } from '../../utils/urlUtils';
 
 const apiRequestConfig: CreateAxiosDefaults<unknown> = {
-    baseURL: `${import.meta.env.API_BASE_URL || 'https://pickbleballcapston-a4eagpasc9fbeeb8.eastasia-01.azurewebsites.net/api'}`,
+  baseURL: `${
+    import.meta.env.API_BASE_URL ||
+    'https://pickbleballcapston-a4eagpasc9fbeeb8.eastasia-01.azurewebsites.net/api'
+  }`,
   // baseURL: 'http://localhost:5098/api',
   timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
@@ -28,11 +31,9 @@ export const axiosInstance: AxiosInstance = axios.create(apiRequestConfig);
 // -- Request --
 axiosInstance.interceptors.request.use(
   (cf) => {
-    console.log('Request Interceptor:', cf);
     return apiRequestInterceptor(cf);
   },
   (err) => {
-    console.error('Request Interceptor Error:', err);
     return apiFailureRequestInterceptor(err);
   }
 );
@@ -40,11 +41,9 @@ axiosInstance.interceptors.request.use(
 // -- Response --
 axiosInstance.interceptors.response.use(
   (res) => {
-    console.log('Response Interceptor:', res);
     return apiSuccessResponseInterceptor(res);
   },
   (err) => {
-    console.error('Response Interceptor Error:', err);
     return apiFailureResponseInterceptor(err);
   }
 );
@@ -56,7 +55,6 @@ class Api {
     config: AxiosRequestConfig = {}
   ) {
     const _url = url + convertObjectToQueryParams(queryParams);
-    console.log('Making GET request to URL:', _url);
     return axiosInstance.get<T>(_url, { ...config }) as unknown as Promise<
       ApiResponse<T>
     >;

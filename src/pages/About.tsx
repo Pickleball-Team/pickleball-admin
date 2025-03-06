@@ -1,5 +1,3 @@
-import { Col, Flex, Row, Typography } from 'antd';
-import { useStylesContext } from '../context';
 import {
   BugOutlined,
   BulbOutlined,
@@ -8,10 +6,11 @@ import {
   HomeOutlined,
   PieChartOutlined,
 } from '@ant-design/icons';
-import { Card, PageHeader } from '../components';
+import { Col, Flex, Row, Typography } from 'antd';
 import { createElement } from 'react';
-import { DASHBOARD_ITEMS, PATH_GITHUB } from '../constants';
-import { Link } from 'react-router-dom';
+import { Card, PageHeader } from '../components';
+import { PATH_GITHUB } from '../constants';
+import { useStylesContext } from '../context';
 
 const { Title, Text } = Typography;
 
@@ -68,10 +67,7 @@ export const AboutPage = () => {
                 </>
               ),
               menu: {
-                items: DASHBOARD_ITEMS.map((d) => ({
-                  key: d.title,
-                  title: <Link to={d.path}>{d.title}</Link>,
-                })),
+                
               },
             },
             {
