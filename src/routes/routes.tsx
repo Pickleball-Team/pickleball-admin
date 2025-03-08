@@ -35,8 +35,6 @@ import SponnerPage from '../pages/authentication/SponnerPage.tsx';
 import ListBlog from '../pages/blog/ListBlog.tsx';
 import TournamentDetail from '../pages/tournament/Detail.tsx';
 import OverviewPage from '../pages/tournament/OverviewPage.tsx';
-import { ResultsPage } from '../pages/tournament/ResultsPage.tsx';
-import { TeamsPage } from '../pages/tournament/TeamsPage.tsx';
 import { VenusPage } from '../pages/tournament/VenusPage.tsx';
 
 // Custom scroll restoration function
@@ -141,12 +139,8 @@ const router = createBrowserRouter([
         element: <VenusPage />,
       },
       {
-        path: 'teams',
-        element: <TeamsPage />,
-      },
-      {
-        path: 'results',
-        element: <ResultsPage />,
+        path: 'referees',
+        element: <RefereesPage />,
       },
       {
         path: ':id',
@@ -163,10 +157,6 @@ const router = createBrowserRouter([
         index: true,
         path: 'manager-sponsor',
         element: <SponnerPage />,
-      },
-      {
-        path: 'referees',
-        element: <RefereesPage />,
       },
       {
         path: 'block-user',

@@ -36,6 +36,7 @@ const RefereesPage: React.FC = () => {
   const searchInput = useRef<InputRef>(null);
   const { mutate: registerUser } = useRegisterRefereesUser();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
 
   const handleSearch = (
     selectedKeys: string[],
@@ -167,6 +168,12 @@ const RefereesPage: React.FC = () => {
       onFilter: (value, record) => record.gender === value,
     },
     {
+      title: 'Phone Number',
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
+      ...getColumnSearchProps('phoneNumber'),
+    },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
@@ -178,13 +185,28 @@ const RefereesPage: React.FC = () => {
       render: (status: boolean) =>
         status ? <Tag color="green">Active</Tag> : <Tag color="red">Inactive</Tag>,
     },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (record: any) => (
+        <Space size="middle">
+          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+        </Space>
+      ),
+    },
   ];
+
+  const handleEdit = (record: any) => {
+    // Placeholder function for editing a referee
+    console.log('Edit referee:', record);
+  };
 
   const onFinish = (values: RegisterUserRequest) => {
     registerUser(values, {
       onSuccess: () => {
         message.success('Referee registered successfully');
         setIsModalVisible(false);
+        form.resetFields();
         queryClient.invalidateQueries({ queryKey: ['fetchReferees'] });
       },
       onError: () => {
@@ -219,10 +241,13 @@ const RefereesPage: React.FC = () => {
       <Modal
         title="Register Referee"
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          form.resetFields();
+        }}
         footer={null}
       >
-        <Form layout="vertical" onFinish={onFinish}>
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item
@@ -291,6 +316,15 @@ const RefereesPage: React.FC = () => {
                   <Option value="Male">Male</Option>
                   <Option value="Female">Female</Option>
                 </Select>
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item
+                name="PhoneNumber"
+                label="Phone Number"
+                rules={[{ required: true, message: 'Please input the phone number!' }]}
+              >
+                <Input />
               </Form.Item>
             </Col>
           </Row>

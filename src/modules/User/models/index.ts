@@ -6,6 +6,7 @@ export interface RegisterUserRequest {
   PasswordHash: string;
   DateOfBirth: string;
   Gender: string;
+  PhoneNumber: string;
   RoleId?: RoleFactory;
 }
 

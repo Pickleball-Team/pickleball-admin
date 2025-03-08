@@ -5,6 +5,7 @@ import MatchRoom from './containers/MatchRoom';
 import PlayersTable from './containers/PlayerRegistration';
 import TournamentInfoForm from './containers/TournamentInfoForm';
 import TournamentMatches from './containers/TournamentMatches';
+import Policy from './containers/Policy';
 
 const { TabPane } = Tabs;
 
@@ -53,6 +54,9 @@ const TournamentDetail = () => {
           <Card title="Tournament Info" bordered={false}>
             <TournamentInfoForm data={data} onSave={handleSave} />
           </Card>
+        </TabPane>
+        <TabPane tab="Policy" key="5">
+          < Policy id={data.id} data={data} refetch={refetch} />
         </TabPane>
       </Tabs>
     </div>

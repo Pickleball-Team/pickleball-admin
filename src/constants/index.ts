@@ -60,9 +60,7 @@ const ERROR_ITEMS = [
 const TOURNAMENT_ITEMS = [
   { title: 'overview', path: PATH_TOURNAMENT.overview },
   { title: 'venus', path: PATH_TOURNAMENT.vennues },
-  { title: 'teams', path: PATH_TOURNAMENT.teams },
-  { title: 'results', path: PATH_TOURNAMENT.results },
-  { title: 'standings', path: PATH_TOURNAMENT.standings },
+  { title: 'referees', path: PATH_TOURNAMENT.referees },
 ];
 
 const AUTHENTICATION_SYS_ITEMS = [
@@ -71,7 +69,6 @@ const AUTHENTICATION_SYS_ITEMS = [
   { title: 'manager player', path: PATH_AUTHENTICATION.managerPlayer },
   { title: 'sponsor details', path: PATH_AUTHENTICATION.sponsorDetails },
   { title: 'player details', path: PATH_AUTHENTICATION.playerDetails },
-  { title: 'referees', path: PATH_AUTHENTICATION.referees },
 ];
 
 const BLOG_ITEMS = [{ title: 'Blog list', path: PATH_BLOG.root }];

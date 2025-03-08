@@ -61,11 +61,6 @@ const items: MenuProps['items'] = [
       'managerPlayer',
       null
     ),
-    getItem(
-      <Link to={PATH_AUTHENTICATION.referees}>Referees</Link>,
-      'referees',
-      null
-    ),
   ]),
 
   // todo: review
@@ -78,6 +73,11 @@ const items: MenuProps['items'] = [
     getItem(
       <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
       'schedule',
+      null
+    ),
+    getItem(
+      <Link to={PATH_TOURNAMENT.referees}>Referees</Link>,
+      'referees',
       null
     ),
   ]),

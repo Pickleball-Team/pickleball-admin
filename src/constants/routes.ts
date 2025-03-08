@@ -231,9 +231,8 @@ export const PATH_TOURNAMENT = {
   root: ROOTS_TOURNAMENT,
   overview: path(ROOTS_TOURNAMENT, '/overview'),
   vennues: path(ROOTS_TOURNAMENT, '/vennues'),
-  teams: path(ROOTS_TOURNAMENT, '/teams'),
-  results: path(ROOTS_TOURNAMENT, '/results'),
   standings: path(ROOTS_TOURNAMENT, '/standings'),
+  referees: path(ROOTS_TOURNAMENT, '/referees'),
 };
 
 export const PATH_AUTHENTICATION = {
@@ -243,7 +242,6 @@ export const PATH_AUTHENTICATION = {
   managerPlayer: path(ROOTS_AUTHENCATION, '/manager-player'),
   sponsorDetails: path(ROOTS_AUTHENCATION, `/manager-sponsor/:id`),
   playerDetails:  path(ROOTS_AUTHENCATION, `/manager-player/:id`),
-  referees: path(ROOTS_AUTHENCATION, '/referees'),
 };
 
 export const PATH_BLOG = {
