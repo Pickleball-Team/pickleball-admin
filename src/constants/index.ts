@@ -29,7 +29,16 @@ import {
   PATH_AUTHENTICATION, // Import PATH_TOURNAMENT
 } from './routes.ts';
 
-const DASHBOARD_ITEMS = [];
+const DASHBOARD_ITEMS = [
+  { title: 'default', path: PATH_DASHBOARD.default },
+  { title: 'projects', path: PATH_DASHBOARD.projects },
+  { title: 'ecommerce', path: PATH_DASHBOARD.ecommerce },
+  { title: 'marketing', path: PATH_DASHBOARD.marketing },
+  { title: 'social', path: PATH_DASHBOARD.social },
+  { title: 'bidding', path: PATH_DASHBOARD.bidding },
+  { title: 'learning', path: PATH_DASHBOARD.learning },
+  { title: 'logistics', path: PATH_DASHBOARD.logistics },
+];
 
 const AUTHENTICATION_ITEMS = [
   { title: 'sign in', path: PATH_AUTH.signin },

@@ -17,7 +17,7 @@ import {
   PieChartOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { DASHBOARD_ITEMS } from '../../constants';
+
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useFetchData } from '../../hooks';
@@ -203,10 +203,7 @@ export const ProjectsDashboardPage = () => {
               </>
             ),
             menu: {
-              items: DASHBOARD_ITEMS.map((d) => ({
-                key: d.title,
-                title: <Link to={d.path}>{d.title}</Link>,
-              })),
+             
             },
           },
           {

@@ -13,7 +13,6 @@ export { NotificationsItem } from './NotificationsItem/NotificationsItem';
 export { PageHeader } from './PageHeader/PageHeader';
 export { PricingTable } from './PricingTable/PricingTable';
 export { RefreshBtn } from './RefreshBtn/RefreshBtn.tsx';
-export { SitemapCard } from './SitemapCard/SitemapCard';
 export { SocialMediaCard } from './SocialMediaCard/SocialMediaCard';
 export { TimelineCard } from './TimelineCard/TimelineCard';
 export { UserAvatar } from './UserAvatar/UserAvatar';

@@ -1,4 +1,3 @@
-import { SitemapCard } from '../components';
 import { Col, Flex, Row, Typography } from 'antd';
 import { AUTHENTICATION_ITEMS, ERROR_ITEMS } from '../constants';
 import { useStylesContext } from '../context';
@@ -27,7 +26,7 @@ export const SitemapPage = () => {
         <Row {...context?.rowProps}>
           {SITES.map((s) => (
             <Col xs={24} sm={12} md={8} xl={6} key={`col-${s.title}`}>
-              <SitemapCard data={s} style={{ height: '100%' }} />
+              {/* update site map card in here */}
             </Col>
           ))}
         </Row>

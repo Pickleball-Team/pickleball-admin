@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { HomeOutlined, PieChartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { withRouter } from 'storybook-addon-react-router-v6';
-import { DASHBOARD_ITEMS } from '../../constants';
+
 
 import { PageHeader } from './PageHeader.tsx';
 
@@ -62,10 +62,7 @@ export const Complex: Story = {
           </>
         ),
         menu: {
-          items: DASHBOARD_ITEMS.map((d) => ({
-            key: d.title,
-            title: <Link to="#">{d.title}</Link>,
-          })),
+         
         },
       },
       {
