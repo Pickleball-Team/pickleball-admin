@@ -23,6 +23,8 @@ import {
   PATH_BLOG,
   PATH_TOURNAMENT,
 } from '../../constants/routes.ts';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store.ts';
 
 const { Sider } = Layout;
 
@@ -44,81 +46,16 @@ const getItem = (
   } as MenuItem;
 };
 
-const items: MenuProps['items'] = [
-  getItem('Authentication', 'authentication', <UserOutlined />, [
-    getItem(
-      <Link to={PATH_AUTHENTICATION.managerSponsor}>Manager Sponsor</Link>,
-      'managerSponsor',
-      null
-    ),
-    getItem(
-      <Link to={PATH_AUTHENTICATION.blockUser}>Block User</Link>,
-      'blockUser',
-      null
-    ),
-    getItem(
-      <Link to={PATH_AUTHENTICATION.managerPlayer}>Manager Player</Link>,
-      'managerPlayer',
-      null
-    ),
-  ]),
-
-  // todo: review
-  getItem('Tournament', 'tournament', <TrophyOutlined />, [
-    getItem(
-      <Link to={PATH_TOURNAMENT.overview}>Overview</Link>,
-      'overview',
-      null
-    ),
-    getItem(
-      <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
-      'schedule',
-      null
-    ),
-    getItem(
-      <Link to={PATH_TOURNAMENT.referees}>Referees</Link>,
-      'referees',
-      null
-    ),
-  ]),
-
-  getItem('Blog', 'blog', <BookOutlined />, [
-    getItem(<Link to={PATH_BLOG.root}>List</Link>, 'overview', null),
-  ]),
-
-  getItem(
-    <Link to={PATH_DOCS.components} target="_blank">
-      Components
-    </Link>,
-    'components',
-    <AppstoreAddOutlined />
-  ),
-  getItem(
-    <Link to={PATH_DOCS.help} target="_blank">
-      Documentation
-    </Link>,
-    'documentation',
-    <SnippetsOutlined />
-  ),
-];
-
-const rootSubmenuKeys = [
-  'dashboards',
-  'corporate',
-  'user-profile',
-  'tournament',
-];
-
-type SideNavProps = SiderProps;
-
-const SideNav = ({ ...others }: SideNavProps) => {
+const SideNav = ({ ...others }: SiderProps) => {
   const nodeRef = useRef(null);
   const { pathname } = useLocation();
   const [openKeys, setOpenKeys] = useState(['']);
   const [current, setCurrent] = useState('');
+  const user = useSelector((state: RootState) => state.authencation.user);
+console.log("user", user);
 
   const onClick: MenuProps['onClick'] = (e) => {
-
+    setCurrent(e.key);
   };
 
   const onOpenChange: MenuProps['onOpenChange'] = (keys) => {
@@ -129,12 +66,81 @@ const SideNav = ({ ...others }: SideNavProps) => {
       setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
     }
   };
-
+  // todo authencation check role
   useEffect(() => {
     const paths = pathname.split('/');
     setOpenKeys(paths);
     setCurrent(paths[paths.length - 1]);
   }, [pathname]);
+
+  const items: MenuProps['items'] = [
+    ...(user?.roleId === 2
+      ? [
+          getItem('Authentication', 'authentication', <UserOutlined />, [
+            getItem(
+              <Link to={PATH_AUTHENTICATION.managerSponsor}>
+                Manager Sponsor
+              </Link>,
+              'managerSponsor',
+              null
+            ),
+            getItem(
+              <Link to={PATH_AUTHENTICATION.blockUser}>Block User</Link>,
+              'blockUser',
+              null
+            ),
+            getItem(
+              <Link to={PATH_AUTHENTICATION.managerPlayer}>
+                Manager Player
+              </Link>,
+              'managerPlayer',
+              null
+            ),
+          ]),
+          getItem('Blog', 'blog', <BookOutlined />, [
+            getItem(<Link to={PATH_BLOG.root}>List</Link>, 'overview', null),
+          ]),
+          getItem(
+            <Link to={PATH_DOCS.components} target="_blank">
+              Components
+            </Link>,
+            'components',
+            <AppstoreAddOutlined />
+          ),
+          getItem(
+            <Link to={PATH_DOCS.help} target="_blank">
+              Documentation
+            </Link>,
+            'documentation',
+            <SnippetsOutlined />
+          ),
+        ]
+      : []),
+    getItem('Tournament', 'tournament', <TrophyOutlined />, [
+      getItem(
+        <Link to={PATH_TOURNAMENT.overview}>Overview</Link>,
+        'overview',
+        null
+      ),
+      getItem(
+        <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
+        'schedule',
+        null
+      ),
+      getItem(
+        <Link to={PATH_TOURNAMENT.referees}>Referees</Link>,
+        'referees',
+        null
+      ),
+    ]),
+  ];
+
+  const rootSubmenuKeys = [
+    'dashboards',
+    'corporate',
+    'user-profile',
+    'tournament',
+  ];
 
   return (
     <Sider ref={nodeRef} breakpoint="lg" collapsedWidth="0" {...others}>

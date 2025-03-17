@@ -13,7 +13,7 @@ export interface Tournament {
   type: string;
   organizerId: number;
   isAccept: boolean;
-  touramentDetails: TournamentDetail[];
+  sponerDetails: TournamentDetail[];
   registrationDetails: RegistrationDetail[];
 }
 
@@ -35,6 +35,7 @@ export interface RegistrationDetail {
   registeredAt: string;
   isApproved: boolean;
   playerDetails: PlayerDetail;
+  partnerDetails?: PlayerDetail;
 }
 
 export interface PlayerDetail {
@@ -94,7 +95,7 @@ export interface MatchRequest {
   matchFormat: number;
   winScore: number;
   isPublic: boolean;
-  roomOnwer: number; // Note the typo here
+  roomOnwer: number; 
   player1Id: number;
   player2Id?: number;
   player3Id?: number;
@@ -107,3 +108,4 @@ export interface UpdateApprovalDTO {
   id: number;
   isApproved: boolean;
 }
+

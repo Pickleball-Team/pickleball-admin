@@ -3,10 +3,11 @@ export interface RegisterUserRequest {
   LastName: string;
   SecondName: string;
   Email: string;
-  PasswordHash: string;
+  Password: string;
   DateOfBirth: string;
   Gender: string;
   PhoneNumber: string;
+  refereeCode?: string;
   RoleId?: RoleFactory;
 }
 
@@ -41,4 +42,16 @@ export interface User {
   refreshToken: string;
   createAt?: Date;
   refreshTokenExpiryTime: Date;
+}
+
+
+export interface UpdateUserRequest {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  secondName: string;
+  dateOfBirth: string;
+  gender: string;
+  avatarUrl: string;
+  status: boolean;
 }

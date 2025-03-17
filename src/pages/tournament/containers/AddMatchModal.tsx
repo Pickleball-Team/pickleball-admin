@@ -1,4 +1,5 @@
-import { Form, Input, Modal, Select, Checkbox, Collapse, Row, Col } from 'antd';
+import { Form, Input, Modal, Select, Checkbox, Collapse, Row, Col, Button, message } from 'antd';
+import seedrandom from 'seedrandom';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -6,6 +7,7 @@ import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees
 import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
 import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
 import { useCreateMatch } from '../../../modules/Macths/hooks/useCreateMatch';
+import { initData } from './mokc';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -22,7 +24,8 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
   const [form] = Form.useForm();
   const user = useSelector((state: RootState) => state.authencation.user);
   const [matchFormat, setMatchFormat] = useState<number>(1);
-  const [selectedPlayers, setSelectedPlayers] = useState<{ [key: string]: number | undefined }>({});
+  const [selectedTeams, setSelectedTeams] = useState<{ [key: string]: number | undefined }>({});
+  const [seed, setSeed] = useState<string>('');
 
   const { data: referees } = useGetAllReferees();
   const { data: tournamentDetails } = useGetTournamentById(tournamentId);
@@ -34,7 +37,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
     form.validateFields().then(values => {
       const matchData = {
         ...values,
-        roomOnwer: user?.id, // Note the typo here to match the interface
+        roomOnwer: user?.id, 
         tournamentId,
       };
       createMatch(matchData, {
@@ -57,16 +60,54 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
     form.resetFields();
   };
 
-  const handlePlayerChange = (value: number, field: string) => {
-    setSelectedPlayers(prev => ({ ...prev, [field]: value }));
+  const handleTeamChange = (value: number, field: string) => {
+    setSelectedTeams(prev => ({ ...prev, [field]: value }));
   };
 
-  const getFilteredPlayers = (excludeKeys: string[]) => {
-    const selectedValues = Object.keys(selectedPlayers)
+  const getFilteredTeams = (excludeKeys: string[]) => {
+    const selectedValues = Object.keys(selectedTeams)
       .filter(key => excludeKeys.includes(key))
-      .map(key => selectedPlayers[key]);
-    return tournamentDetails?.registrationDetails?.filter(player => !selectedValues.includes(player.playerId));
+      .map(key => selectedTeams[key]);
+    return tournamentDetails?.registrationDetails?.filter(team => !selectedValues.includes(team.id));
   };
+
+  const pairTeamsRandomly = () => {
+    const teams = tournamentDetails?.registrationDetails || [];
+    if (teams.length < 2) {
+      message.warning('Not enough teams to pair');
+      return;
+    }
+
+    // Generate a new random seed each time
+    const newSeed = Math.random().toString();
+    const rng = seedrandom(newSeed);
+    const shuffledTeams = [...teams].sort(() => rng() - 0.5);
+    const pairs = [];
+    for (let i = 0; i < shuffledTeams.length; i += 2) {
+      if (shuffledTeams[i + 1]) {
+        pairs.push([shuffledTeams[i], shuffledTeams[i + 1]]);
+      }
+    }
+
+    if (pairs.length > 0) {
+      const [team1, team2] = pairs[0];
+      form.setFieldsValue({
+        team1Id: team1.id,
+        team2Id: team2.id,
+      });
+      setSelectedTeams({
+        team1Id: team1.id,
+        team2Id: team2.id,
+      });
+      message.success('Teams paired successfully');
+    } else {
+      message.warning('Not enough teams to pair');
+    }
+  };
+
+  if (tournamentDetails) {
+    tournamentDetails.registrationDetails = initData;
+  }
 
   return (
     <Modal
@@ -102,7 +143,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
                 </Form.Item>
               </Col>
               <Col span={12}>
-              <Form.Item
+                <Form.Item
                   name="winScore"
                   label="Win Score"
                   rules={[{ required: true, message: 'Please select the win score!' }]}
@@ -168,9 +209,8 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={12}>
-                
-              </Col>
+              
+              
               <Col span={12}>
                 <Form.Item
                   name="isPublic"
@@ -182,12 +222,12 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
               </Col>
             </Row>
             <Form.Item
-                  name="description"
-                  label="Description"
-                  rules={[{ required: true, message: 'Please input the description!' }]}
-                >
-                  <TextArea rows={4} />
-                </Form.Item>
+              name="description"
+              label="Description"
+              rules={[{ required: true, message: 'Please input the description!' }]}
+            >
+              <TextArea rows={4} />
+            </Form.Item>
           </Panel>
           <Panel header="Referee and Venue" key="2">
             <Row gutter={16}>
@@ -230,140 +270,52 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
               </Col>
             </Row>
           </Panel>
-          <Panel header="Players" key="3">
-            {matchFormat === 1 ? (
-              <>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player1Id"
-                      label="Player 1"
-                      rules={[{ required: true, message: 'Please select player 1!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player1Id')}
-                      >
-                        {getFilteredPlayers(['player2Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player2Id"
-                      label="Player 2"
-                      rules={[{ required: true, message: 'Please select player 2!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player2Id')}
-                      >
-                        {getFilteredPlayers(['player1Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </>
-            ) : (
-              <>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player1Id"
-                      label="Team 1 - Player 1"
-                      rules={[{ required: true, message: 'Please select player 1!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player1Id')}
-                      >
-                        {getFilteredPlayers(['player2Id', 'player3Id', 'player4Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player2Id"
-                      label="Team 1 - Player 2"
-                      rules={[{ required: true, message: 'Please select player 2!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player2Id')}
-                      >
-                        {getFilteredPlayers(['player1Id', 'player3Id', 'player4Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player3Id"
-                      label="Team 2 - Player 1"
-                      rules={[{ required: true, message: 'Please select player 3!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player3Id')}
-                      >
-                        {getFilteredPlayers(['player1Id', 'player2Id', 'player4Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Form.Item
-                      name="player4Id"
-                      label="Team 2 - Player 2"
-                      rules={[{ required: true, message: 'Please select player 4!' }]}
-                    >
-                      <Select
-                        showSearch
-                        optionFilterProp="children"
-                        onChange={(value) => handlePlayerChange(value, 'player4Id')}
-                      >
-                        {getFilteredPlayers(['player1Id', 'player2Id', 'player3Id'])?.map(player => (
-                          <Option key={player.playerId} value={player.playerId}>
-                            <img src={player.playerDetails.avatarUrl} alt="avatar" style={{ width: 20, height: 20, marginRight: 8 }} />
-                            {player.playerDetails.firstName} {player.playerDetails.lastName}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </>
-            )}
+          <Panel header="Teams" key="3">
+            <Button type="primary" onClick={pairTeamsRandomly} style={{ marginBottom: 16 }}>
+              Auto Pair Teams
+            </Button>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="team1Id"
+                  label="Team 1"
+                  rules={[{ required: true, message: 'Please select team 1!' }]}
+                >
+                  <Select
+                    showSearch
+                    optionFilterProp="children"
+                    onChange={(value) => handleTeamChange(value, 'team1Id')}
+                  >
+                    {getFilteredTeams(['team2Id'])?.map(team => (
+                      <Option key={team.id} value={team.id}>
+                        {team.playerDetails.firstName} {team.playerDetails.lastName}
+                        {team.partnerDetails && ` & ${team.partnerDetails.firstName} ${team.partnerDetails.lastName}`}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="team2Id"
+                  label="Team 2"
+                  rules={[{ required: true, message: 'Please select team 2!' }]}
+                >
+                  <Select
+                    showSearch
+                    optionFilterProp="children"
+                    onChange={(value) => handleTeamChange(value, 'team2Id')}
+                  >
+                    {getFilteredTeams(['team1Id'])?.map(team => (
+                      <Option key={team.id} value={team.id}>
+                        {team.playerDetails.firstName} {team.playerDetails.lastName}
+                        {team.partnerDetails && ` & ${team.partnerDetails.firstName} ${team.partnerDetails.lastName}`}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
           </Panel>
         </Collapse>
         {isError && <p style={{ color: 'red' }}>Error: {error.message}</p>}

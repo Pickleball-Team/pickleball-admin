@@ -112,8 +112,8 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'john.doe@example.com',
-              password: 'hashed_password',
+              email: 'admin1@gmail.com',
+              password: 'hashed_password_here',
               remember: true,
             }}
             onFinish={onFinish}

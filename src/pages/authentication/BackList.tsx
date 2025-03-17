@@ -1,16 +1,18 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Input, InputRef, Space, Table, Tag } from 'antd';
+import { Button, DatePicker, Input, InputRef, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import moment from 'moment';
 import React, { useRef, useState } from 'react';
 import { useFetchAllUser } from '../../modules/User/hooks/useFetchAllUser';
+import { useUpdateUser } from '../../modules/User/hooks/useUpdateUser';
 import { User } from '../../modules/User/models';
 
 type DataIndex = keyof User;
 
 const BackList: React.FC = () => {
-  const { data, isLoading, error } = useFetchAllUser();
+  const { data, isLoading, error, refetch } = useFetchAllUser();
+  const { mutate: updateUser } = useUpdateUser();
   const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
@@ -108,8 +110,18 @@ const BackList: React.FC = () => {
   };
 
   const handleAction = (userId: number, status: boolean) => {
-    // Implement the action to ban or unban the user here
-    console.log(`User ID: ${userId}, Status: ${status ? 'Ban' : 'Unban'}`);
+    updateUser(
+      { id: userId, data: { status: !status } },
+      {
+        onSuccess: () => {
+          message.success(`User ${status ? 'banned' : 'unbanned'} successfully`);
+          refetch();
+        },
+        onError: () => {
+          message.error(`Failed to ${status ? 'ban' : 'unban'} user`);
+        },
+      }
+    );
   };
 
   const columns: ColumnsType<User> = [

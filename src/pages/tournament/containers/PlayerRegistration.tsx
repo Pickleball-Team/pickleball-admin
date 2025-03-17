@@ -153,18 +153,6 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
 
   const columns: ColumnsType<any> = [
     {
-      title: 'Avatar',
-      dataIndex: ['playerDetails', 'avatarUrl'],
-      key: 'avatarUrl',
-      render: (avatarUrl: string) => (
-        <img
-          src={avatarUrl}
-          alt="avatar"
-          style={{ width: 50, height: 50, borderRadius: '50%' }}
-        />
-      ),
-    },
-    {
       title: 'Player',
       dataIndex: ['playerDetails', 'firstName'],
       key: 'firstName',
@@ -180,6 +168,21 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
       dataIndex: ['playerDetails', 'email'],
       key: 'email',
       ...getColumnSearchProps('email'),
+    },
+    {
+      title: 'Partner',
+      dataIndex: ['partnerDetails', 'firstName'],
+      key: 'partnerFirstName',
+      render: (_: string, record: RegistrationDetail) => (
+        <span>
+          {record.partnerDetails?.firstName} {record.partnerDetails?.lastName}
+        </span>
+      ),
+    },
+    {
+      title: 'Partner Email',
+      dataIndex: ['partnerDetails', 'email'],
+      key: 'partnerEmail',
     },
     {
       title: 'Registered At',

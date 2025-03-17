@@ -18,10 +18,15 @@ import {
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
-import { useGetAllReferees } from '../../modules/User/hooks/useGetAllReferees';
+
 import { RegisterUserRequest } from '../../modules/User/models';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRegisterRefereesUser } from '../../modules/User/hooks/useRegisterUser';
+
+import { RootState } from '../../redux/store';
+import { useSelector } from 'react-redux';
+import { useGetRefereeBySponnerId } from '../../modules/Refee/hooks/useGetRefereeBySponnerId';
+import { useUpdateReferee } from '../../modules/Refee/hooks/useUpdateRefee';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -30,11 +35,13 @@ type DataIndex = string;
 
 const RefereesPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data: referees, isLoading, error } = useGetAllReferees();
+  const user = useSelector((state: RootState) => state.authencation.user);
+  const { data: referees, isLoading, error } = useGetRefereeBySponnerId(user?.id.toString() || '');
   const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
   const { mutate: registerUser } = useRegisterRefereesUser();
+  const { mutate: updateReferee } = useUpdateReferee();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
@@ -123,7 +130,7 @@ const RefereesPage: React.FC = () => {
   const columns: ColumnsType<any> = [
     {
       title: 'Avatar',
-      dataIndex: 'avatarUrl',
+      dataIndex: ['user', 'avatarUrl'],
       key: 'avatarUrl',
       render: (avatarUrl: string) => (
         <img
@@ -135,62 +142,84 @@ const RefereesPage: React.FC = () => {
     },
     {
       title: 'First Name',
-      dataIndex: 'firstName',
+      dataIndex: ['user', 'firstName'],
       key: 'firstName',
       ...getColumnSearchProps('firstName'),
     },
     {
       title: 'Last Name',
-      dataIndex: 'lastName',
+      dataIndex: ['user', 'lastName'],
       key: 'lastName',
       ...getColumnSearchProps('lastName'),
     },
     {
       title: 'Email',
-      dataIndex: 'email',
+      dataIndex: ['user', 'email'],
       key: 'email',
       ...getColumnSearchProps('email'),
     },
     {
       title: 'Date of Birth',
-      dataIndex: 'dateOfBirth',
+      dataIndex: ['user', 'dateOfBirth'],
       key: 'dateOfBirth',
-      render: (dateOfBirth: string) => new Date(dateOfBirth).toLocaleDateString(),
+      render: (dateOfBirth: string) =>
+        new Date(dateOfBirth).toLocaleDateString(),
     },
     {
       title: 'Gender',
-      dataIndex: 'gender',
+      dataIndex: ['user', 'gender'],
       key: 'gender',
       filters: [
         { text: 'Male', value: 'Male' },
         { text: 'Female', value: 'Female' },
       ],
-      onFilter: (value, record) => record.gender === value,
+      onFilter: (value, record) => record.user.gender === value,
     },
     {
       title: 'Phone Number',
-      dataIndex: 'phoneNumber',
+      dataIndex: ['user', 'phoneNumber'],
       key: 'phoneNumber',
       ...getColumnSearchProps('phoneNumber'),
     },
     {
       title: 'Status',
-      dataIndex: 'status',
+      dataIndex: ['user', 'status'],
       key: 'status',
       filters: [
         { text: 'Active', value: true },
         { text: 'Inactive', value: false },
       ],
-      onFilter: (value, record) => record.status === value,
+      onFilter: (value, record) => record.user.status === value,
       render: (status: boolean) =>
-        status ? <Tag color="green">Active</Tag> : <Tag color="red">Inactive</Tag>,
+        status ? (
+          <Tag color="green">Active</Tag>
+        ) : (
+          <Tag color="red">Inactive</Tag>
+        ),
+    },
+    {
+      title: 'Referee Code',
+      dataIndex: 'refreeCode',
+      key: 'refreeCode',
+      render: (refreeCode: string) => <span>{refreeCode}</span>,
     },
     {
       title: 'Action',
       key: 'action',
       render: (record: any) => (
         <Space size="middle">
-          <Button type="link" onClick={() => handleEdit(record)}>Edit</Button>
+          <Button type="link" onClick={() => handleEdit(record)}>
+            Edit
+          </Button>
+          {record.isAccept ? (
+            <Button type="dashed" color='red' onClick={() => handleBan(record)}>
+              Ban
+            </Button>
+          ) : (
+            <Button type="primary" onClick={() => handleAccept(record)}>
+              Accept
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -201,13 +230,43 @@ const RefereesPage: React.FC = () => {
     console.log('Edit referee:', record);
   };
 
+  const handleAccept = (record: any) => {
+    updateReferee(
+      { id: record.refreeId, data: { isAccept: true } },
+      {
+        onSuccess: () => {
+          message.success('Referee accepted successfully');
+          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+        },
+        onError: () => {
+          message.error('Failed to accept referee');
+        },
+      }
+    );
+  };
+
+  const handleBan = (record: any) => {
+    updateReferee(
+      { id: record.refreeId, data: { isAccept: false } },
+      {
+        onSuccess: () => {
+          message.success('Referee banned successfully');
+          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+        },
+        onError: () => {
+          message.error('Failed to ban referee');
+        },
+      }
+    );
+  };
+
   const onFinish = (values: RegisterUserRequest) => {
-    registerUser(values, {
+    registerUser({ ...values, refereeCode: `${user?.id}` }, {
       onSuccess: () => {
         message.success('Referee registered successfully');
         setIsModalVisible(false);
         form.resetFields();
-        queryClient.invalidateQueries({ queryKey: ['fetchReferees'] });
+        queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
       },
       onError: () => {
         message.error('Failed to register referee');
@@ -220,6 +279,8 @@ const RefereesPage: React.FC = () => {
   }
 
   if (error) {
+    console.log(error);
+    
     return <div>Error loading referees</div>;
   }
 
@@ -229,7 +290,9 @@ const RefereesPage: React.FC = () => {
         <Col span={6}>
           <Card title="Total Referees" bordered={false} style={{ height: 150 }}>
             <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>{referees?.length}</Text>
+            <Text style={{ fontSize: 24, marginLeft: 8 }}>
+              {referees?.length}
+            </Text>
           </Card>
         </Col>
         <Col span={6}>
@@ -247,13 +310,15 @@ const RefereesPage: React.FC = () => {
         }}
         footer={null}
       >
-        <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ refereeCode: user?.id }}>
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item
                 name="FirstName"
                 label="First Name"
-                rules={[{ required: true, message: 'Please input the first name!' }]}
+                rules={[
+                  { required: true, message: 'Please input the first name!' },
+                ]}
               >
                 <Input />
               </Form.Item>
@@ -262,16 +327,15 @@ const RefereesPage: React.FC = () => {
               <Form.Item
                 name="LastName"
                 label="Last Name"
-                rules={[{ required: true, message: 'Please input the last name!' }]}
+                rules={[
+                  { required: true, message: 'Please input the last name!' },
+                ]}
               >
                 <Input />
               </Form.Item>
             </Col>
             <Col span={24}>
-              <Form.Item
-                name="SecondName"
-                label="Second Name"
-              >
+              <Form.Item name="SecondName" label="Second Name">
                 <Input />
               </Form.Item>
             </Col>
@@ -288,9 +352,11 @@ const RefereesPage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Form.Item
-                name="PasswordHash"
+                name="Password"
                 label="Password"
-                rules={[{ required: true, message: 'Please input the password!' }]}
+                rules={[
+                  { required: true, message: 'Please input the password!' },
+                ]}
               >
                 <Input.Password />
               </Form.Item>
@@ -299,7 +365,12 @@ const RefereesPage: React.FC = () => {
               <Form.Item
                 name="DateOfBirth"
                 label="Date of Birth"
-                rules={[{ required: true, message: 'Please input the date of birth!' }]}
+                rules={[
+                  {
+                    required: true,
+                    message: 'Please input the date of birth!',
+                  },
+                ]}
               >
                 <DatePicker style={{ width: '100%' }} />
               </Form.Item>
@@ -310,7 +381,9 @@ const RefereesPage: React.FC = () => {
               <Form.Item
                 name="Gender"
                 label="Gender"
-                rules={[{ required: true, message: 'Please select the gender!' }]}
+                rules={[
+                  { required: true, message: 'Please select the gender!' },
+                ]}
               >
                 <Select>
                   <Option value="Male">Male</Option>
@@ -322,12 +395,17 @@ const RefereesPage: React.FC = () => {
               <Form.Item
                 name="PhoneNumber"
                 label="Phone Number"
-                rules={[{ required: true, message: 'Please input the phone number!' }]}
+                rules={[
+                  { required: true, message: 'Please input the phone number!' },
+                ]}
               >
                 <Input />
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item name="refereeCode" label="Referee Code">
+            <Input value={user?.id} disabled />
+          </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Register Referee
@@ -335,7 +413,7 @@ const RefereesPage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-      <Table columns={columns} dataSource={referees} rowKey="id" />
+      <Table columns={columns} dataSource={Array.isArray(referees) ? referees : []} rowKey="refreeId" />
     </div>
   );
 };
