@@ -1,26 +1,16 @@
-import {
-  AppstoreAddOutlined,
-  BookOutlined,
-  BugOutlined,
-  PieChartOutlined,
-  SnippetsOutlined,
-  TrophyOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { BookOutlined, TrophyOutlined, UserOutlined } from '@ant-design/icons';
 import { ConfigProvider, Layout, Menu, MenuProps, SiderProps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { COLOR } from '../../App.tsx';
 import { Logo } from '../../components';
+import { PATH_LANDING } from '../../constants';
 import {
-  PATH_DASHBOARD,
-  PATH_DOCS,
-  PATH_ERROR,
-  PATH_LANDING,
-} from '../../constants';
-import {
+  PATH_ADMIN_PAYMENT,
+  PATH_ADMIN_TOURNAMENT,
   PATH_AUTHENTICATION,
   PATH_BLOG,
+  PATH_PAYMENT,
   PATH_TOURNAMENT,
 } from '../../constants/routes.ts';
 import { useSelector } from 'react-redux';
@@ -49,10 +39,9 @@ const getItem = (
 const SideNav = ({ ...others }: SiderProps) => {
   const nodeRef = useRef(null);
   const { pathname } = useLocation();
-  const [openKeys, setOpenKeys] = useState(['']);
-  const [current, setCurrent] = useState('');
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
+  const [current, setCurrent] = useState<string>('');
   const user = useSelector((state: RootState) => state.authencation.user);
-console.log("user", user);
 
   const onClick: MenuProps['onClick'] = (e) => {
     setCurrent(e.key);
@@ -66,7 +55,7 @@ console.log("user", user);
       setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
     }
   };
-  // todo authencation check role
+
   useEffect(() => {
     const paths = pathname.split('/');
     setOpenKeys(paths);
@@ -81,58 +70,59 @@ console.log("user", user);
               <Link to={PATH_AUTHENTICATION.managerSponsor}>
                 Manager Sponsor
               </Link>,
-              'managerSponsor',
-              null
+              'managerSponsor'
             ),
             getItem(
               <Link to={PATH_AUTHENTICATION.blockUser}>Block User</Link>,
-              'blockUser',
-              null
+              'blockUser'
             ),
             getItem(
               <Link to={PATH_AUTHENTICATION.managerPlayer}>
                 Manager Player
               </Link>,
-              'managerPlayer',
-              null
+              'managerPlayer'
             ),
           ]),
           getItem('Blog', 'blog', <BookOutlined />, [
-            getItem(<Link to={PATH_BLOG.root}>List</Link>, 'overview', null),
+            getItem(<Link to={PATH_BLOG.root}>List</Link>, 'list'),
           ]),
-          getItem(
-            <Link to={PATH_DOCS.components} target="_blank">
-              Components
-            </Link>,
-            'components',
-            <AppstoreAddOutlined />
-          ),
-          getItem(
-            <Link to={PATH_DOCS.help} target="_blank">
-              Documentation
-            </Link>,
-            'documentation',
-            <SnippetsOutlined />
-          ),
+          getItem('Tournament Admin', 'admin/tournament', <TrophyOutlined />, [
+            getItem(
+              <Link to={PATH_ADMIN_TOURNAMENT.overview}>Overview</Link>,
+              'overview'
+            ),
+            getItem(
+              <Link to={PATH_ADMIN_TOURNAMENT.vennues}>Vennues</Link>,
+              'schedule'
+            ),
+            getItem(
+              <Link to={PATH_ADMIN_TOURNAMENT.referees}>Referees</Link>,
+              'referees'
+            ),
+          ]),
+          getItem('Payments', 'admin/payment', <TrophyOutlined />, [
+            getItem(<Link to={PATH_ADMIN_PAYMENT.root}>List</Link>, 'List'),
+          ]),
         ]
-      : []),
-    getItem('Tournament', 'tournament', <TrophyOutlined />, [
-      getItem(
-        <Link to={PATH_TOURNAMENT.overview}>Overview</Link>,
-        'overview',
-        null
-      ),
-      getItem(
-        <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
-        'schedule',
-        null
-      ),
-      getItem(
-        <Link to={PATH_TOURNAMENT.referees}>Referees</Link>,
-        'referees',
-        null
-      ),
-    ]),
+      : [
+          getItem('Tournament', 'tournament', <TrophyOutlined />, [
+            getItem(
+              <Link to={PATH_TOURNAMENT.overview}>List</Link>,
+              'overview'
+            ),
+            getItem(
+              <Link to={PATH_TOURNAMENT.vennues}>Vennues</Link>,
+              'schedule'
+            ),
+            getItem(
+              <Link to={PATH_TOURNAMENT.referees}>Referees</Link>,
+              'referees'
+            ),
+          ]),
+          getItem('Payments', 'payment', <TrophyOutlined />, [
+            getItem(<Link to={PATH_PAYMENT.root}>List</Link>, 'List'),
+          ]),
+        ]),
   ];
 
   const rootSubmenuKeys = [

@@ -26,7 +26,9 @@ import {
   PATH_SOCIALS,
   PATH_ABOUT,
   PATH_TOURNAMENT,
-  PATH_AUTHENTICATION, // Import PATH_TOURNAMENT
+  PATH_AUTHENTICATION,
+  PATH_ADMIN_TOURNAMENT,
+  PATH_PAYMENT, // Import PATH_TOURNAMENT
 } from './routes.ts';
 
 const DASHBOARD_ITEMS = [
@@ -63,6 +65,12 @@ const TOURNAMENT_ITEMS = [
   { title: 'referees', path: PATH_TOURNAMENT.referees },
 ];
 
+const TOURNAMENT_ADMIN_ITEMS = [
+  { title: 'overview', path: PATH_ADMIN_TOURNAMENT.overview },
+  { title: 'venus', path: PATH_ADMIN_TOURNAMENT.vennues },
+  { title: 'referees', path: PATH_ADMIN_TOURNAMENT.referees },
+];
+
 const AUTHENTICATION_SYS_ITEMS = [
   { title: 'manager sponsor', path: PATH_AUTHENTICATION.managerSponsor },
   { title: 'block user', path: PATH_AUTHENTICATION.blockUser },
@@ -72,6 +80,8 @@ const AUTHENTICATION_SYS_ITEMS = [
 ];
 
 const BLOG_ITEMS = [{ title: 'Blog list', path: PATH_BLOG.root }];
+const PAYMENT_ITEMS = [{ title: 'Payments list', path: PATH_PAYMENT.root }];
+const PAYMENT_ADMIN_ITEMS = [{ title: 'Payments list', path: PATH_PAYMENT.root }];
 
 export {
   PATH_CALENDAR,
@@ -104,6 +114,9 @@ export {
   ERROR_ITEMS,
   PATH_ABOUT,
   TOURNAMENT_ITEMS,
+  TOURNAMENT_ADMIN_ITEMS,
   AUTHENTICATION_SYS_ITEMS,
   BLOG_ITEMS,
+  PAYMENT_ITEMS,
+  PAYMENT_ADMIN_ITEMS,
 };

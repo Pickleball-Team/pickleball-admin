@@ -42,13 +42,15 @@ function App() {
   // handle authentication
   useEffect(() => {
     refetch();
+    console.log('refetch');
+    
   }, [isAuth, refetch]);
 
   useEffect(() => {
     if (data) {
       const user = _createUserFromData(data);
       dispatch(setUser(user));
-    }
+    } 
   }, [data, dispatch]);
 
   const _createUserFromData = (data: any): User => {

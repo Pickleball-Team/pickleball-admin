@@ -20,8 +20,8 @@ import {
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
-import { RegistrationDetail } from '../../../modules/Tournaments/models';
-import { useApprovalPlayerTournament } from '../../../modules/Tournaments/hooks/useApprovalPlayerTournament';
+import { RegistrationDetail } from '../../../../modules/Tournaments/models';
+import { useApprovalPlayerTournament } from '../../../../modules/Tournaments/hooks/useApprovalPlayerTournament';
 
 const { Text } = Typography;
 
@@ -38,36 +38,6 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
   const searchInput = useRef<InputRef>(null);
 
   const { mutate: approvePlayer, status } = useApprovalPlayerTournament();
-
-  const onAccept = (id: number) => {
-    approvePlayer(
-      { id, isApproved: true },
-      {
-        onSuccess: () => {
-          refetch();
-          message.success('Player approved successfully');
-        },
-        onError: (error) => {
-          message.error(`Error approving player: ${error.message}`);
-        },
-      }
-    );
-  };
-
-  const onReject = (id: number) => {
-    approvePlayer(
-      { id, isApproved: false },
-      {
-        onSuccess: () => {
-          refetch();
-          message.success('Player rejected successfully');
-        },
-        onError: (error) => {
-          message.error(`Error rejecting player: ${error.message}`);
-        },
-      }
-    );
-  };
 
   const handleSearch = (
     selectedKeys: string[],
@@ -206,20 +176,6 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
           <Tag color="red">Not Approved</Tag>
         ),
     },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button type="primary" onClick={() => onAccept(record.id)}>
-            Accept
-          </Button>
-          <Button danger onClick={() => onReject(record.id)}>
-            Reject
-          </Button>
-        </Space>
-      ),
-    },
   ];
 
   const totalPlayers = registrations?.length || 0;
@@ -299,12 +255,7 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
           </Card>
         </Col>
       </Row>
-      <Table
-        columns={columns}
-        dataSource={registrations}
-        rowKey="id"
-        style={{ backgroundColor: '#ffffff' }}
-      />
+      <Table columns={columns} dataSource={registrations} rowKey="id" />
     </div>
   );
 };

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Button, Space, Table, Tabs, Modal, Form, Input, Select, message } from 'antd';
+import {
+  Button,
+  Space,
+  Table,
+  Tabs,
+  Modal,
+  Form,
+  Input,
+  Select,
+  message,
+} from 'antd';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -18,13 +28,16 @@ const { Option } = Select;
 const ListBlog: React.FC = () => {
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [isRuleModalVisible, setIsRuleModalVisible] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(
+    null
+  );
   const [selectedRule, setSelectedRule] = useState<IRule | null>(null);
   const [ruleContent, setRuleContent] = useState<string>('');
   const [categoryForm] = Form.useForm();
   const [ruleForm] = Form.useForm();
 
-  const { data: categoriesData, refetch: refetchCategories } = useGetBlogCategories();
+  const { data: categoriesData, refetch: refetchCategories } =
+    useGetBlogCategories();
   const { data: rulesData, refetch: refetchRules } = useGetAllRules();
 
   const { mutate: createCategory } = useCreateBlogCategory();
@@ -56,19 +69,22 @@ const ListBlog: React.FC = () => {
   const handleRuleSubmit = (values: any) => {
     const ruleValues = { ...values, content: ruleContent };
     if (selectedRule) {
-      updateRule({ ...ruleValues, id: selectedRule.id }, {
-        onSuccess: () => {
-          message.success('Rule updated successfully');
-          setIsRuleModalVisible(false);
-          setSelectedRule(null);
-          setRuleContent('');
-          ruleForm.resetFields();
-          refetchRules();
-        },
-        onError: () => {
-          message.error('Failed to update rule');
-        },
-      });
+      updateRule(
+        { ...ruleValues, id: selectedRule.id },
+        {
+          onSuccess: () => {
+            message.success('Rule updated successfully');
+            setIsRuleModalVisible(false);
+            setSelectedRule(null);
+            setRuleContent('');
+            ruleForm.resetFields();
+            refetchRules();
+          },
+          onError: () => {
+            message.error('Failed to update rule');
+          },
+        }
+      );
     } else {
       createRule(ruleValues, {
         onSuccess: () => {
@@ -101,22 +117,36 @@ const ListBlog: React.FC = () => {
       key: 'action',
       render: (record: BlogCategory) => (
         <Space size="middle">
-          <Button type="link" onClick={() => {
-            setSelectedCategory(record);
-            setIsCategoryModalVisible(true);
-            categoryForm.setFieldsValue(record);
-          }}>Edit</Button>
-          <Button type="link" danger onClick={() => {
-            deleteCategory({ blogCategoryId: record.id }, {
-              onSuccess: () => {
-                message.success('Category deleted successfully');
-                refetchCategories();
-              },
-              onError: () => {
-                message.error('Failed to delete category');
-              },
-            });
-          }}>Delete</Button>
+          <Button
+            type="link"
+            onClick={() => {
+              setSelectedCategory(record);
+              setIsCategoryModalVisible(true);
+              categoryForm.setFieldsValue(record);
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            type="link"
+            danger
+            onClick={() => {
+              deleteCategory(
+                { blogCategoryId: record.id },
+                {
+                  onSuccess: () => {
+                    message.success('Category deleted successfully');
+                    refetchCategories();
+                  },
+                  onError: () => {
+                    message.error('Failed to delete category');
+                  },
+                }
+              );
+            }}
+          >
+            Delete
+          </Button>
         </Space>
       ),
     },
@@ -138,7 +168,10 @@ const ListBlog: React.FC = () => {
       dataIndex: 'content',
       key: 'content',
       render: (content: string) => (
-        <div dangerouslySetInnerHTML={{ __html: content }} style={{ whiteSpace: 'pre-wrap' }} />
+        <div
+          dangerouslySetInnerHTML={{ __html: content }}
+          style={{ whiteSpace: 'pre-wrap' }}
+        />
       ),
     },
     {
@@ -146,7 +179,9 @@ const ListBlog: React.FC = () => {
       dataIndex: 'blogCategoryId',
       key: 'blogCategoryId',
       render: (blogCategoryId: number) => {
-        const category = categoriesData?.results.find((cat: BlogCategory) => cat.id === blogCategoryId);
+        const category = categoriesData?.results.find(
+          (cat: BlogCategory) => cat.id === blogCategoryId
+        );
         return category ? category.name : 'Unknown';
       },
     },
@@ -155,23 +190,37 @@ const ListBlog: React.FC = () => {
       key: 'action',
       render: (record: IRule) => (
         <Space size="middle">
-          <Button type="link" onClick={() => {
-            setSelectedRule(record);
-            setRuleContent(record.content);
-            setIsRuleModalVisible(true);
-            ruleForm.setFieldsValue(record);
-          }}>Edit</Button>
-          <Button type="link" danger onClick={() => {
-            deleteRule({ RuleId: record.id }, {
-              onSuccess: () => {
-                message.success('Rule deleted successfully');
-                refetchRules();
-              },
-              onError: () => {
-                message.error('Failed to delete rule');
-              },
-            });
-          }}>Delete</Button>
+          <Button
+            type="link"
+            onClick={() => {
+              setSelectedRule(record);
+              setRuleContent(record.content);
+              setIsRuleModalVisible(true);
+              ruleForm.setFieldsValue(record);
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            type="link"
+            danger
+            onClick={() => {
+              deleteRule(
+                { RuleId: record.id },
+                {
+                  onSuccess: () => {
+                    message.success('Rule deleted successfully');
+                    refetchRules();
+                  },
+                  onError: () => {
+                    message.error('Failed to delete rule');
+                  },
+                }
+              );
+            }}
+          >
+            Delete
+          </Button>
         </Space>
       ),
     },
@@ -181,30 +230,48 @@ const ListBlog: React.FC = () => {
     <div>
       <Tabs defaultActiveKey="1">
         <TabPane tab="Category" key="1">
-          <Button type="primary" onClick={() => {
-            setIsCategoryModalVisible(true);
-            categoryForm.resetFields();
-            setSelectedCategory(null);
-          }} style={{ marginBottom: 16 }}>
+          <Button
+            type="primary"
+            onClick={() => {
+              setIsCategoryModalVisible(true);
+              categoryForm.resetFields();
+              setSelectedCategory(null);
+            }}
+            style={{ marginBottom: 16 }}
+          >
             Add Category
           </Button>
-          <Table columns={categoryColumns} dataSource={categoriesData?.results || []} rowKey="id" />
+          <Table
+            columns={categoryColumns}
+            dataSource={categoriesData?.results || []}
+            rowKey="id"
+            style={{ backgroundColor: '#ffffff' }}
+          />
         </TabPane>
         <TabPane tab="Content (Rule)" key="2">
-          <Button type="primary" onClick={() => {
-            setIsRuleModalVisible(true);
-            ruleForm.resetFields();
-            setSelectedRule(null);
-            setRuleContent('');
-          }} style={{ marginBottom: 16 }}>
+          <Button
+            type="primary"
+            onClick={() => {
+              setIsRuleModalVisible(true);
+              ruleForm.resetFields();
+              setSelectedRule(null);
+              setRuleContent('');
+            }}
+            style={{ marginBottom: 16 }}
+          >
             Add Rule
           </Button>
-          <Table columns={ruleColumns} dataSource={rulesData?.results || []} rowKey="id" />
+          <Table
+            columns={ruleColumns}
+            dataSource={rulesData?.results || []}
+            rowKey="id"
+            style={{ backgroundColor: '#ffffff' }}
+          />
         </TabPane>
       </Tabs>
 
       <Modal
-        title={selectedCategory ? "Edit Category" : "Add Category"}
+        title={selectedCategory ? 'Edit Category' : 'Add Category'}
         open={isCategoryModalVisible}
         onCancel={() => {
           setIsCategoryModalVisible(false);
@@ -222,20 +289,22 @@ const ListBlog: React.FC = () => {
           <Form.Item
             name="name"
             label="Category Name"
-            rules={[{ required: true, message: 'Please input the category name!' }]}
+            rules={[
+              { required: true, message: 'Please input the category name!' },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              {selectedCategory ? "Update" : "Create"}
+              {selectedCategory ? 'Update' : 'Create'}
             </Button>
           </Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title={selectedRule ? "Edit Rule" : "Add Rule"}
+        title={selectedRule ? 'Edit Rule' : 'Add Rule'}
         open={isRuleModalVisible}
         width={800}
         onCancel={() => {
@@ -249,13 +318,17 @@ const ListBlog: React.FC = () => {
         <Form
           form={ruleForm}
           layout="vertical"
-          initialValues={selectedRule || { title: '', content: '', blogCategoryId: null }}
+          initialValues={
+            selectedRule || { title: '', content: '', blogCategoryId: null }
+          }
           onFinish={handleRuleSubmit}
         >
           <Form.Item
             name="title"
             label="Rule Title"
-            rules={[{ required: true, message: 'Please input the rule title!' }]}
+            rules={[
+              { required: true, message: 'Please input the rule title!' },
+            ]}
           >
             <Input />
           </Form.Item>
@@ -275,13 +348,15 @@ const ListBlog: React.FC = () => {
           <Form.Item
             name="content"
             label="Rule Content"
-            rules={[{ required: true, message: 'Please input the rule content!' }]}
+            rules={[
+              { required: true, message: 'Please input the rule content!' },
+            ]}
           >
             <ReactQuill value={ruleContent} onChange={setRuleContent} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
-              {selectedRule ? "Update" : "Create"}
+              {selectedRule ? 'Update' : 'Create'}
             </Button>
           </Form.Item>
         </Form>

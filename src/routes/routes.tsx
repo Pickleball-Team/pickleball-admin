@@ -1,9 +1,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
-import { DashboardLayout } from '../layouts';
-import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
-import { BlogLayout } from '../layouts/blog/index.tsx';
-import { TournamentLayout } from '../layouts/tournament/index.tsx';
+
 import {
   AccountDeactivePage,
   BiddingDashboardPage,
@@ -27,6 +24,13 @@ import {
   VerifyEmailPage,
   WelcomePage
 } from '../pages';
+// layouts
+import { DashboardLayout } from '../layouts';
+import { AuthenticationLayout } from '../layouts/authentication/index.tsx';
+import { BlogLayout } from '../layouts/blog/index.tsx';
+import { TournamentLayout } from '../layouts/tournament/index.tsx';
+import { TournamentAdminLayout } from '../layouts/tournament/index.admin.tsx';
+// pages
 import { AboutPage } from '../pages/About.tsx';
 import BackList from '../pages/authentication/BackList.tsx';
 import PlayerPage from '../pages/authentication/PlayerPage.tsx';
@@ -35,7 +39,16 @@ import SponnerPage from '../pages/authentication/SponnerPage.tsx';
 import ListBlog from '../pages/blog/ListBlog.tsx';
 import TournamentDetail from '../pages/tournament/Detail.tsx';
 import OverviewPage from '../pages/tournament/OverviewPage.tsx';
+import OverviewAdminPage from '../pages/tournament/Admin/OverviewPage.tsx';
+import DetailAdminPage from '../pages/tournament/Admin/Detail.tsx';
+import VenusAdminPage from '../pages/tournament/Admin/VenusPage.tsx';
+import RefereesAdminPage from '../pages/tournament/Admin/RefereesPage.tsx';
 import { VenusPage } from '../pages/tournament/VenusPage.tsx';
+
+import TournamentAdminDetail from '../pages/tournament/Admin/Detail.tsx';
+import { PaymentAdminLayout } from '../layouts/payment/index.admin.tsx';
+import PaymentAdmin from '../pages/payment/All/index.tsx';
+import PaymentSponner from '../pages/payment/Sponner/index.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -149,6 +162,34 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: 'tournament/admin',
+    element: <PageWrapper children={<TournamentAdminLayout />} />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        path: 'overview',
+        element: <OverviewAdminPage />,
+      },
+      {
+        path: 'overview',
+        element: <OverviewAdminPage />,
+      },
+      {
+        path: 'vennues',
+        element: <VenusAdminPage />,
+      },
+      {
+        path: 'referees',
+        element: <RefereesAdminPage />,
+      },
+      {
+        path: ':id',
+        element: <DetailAdminPage />,
+      },
+    ],
+  },
+  {
     path: '/authencation',
     element: <PageWrapper children={<AuthenticationLayout />} />, // Use AuthenticationLayout if it exists
     errorElement: <ErrorPage />,
@@ -179,6 +220,29 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: '/admin/payment',
+    element: <PageWrapper children={<PaymentAdminLayout />} />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        element: <PaymentAdmin />,
+      },
+    ],
+  },
+  {
+    path: '/payment',
+    element: <PageWrapper children={<PaymentAdminLayout />} />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        element: <PaymentSponner />,
+      },
+    ],
+  },
+
   {
     path: '/auth',
     errorElement: <ErrorPage />,

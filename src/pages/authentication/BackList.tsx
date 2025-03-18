@@ -1,5 +1,14 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Input, InputRef, Space, Table, Tag, message } from 'antd';
+import {
+  Button,
+  DatePicker,
+  Input,
+  InputRef,
+  Space,
+  Table,
+  Tag,
+  message,
+} from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import moment from 'moment';
@@ -76,8 +85,7 @@ const BackList: React.FC = () => {
     ),
     onFilter: (value, record) =>
       record[dataIndex] !== undefined
-        ? record[dataIndex]!
-            .toString()
+        ? record[dataIndex]!.toString()
             .toLowerCase()
             .includes((value as string).toLowerCase())
         : false,
@@ -114,7 +122,9 @@ const BackList: React.FC = () => {
       { id: userId, data: { status: !status } },
       {
         onSuccess: () => {
-          message.success(`User ${status ? 'banned' : 'unbanned'} successfully`);
+          message.success(
+            `User ${status ? 'banned' : 'unbanned'} successfully`
+          );
           refetch();
         },
         onError: () => {
@@ -230,7 +240,12 @@ const BackList: React.FC = () => {
 
   return (
     <div>
-      <Table columns={columns} dataSource={data} rowKey="id" />
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        style={{ backgroundColor: '#ffffff' }}
+      />
     </div>
   );
 };

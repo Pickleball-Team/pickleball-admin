@@ -1,11 +1,7 @@
 import {
   CalendarOutlined,
-  EditOutlined,
-  FileAddOutlined,
-  FilterOutlined,
   LockFilled,
   MailFilled,
-  PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
   TeamOutlined,
@@ -15,7 +11,6 @@ import {
 import type { InputRef } from 'antd';
 import {
   Avatar,
-  Badge,
   Button,
   Card,
   Col,
@@ -30,28 +25,22 @@ import {
   Tag,
   Tooltip,
   Typography,
-  Tabs,
-  Progress,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import Title from 'antd/es/typography/Title';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { IMatch } from '../../../modules/Macths/models';
-import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
-import { Match, Member } from '../../../modules/Tournaments/models';
-import { fetchUserById } from '../../../modules/User/hooks/useGetUserById';
-import { User } from '../../../modules/User/models';
-import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees';
-import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
-import { RootState } from '../../../redux/store';
-import AddMatchModal from './AddMatchModal';
-import UpdateMatchModal from './UpdateMatchModal';
-import Title from 'antd/es/typography/Title';
+import { useGetMatchByTournamentId } from '../../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
+import { useGetVenueBySponnerId } from '../../../../modules/Venues/hooks/useGetVenueBySponnerId';
+import { useGetAllReferees } from '../../../../modules/User/hooks/useGetAllReferees';
+import { Match, Member } from '../../../../modules/Tournaments/models';
+import { RootState } from '../../../../redux/store';
+import { User } from '../../../../modules/User/models';
+import { fetchUserById } from '../../../../modules/User/hooks/useGetUserById';
 
 const { Text } = Typography;
 const { Option } = Select;
 const { Meta } = Card;
-const { TabPane } = Tabs;
 
 type DataIndex = string;
 
@@ -75,9 +64,6 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<IMatch | null>(null);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -92,9 +78,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
 
     return {
       totalMatches: matchData.length,
-      scheduled: matchData.filter((match) => match.status === 1).length,
-      ongoing: matchData.filter((match) => match.status === 3).length,
-      completed: matchData.filter((match) => match.status === 2).length,
+      scheduled: matchData.filter(match => match.status === 1).length,
+      ongoing: matchData.filter(match => match.status === 3).length,
+      completed: matchData.filter(match => match.status === 2).length,
     };
   }, [matchData]);
 
@@ -135,16 +121,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       setFilteredDetails(matchData || []);
     } else {
       const filteredMatches =
-        matchData?.filter((match) => match.status === Number(filterStatus)) ||
-        [];
+        matchData?.filter((match) => match.status === Number(filterStatus)) || [];
       setFilteredDetails(filteredMatches);
     }
   }, [filterStatus, matchData]);
-
-  useEffect(() => {
-    // Initial load
-    setFilteredDetails(matchData || []);
-  }, [matchData]);
 
   const getUserById = (id: number) =>
     userDetails.find((user: User) => user?.id === id);
@@ -167,32 +147,6 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     }
   };
 
-  const getStatusText = (status: number) => {
-    switch (status) {
-      case 1:
-        return 'Scheduled';
-      case 2:
-        return 'Completed';
-      case 3:
-        return 'Ongoing';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const getStatusIcon = (status: number) => {
-    switch (status) {
-      case 1:
-        return <CalendarOutlined />;
-      case 2:
-        return <TrophyOutlined />;
-      case 3:
-        return <TeamOutlined />;
-      default:
-        return null;
-    }
-  };
-
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,
@@ -208,20 +162,6 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       clearFilters();
     }
     setSearchText('');
-  };
-
-  const handleSearchByTitle = (value: string) => {
-    if (!value) {
-      setFilteredDetails(matchData || []);
-      return;
-    }
-
-    const filteredMatches =
-      matchData?.filter((match) =>
-        match.title.toLowerCase().includes(value.toLowerCase())
-      ) || [];
-
-    setFilteredDetails(filteredMatches);
   };
 
   const getColumnSearchProps = (dataIndex: DataIndex): ColumnType<any> => ({
@@ -295,7 +235,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       dataIndex: 'title',
       key: 'title',
       ...getColumnSearchProps('title'),
-      render: (text: string) => <Text strong>{text}</Text>,
+      render: (text: string) => (
+        <Text strong>{text}</Text>
+      ),
     },
     {
       title: 'Match Date',
@@ -318,9 +260,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       key: 'status',
       render: (status: number) => {
         const color = getResultTagColor(status);
-        const text = getStatusText(status);
-        const icon = getStatusIcon(status);
-
+        const text = status === 1 ? 'Scheduled' : status === 2 ? 'Completed' : 'Ongoing';
+        const icon = status === 1 ? <CalendarOutlined /> : 
+                    status === 2 ? <TrophyOutlined /> : <TeamOutlined />;
+        
         return (
           <Tag color={color} icon={icon}>
             {text}
@@ -357,23 +300,17 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
             <Meta title={venue.name} description={venue.address} />
             {referee && (
               <div style={{ marginTop: 12 }}>
-                <Title level={5} style={{ marginBottom: 8 }}>
-                  Referee
-                </Title>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#f5f5f5',
-                    padding: '8px',
-                    borderRadius: '4px',
-                  }}
-                >
+                <Title level={5} style={{ marginBottom: 8 }}>Referee</Title>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  background: '#f5f5f5',
+                  padding: '8px', 
+                  borderRadius: '4px' 
+                }}>
                   <Avatar size="large" src={referee.avatarUrl} />
                   <div style={{ marginLeft: 12 }}>
-                    <Text strong>
-                      {referee.firstName} {referee.lastName}
-                    </Text>
+                    <Text strong>{referee.firstName} {referee.lastName}</Text>
                     <div>
                       <Text type="secondary">
                         <MailFilled /> {referee.email}
@@ -385,9 +322,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
             )}
           </Card>
         ) : (
-          <Tag color="warning" style={{ padding: '4px 8px' }}>
-            No venue assigned
-          </Tag>
+          <Tag color="warning" style={{ padding: '4px 8px' }}>No venue assigned</Tag>
         );
       },
     },
@@ -397,7 +332,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       render: (text: any, record: Match) => {
         const team1 = record.teamResponse?.[0];
         const team2 = record?.teamResponse?.[1];
-
+        
         return (
           <div style={{ width: '100%' }}>
             {/* Team 1 */}
@@ -409,11 +344,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                 </div>
               }
               bordered
-              style={{
-                marginBottom: 16,
-                background: '#f0f8ff',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-              }}
+              style={{ marginBottom: 16, background: '#f0f8ff', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
               size="small"
             >
               {team1 && Array.isArray(team1.members) ? (
@@ -446,25 +377,13 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                               <MailFilled /> {user.email}
                             </Text>
                           </Tooltip>
-                          <br />
-                          <Text type="secondary">
-                            <LockFilled />{' '}
-                            {user.userDetails?.joinedAt
-                              ? new Date(
-                                  user.userDetails?.joinedAt
-                                ).toLocaleDateString()
-                              : 'N/A'}
-                          </Text>
                         </div>
                       </div>
                     ) : null;
                   })}
                 </div>
               ) : (
-                <Empty
-                  description="No team members"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
+                <Empty description="No team members" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
             </Card>
 
@@ -477,10 +396,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                 </div>
               }
               bordered
-              style={{
-                background: '#fffbe6',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-              }}
+              style={{ background: '#fffbe6', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
               size="small"
             >
               {team2 && Array.isArray(team2.members) ? (
@@ -513,46 +429,18 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                               <MailFilled /> {user.email}
                             </Text>
                           </Tooltip>
-                          <br />
-                          <Text type="secondary">
-                            <LockFilled />{' '}
-                            {user.userDetails?.joinedAt
-                              ? new Date(
-                                  user.userDetails?.joinedAt
-                                ).toLocaleDateString()
-                              : 'N/A'}
-                          </Text>
                         </div>
                       </div>
                     ) : null;
                   })}
                 </div>
               ) : (
-                <Empty
-                  description="No team members"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
+                <Empty description="No team members" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
             </Card>
           </div>
         );
       },
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (text: any, record: any) => (
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => {
-            setSelectedMatch(record);
-            setIsUpdateModalVisible(true);
-          }}
-        >
-          Update
-        </Button>
-      ),
     },
   ];
 
@@ -560,7 +448,14 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     return (
       <div style={{ textAlign: 'center', padding: '50px 0' }}>
         <Space direction="vertical" size="large" align="center">
-          <Progress type="circle" status="active" />
+          <div className="ant-spin ant-spin-lg ant-spin-spinning">
+            <span className="ant-spin-dot ant-spin-dot-spin">
+              <i className="ant-spin-dot-item"></i>
+              <i className="ant-spin-dot-item"></i>
+              <i className="ant-spin-dot-item"></i>
+              <i className="ant-spin-dot-item"></i>
+            </span>
+          </div>
           <Text>Loading match data...</Text>
         </Space>
       </div>
@@ -571,13 +466,11 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     return (
       <div style={{ textAlign: 'center', padding: '50px 0' }}>
         <Space direction="vertical" size="large" align="center">
-          <Progress type="circle" status="exception" percent={100} />
-          <Text type="danger">
-            Error loading matches: {(errorMatches as Error).message}
-          </Text>
-          <Button type="primary" onClick={() => refetch()}>
-            Try Again
-          </Button>
+          <div style={{ fontSize: '48px', color: '#ff4d4f' }}>
+            <i className="anticon anticon-warning" />
+          </div>
+          <Text type="danger">Error loading matches: {(errorMatches as Error).message}</Text>
+          <Button type="primary" onClick={() => refetch()}>Try Again</Button>
         </Space>
       </div>
     );
@@ -588,10 +481,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       {/* Statistics Cards */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}>
-          <Card
-            bordered={false}
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}
-          >
+          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}>
             <Statistic
               title={<Text strong>Total Matches</Text>}
               value={statistics.totalMatches}
@@ -601,271 +491,139 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
           </Card>
         </Col>
         <Col span={6}>
-          <Card
-            bordered={false}
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}
-          >
+          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}>
             <Statistic
               title={<Text strong>Scheduled</Text>}
               value={statistics.scheduled}
               valueStyle={{ color: '#52c41a' }}
               prefix={<CalendarOutlined />}
-              suffix={
-                <Text
-                  type="secondary"
-                  style={{ fontSize: '14px' }}
-                >{`(${Math.round(
-                  (statistics.scheduled / statistics.totalMatches || 0) * 100
-                )}%)`}</Text>
-              }
+              suffix={<Text type="secondary" style={{ fontSize: '14px' }}>{`(${Math.round((statistics.scheduled / statistics.totalMatches || 0) * 100)}%)`}</Text>}
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card
-            bordered={false}
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}
-          >
+          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}>
             <Statistic
               title={<Text strong>Ongoing</Text>}
               value={statistics.ongoing}
               valueStyle={{ color: '#faad14' }}
               prefix={<TeamOutlined />}
-              suffix={
-                <Text
-                  type="secondary"
-                  style={{ fontSize: '14px' }}
-                >{`(${Math.round(
-                  (statistics.ongoing / statistics.totalMatches || 0) * 100
-                )}%)`}</Text>
-              }
+              suffix={<Text type="secondary" style={{ fontSize: '14px' }}>{`(${Math.round((statistics.ongoing / statistics.totalMatches || 0) * 100)}%)`}</Text>}
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card
-            bordered={false}
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}
-          >
+          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)', borderRadius: 8 }}>
             <Statistic
               title={<Text strong>Completed</Text>}
               value={statistics.completed}
               valueStyle={{ color: '#eb2f96' }}
               prefix={<TrophyOutlined />}
-              suffix={
-                <Text
-                  type="secondary"
-                  style={{ fontSize: '14px' }}
-                >{`(${Math.round(
-                  (statistics.completed / statistics.totalMatches || 0) * 100
-                )}%)`}</Text>
-              }
+              suffix={<Text type="secondary" style={{ fontSize: '14px' }}>{`(${Math.round((statistics.completed / statistics.totalMatches || 0) * 100)}%)`}</Text>}
             />
           </Card>
         </Col>
       </Row>
 
-      {/* Match Management Header */}
-      <Card
-        title={
-          <Title level={4} style={{ margin: 0 }}>
-            Match Management
-          </Title>
-        }
-        extra={
+      {/* Filter Controls */}
+      <Row style={{ marginBottom: 16 }} align="middle">
+        <Col span={16}>
+          <Space size="large">
+            <Text strong>Filter by Status:</Text>
+            <Select
+              defaultValue="All"
+              style={{ width: 150 }}
+              onChange={(value) => setFilterStatus(value)}
+            >
+              <Option value="All">All Matches</Option>
+              <Option value="1">
+                <Space>
+                  <CalendarOutlined />
+                  <span>Scheduled</span>
+                </Space>
+              </Option>
+              <Option value="3">
+                <Space>
+                  <TeamOutlined />
+                  <span>Ongoing</span>
+                </Space>
+              </Option>
+              <Option value="2">
+                <Space>
+                  <TrophyOutlined />
+                  <span>Completed</span>
+                </Space>
+              </Option>
+            </Select>
+            <Input.Search 
+              placeholder="Search match title" 
+              style={{ width: 250 }}
+              onSearch={(value) => {
+                const filtered = matchData?.filter(match => 
+                  match.title.toLowerCase().includes(value.toLowerCase())
+                ) || [];
+                setFilteredDetails(filtered);
+              }}
+              allowClear
+            />
+          </Space>
+        </Col>
+        <Col span={8} style={{ textAlign: 'right' }}>
           <Button
             type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
-            size="large"
+            icon={<ReloadOutlined />}
+            onClick={() => refetch()}
           >
-            Add Match
+            Refresh Matches
           </Button>
-        }
-        style={{ marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
-      >
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={8}>
-            <Input.Group compact>
-              <Select
-                defaultValue="All"
-                style={{ width: '40%' }}
-                onChange={(value) => setFilterStatus(value)}
-              >
-                <Option value="All">All Matches</Option>
-                <Option value="1">
-                  <CalendarOutlined /> Scheduled
-                </Option>
-                <Option value="3">
-                  <TeamOutlined /> Ongoing
-                </Option>
-                <Option value="2">
-                  <TrophyOutlined /> Completed
-                </Option>
-              </Select>
-              <Input.Search
-                placeholder="Search match title"
-                style={{ width: '60%' }}
-                onSearch={handleSearchByTitle}
-                allowClear
-              />
-            </Input.Group>
-          </Col>
-          <Col xs={24} md={8}>
-            <div style={{ textAlign: 'center' }}>
-              <Badge
-                count={filteredDetails.length}
-                style={{ backgroundColor: '#52c41a' }}
-              >
-                <Text strong style={{ fontSize: 16 }}>
-                  {filterStatus === 'All'
-                    ? 'All Matches'
-                    : filterStatus === '1'
-                      ? 'Scheduled Matches'
-                      : filterStatus === '2'
-                        ? 'Completed Matches'
-                        : 'Ongoing Matches'}
-                </Text>
-              </Badge>
-            </div>
-          </Col>
-          <Col xs={24} md={8}>
-            <div style={{ textAlign: 'right' }}>
-              <Button
-                type="default"
-                icon={<ReloadOutlined />}
-                onClick={() => refetch()}
-              >
-                Refresh Data
-              </Button>
-            </div>
-          </Col>
-        </Row>
-      </Card>
+        </Col>
+      </Row>
 
-      {/* Tab View for Different Status */}
-      <Tabs
-        defaultActiveKey="all"
-        onChange={(key) => setFilterStatus(key === 'all' ? 'All' : key)}
-        type="card"
-        style={{ marginBottom: 16 }}
-      >
-        <TabPane
-          tab={
-            <span>
-              <FilterOutlined /> All Matches
-            </span>
-          }
-          key="all"
-        />
-        <TabPane
-          tab={
-            <span>
-              <CalendarOutlined /> Scheduled ({statistics.scheduled})
-            </span>
-          }
-          key="1"
-        />
-        <TabPane
-          tab={
-            <span>
-              <TeamOutlined /> Ongoing ({statistics.ongoing})
-            </span>
-          }
-          key="3"
-        />
-        <TabPane
-          tab={
-            <span>
-              <TrophyOutlined /> Completed ({statistics.completed})
-            </span>
-          }
-          key="2"
-        />
-      </Tabs>
+      <Divider orientation="left">Match List</Divider>
 
       {/* Matches Table */}
-      <Table
-        columns={columns}
-        dataSource={filteredDetails || []}
+      <Table 
+        columns={columns} 
+        dataSource={filteredDetails || []} 
         rowKey="id"
-        bordered
-        pagination={{
+        pagination={{ 
           showTotal: (total) => `Total ${total} matches`,
           showQuickJumper: true,
-          showSizeChanger: true,
-        }}
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: 8,
-          overflow: 'hidden',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
         }}
         expandable={{
           expandedRowRender: (record) => (
             <div style={{ padding: '20px' }}>
               <Row gutter={24}>
                 <Col span={12}>
-                  <Card title="Match Details" bordered={false}>
-                    <p>
-                      <strong>Match ID:</strong> {record.id}
-                    </p>
-                    <p>
-                      <strong>Title:</strong> {record.title}
-                    </p>
-                    <p>
-                      <strong>Date:</strong>{' '}
-                      {new Date(record.matchDate).toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Status:</strong> {getStatusText(record.status)}
-                    </p>
+                  <Card title="Match Details" bordered={false} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                    <p><strong>Match ID:</strong> {record.id}</p>
+                    <p><strong>Title:</strong> {record.title}</p>
+                    <p><strong>Date:</strong> {new Date(record.matchDate).toLocaleString()}</p>
+                    <p><strong>Status:</strong> {
+                      record.status === 1 ? 'Scheduled' : 
+                      record.status === 2 ? 'Completed' : 'Ongoing'
+                    }</p>
                   </Card>
                 </Col>
                 <Col span={12}>
-                  <Card title="Additional Information" bordered={false}>
-                    <p>
-                      <strong>Created:</strong>{' '}
-                      {record.createdDate
-                        ? new Date(record.createdDate).toLocaleString()
-                        : 'N/A'}
-                    </p>
-                    <p>
-                      <strong>Last Updated:</strong>{' '}
-                      {record.updatedDate
-                        ? new Date(record.updatedDate).toLocaleString()
-                        : 'N/A'}
-                    </p>
-                    <p>
-                      <strong>Notes:</strong>{' '}
-                      {record.note || 'No notes available'}
-                    </p>
+                  <Card title="Additional Information" bordered={false} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                    <p><strong>Created:</strong> {record.createdDate ? new Date(record.createdDate).toLocaleString() : 'N/A'}</p>
+                    <p><strong>Last Updated:</strong> {record.updatedDate ? new Date(record.updatedDate).toLocaleString() : 'N/A'}</p>
+                    <p><strong>Notes:</strong> {record.note || 'No notes available'}</p>
                   </Card>
                 </Col>
               </Row>
             </div>
           ),
         }}
+        bordered
+        style={{ 
+          backgroundColor: '#ffffff',
+          borderRadius: 8,
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.09)'
+        }}
       />
-
-      {/* Add/Update Match Modals */}
-      <AddMatchModal
-        tournamentId={id}
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        refetch={refetch}
-      />
-      {selectedMatch && (
-        <UpdateMatchModal
-          visible={isUpdateModalVisible}
-          onClose={() => {
-            setIsUpdateModalVisible(false);
-            setSelectedMatch(null);
-          }}
-          match={selectedMatch}
-          refetch={refetch}
-        />
-      )}
     </div>
   );
 };

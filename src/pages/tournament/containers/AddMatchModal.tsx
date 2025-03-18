@@ -7,11 +7,19 @@ import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees
 import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
 import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
 import { useCreateMatch } from '../../../modules/Macths/hooks/useCreateMatch';
-import { initData } from './mokc';
 
 const { Option } = Select;
 const { Panel } = Collapse;
 const { TextArea } = Input;
+
+// Enum for Match Format to match backend
+enum MatchFormat {
+  SingleMale = 1,
+  SingleFemale = 2,
+  DoubleMale = 3,
+  DoubleFemale = 4,
+  DoubleMix = 5
+}
 
 type AddMatchModalProps = {
   visible: boolean;
@@ -23,7 +31,7 @@ type AddMatchModalProps = {
 const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournamentId, refetch }) => {
   const [form] = Form.useForm();
   const user = useSelector((state: RootState) => state.authencation.user);
-  const [matchFormat, setMatchFormat] = useState<number>(1);
+  const [matchFormat, setMatchFormat] = useState<number>(MatchFormat.SingleMale);
   const [selectedTeams, setSelectedTeams] = useState<{ [key: string]: number | undefined }>({});
   const [seed, setSeed] = useState<string>('');
 
@@ -35,18 +43,49 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
 
   const handleOk = () => {
     form.validateFields().then(values => {
-      const matchData = {
-        ...values,
-        roomOnwer: user?.id, 
-        tournamentId,
-      };
+      // Find the selected teams
+      const team1 = tournamentDetails?.registrationDetails?.find(team => team.id === values.team1Id);
+      const team2 = tournamentDetails?.registrationDetails?.find(team => team.id === values.team2Id);
+
+      if (!team1 || !team2) {
+        message.error('Selected teams not found');
+        return;
+      }
+
+      // Prepare match data based on match format
+      let matchData;
+      
+      // Check if the format is Singles (SingleMale=1 or SingleFemale=2)
+      if (matchFormat === MatchFormat.SingleMale || matchFormat === MatchFormat.SingleFemale) {
+        matchData = {
+          ...values,
+          roomOnwer: user?.id,
+          tournamentId,
+          player1Id: team1.playerId, // First player from team 1
+          player2Id: team2.playerId, // First player from team 2
+        };
+      } else { // Double formats (DoubleMale=3, DoubleFemale=4, DoubleMix=5)
+        matchData = {
+          ...values,
+          roomOnwer: user?.id,
+          tournamentId,
+          player1Id: team1.playerId, // First player from team 1
+          player2Id: team1.partnerId, // Partner from team 1
+          player3Id: team2.playerId, // First player from team 2
+          player4Id: team2.partnerId, // Partner from team 2
+        };
+      }
+
+      // Create the match with the prepared data
       createMatch(matchData, {
         onSuccess: () => {
+          message.success('Match created successfully');
           onClose();
           form.resetFields();
           refetch();
         },
         onError: (err) => {
+          message.error('Error creating match');
           console.error('Error creating match:', err);
         }
       });
@@ -105,10 +144,6 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
     }
   };
 
-  if (tournamentDetails) {
-    tournamentDetails.registrationDetails = initData;
-  }
-
   return (
     <Modal
       title="Add Match"
@@ -125,7 +160,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
           description: 'This is a sample description for the match.',
           matchCategory: 3,
           status: 1,
-          matchFormat: 1,
+          matchFormat: MatchFormat.SingleMale,
           isPublic: true,
           winScore: 1,
         }}
@@ -202,15 +237,16 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({ visible, onClose, tournam
                   rules={[{ required: true, message: 'Please select the match format!' }]}
                 >
                   <Select onChange={(value) => setMatchFormat(value)}>
-                    <Option value={1}>Single</Option>
-                    <Option value={2}>Team</Option>
+                    <Option value={MatchFormat.SingleMale}>Single Male</Option>
+                    <Option value={MatchFormat.SingleFemale}>Single Female</Option>
+                    <Option value={MatchFormat.DoubleMale}>Double Male</Option>
+                    <Option value={MatchFormat.DoubleFemale}>Double Female</Option>
+                    <Option value={MatchFormat.DoubleMix}>Double Mix</Option>
                   </Select>
                 </Form.Item>
               </Col>
             </Row>
             <Row gutter={16}>
-              
-              
               <Col span={12}>
                 <Form.Item
                   name="isPublic"

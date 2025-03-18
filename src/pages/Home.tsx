@@ -39,7 +39,7 @@ const FEATURES = [
   },
   {
     title: '60+ UI components',
-    description: 'Almost 60+ UI Components being given with pickerPall Admin Pack.',
+    description: 'Almost 60+ UI Components being given with Pickleball Admin Pack.',
     icon: AppstoreOutlined,
   },
   {
@@ -50,7 +50,7 @@ const FEATURES = [
   {
     title: '500+ font icons',
     description:
-      'Lots of Icon Fonts are included here in the package of pickerPall Admin.',
+      'Lots of Icon Fonts are included here in the package of Pickleball Admin.',
     icon: BorderOutlined,
   },
   {

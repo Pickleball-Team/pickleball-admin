@@ -1,12 +1,11 @@
 import { Button, Card, Spin, Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useGetTournamentById } from '../../modules/Tournaments/hooks/useGetTournamentById';
+import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
 import MatchRoom from './containers/MatchRoom';
 import PlayersTable from './containers/PlayerRegistration';
-import TournamentInfoForm from './containers/TournamentInfoForm';
-import TournamentMatches from './containers/TournamentMatches';
-import Policy from './containers/Policy';
-import BillTab from './containers/BillTab';
+import TournamentInfoForm from '../containers/TournamentInfoForm';
+import Policy from '../containers/Policy';
+import BillTab from '../containers/BillTab';
 
 const { TabPane } = Tabs;
 

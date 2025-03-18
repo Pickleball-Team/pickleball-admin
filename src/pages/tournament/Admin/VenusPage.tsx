@@ -4,10 +4,11 @@ import { SearchOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { useGetVenueBySponnerId } from '../../modules/Venues/hooks/useGetVenueBySponnerId';
-import { useCreateVenue } from '../../modules/Venues/hooks/useCreateVenus';
-import { useUpdateVenue } from '../../modules/Venues/hooks/useUpdateVenue';
+import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
+import { useCreateVenue } from '../../../modules/Venues/hooks/useCreateVenus';
+import { useUpdateVenue } from '../../../modules/Venues/hooks/useUpdateVenue';
+import { RootState } from '../../../redux/store';
+import { useGetVenueAll } from '../../../modules/Venues/hooks/useGetAllVenus';
 
 const { Title, Paragraph } = Typography;
 
@@ -19,7 +20,7 @@ export const VenusPage = () => {
 
   const id = useMemo(() => user?.id || '', [user?.id]);
 
-  const { data, isLoading, refetch } = useGetVenueBySponnerId(Number(id));
+  const { data, isLoading, refetch } =  useGetVenueAll();
   const { mutate: createVenue } = useCreateVenue();
   const { mutate: updateVenue } = useUpdateVenue();
   const [searchText, setSearchText] = useState<string>('');

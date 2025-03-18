@@ -59,7 +59,7 @@ export const PasswordResetPage = () => {
         >
           <Logo color="white" />
           <Title level={2} className="text-white">
-            Welcome back to pickerPall Admin
+            Welcome back to Pickleball Admin
           </Title>
           <Text className="text-white" style={{ fontSize: 18 }}>
             A dynamic and versatile multipurpose dashboard utilizing Ant Design,

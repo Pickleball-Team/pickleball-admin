@@ -33,27 +33,43 @@ const SponnerPage: React.FC = () => {
   };
 
   const getColumnSearchProps = (dataIndex: DataIndex): ColumnType<Sponsor> => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }: FilterDropdownProps) => (
+    filterDropdown: ({
+      setSelectedKeys,
+      selectedKeys,
+      confirm,
+      clearFilters,
+      close,
+    }: FilterDropdownProps) => (
       <div style={{ padding: 8 }}>
         <Input
           ref={searchInput}
           placeholder={`Search ${dataIndex}`}
           value={selectedKeys[0]}
-          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() =>
+            handleSearch(selectedKeys as string[], confirm, dataIndex)
+          }
           style={{ marginBottom: 8, display: 'block' }}
         />
         <Space>
           <Button
             type="primary"
-            onClick={() => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+            onClick={() =>
+              handleSearch(selectedKeys as string[], confirm, dataIndex)
+            }
             icon={<SearchOutlined />}
             size="small"
             style={{ width: 90 }}
           >
             Search
           </Button>
-          <Button onClick={() => clearFilters && handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+          <Button
+            onClick={() => clearFilters && handleReset(clearFilters)}
+            size="small"
+            style={{ width: 90 }}
+          >
             Reset
           </Button>
           <Button onClick={close} size="small" style={{ width: 90 }}>
@@ -62,17 +78,21 @@ const SponnerPage: React.FC = () => {
         </Space>
       </div>
     ),
-    filterIcon: (filtered: boolean) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+    filterIcon: (filtered: boolean) => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
     onFilter: (value, record) =>
       record[dataIndex] != null && record[dataIndex] !== undefined
-        ? record[dataIndex]!.toString().toLowerCase().includes((value as string).toLowerCase())
+        ? record[dataIndex]!.toString()
+            .toLowerCase()
+            .includes((value as string).toLowerCase())
         : false,
-    onFilterDropdownVisibleChange: visible => {
+    onFilterDropdownVisibleChange: (visible) => {
       if (visible) {
         setTimeout(() => searchInput.current?.select(), 100);
       }
     },
-    render: text =>
+    render: (text) =>
       searchedColumn === dataIndex ? (
         <span style={{ backgroundColor: '#ffc069', padding: 0 }}>{text}</span>
       ) : (
@@ -80,7 +100,11 @@ const SponnerPage: React.FC = () => {
       ),
   });
 
-  const handleSearch = (selectedKeys: React.Key[], confirm: () => void, dataIndex: DataIndex) => {
+  const handleSearch = (
+    selectedKeys: React.Key[],
+    confirm: () => void,
+    dataIndex: DataIndex
+  ) => {
     confirm();
     setSearchText(selectedKeys[0] as string);
     setSearchedColumn(dataIndex);
@@ -137,10 +161,18 @@ const SponnerPage: React.FC = () => {
       dataIndex: 'joinedAt',
       key: 'joinedAt',
       render: (text: string) => moment(text).format('YYYY-MM-DD'),
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters, close }: FilterDropdownProps) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+        close,
+      }: FilterDropdownProps) => (
         <div style={{ padding: 8 }}>
           <DatePicker
-            onChange={date => setSelectedKeys(date ? [date.format('YYYY-MM-DD')] : [])}
+            onChange={(date) =>
+              setSelectedKeys(date ? [date.format('YYYY-MM-DD')] : [])
+            }
             style={{ marginBottom: 8, display: 'block' }}
           />
           <Space>
@@ -153,7 +185,11 @@ const SponnerPage: React.FC = () => {
             >
               Search
             </Button>
-            <Button onClick={() => clearFilters && handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters && handleReset(clearFilters)}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
             <Button onClick={close} size="small" style={{ width: 90 }}>
@@ -162,7 +198,8 @@ const SponnerPage: React.FC = () => {
           </Space>
         </div>
       ),
-      onFilter: (value, record) => moment(record.joinedAt).format('YYYY-MM-DD') === value,
+      onFilter: (value, record) =>
+        moment(record.joinedAt).format('YYYY-MM-DD') === value,
     },
     {
       title: 'Actions',
@@ -170,11 +207,17 @@ const SponnerPage: React.FC = () => {
       render: (_: string, record: Sponsor) => (
         <Space>
           {record.isAccept ? (
-            <Button danger onClick={() => handleAccept(record.sponsorId, false)}>
+            <Button
+              danger
+              onClick={() => handleAccept(record.sponsorId, false)}
+            >
               Unaccept
             </Button>
           ) : (
-            <Button type="primary" onClick={() => handleAccept(record.sponsorId, true)}>
+            <Button
+              type="primary"
+              onClick={() => handleAccept(record.sponsorId, true)}
+            >
               Accept
             </Button>
           )}
@@ -185,10 +228,12 @@ const SponnerPage: React.FC = () => {
 
   return (
     <div>
-      <div className="">
-
-      </div>
-      <Table columns={columns} dataSource={data} rowKey="sponsorId" />
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="sponsorId"
+        style={{ backgroundColor: '#ffffff' }}
+      />
     </div>
   );
 };

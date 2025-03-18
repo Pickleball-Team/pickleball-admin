@@ -41,6 +41,7 @@ import { PATH_LANDING } from '../../constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../../redux/theme/themeSlice.ts';
 import { RootState } from '../../redux/store.ts';
+import { clearUser } from '../../redux/authencation/slice.ts';
 const { Content } = Layout;
 const { Text } = Typography;
 
@@ -93,7 +94,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           type: 'loading',
           content: 'signing you out',
         });
-
+        dispatch(clearUser())
         setTimeout(() => {
           navigate(PATH_LANDING.root);
         }, 1000);

@@ -85,7 +85,7 @@ export const SignInPage = () => {
         >
           <Logo color="white" />
           <Title level={2} className="text-white">
-            Welcome back to pickerPall Admin
+            Welcome back to Pickleball Admin
           </Title>
           <Text className="text-white" style={{ fontSize: 18 }}>
             A dynamic and versatile multipurpose dashboard utilizing Ant Design,
@@ -112,8 +112,8 @@ export const SignInPage = () => {
             labelCol={{ span: 24 }}
             wrapperCol={{ span: 24 }}
             initialValues={{
-              email: 'admin1@gmail.com',
-              password: 'hashed_password_here',
+              // email: 'admin1@gmail.com',
+              // password: 'hashed_password_here',
               remember: true,
             }}
             onFinish={onFinish}

@@ -15,11 +15,11 @@ import { ApiResponse } from './apiResponses';
 import { convertObjectToQueryParams } from '../../utils/urlUtils';
 
 const apiRequestConfig: CreateAxiosDefaults<unknown> = {
-  // baseURL: `${
-  //   import.meta.env.API_BASE_URL ||
-  //   'https://pickbleballcapston-a4eagpasc9fbeeb8.eastasia-01.azurewebsites.net/api'
-  // }`,
-  baseURL: 'http://localhost:5098/api',
+  baseURL: `${
+    import.meta.env.API_BASE_URL ||
+    'https://pickbleballcapston-a4eagpasc9fbeeb8.eastasia-01.azurewebsites.net/api'
+  }`,
+  // baseURL: 'http://localhost:5098/api',
   timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
