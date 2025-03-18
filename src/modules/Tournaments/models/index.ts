@@ -29,6 +29,7 @@ export interface TournamentDetail {
 }
 
 export interface RegistrationDetail {
+  partnerId?: number;
   id: number;
   playerId: number;
   paymentId: number;

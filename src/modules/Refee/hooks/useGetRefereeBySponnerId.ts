@@ -6,6 +6,7 @@ import { GET_REFEREE_BY_CODE } from '../constants';
 const fetchRefereeByCode = async (code: string): Promise<RefereeResponse[]> => {
   try {
     const response = await api.get<RefereeResponse[]>(`/Refree/code/${code}`);
+    // @ts-ignore
     return response;
   } catch (error) {
     throw new Error('Error fetching referee data');
