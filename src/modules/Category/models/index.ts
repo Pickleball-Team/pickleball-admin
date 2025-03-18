@@ -1,4 +1,6 @@
 export interface IRule {
+  image1: string,
+  image2: string
   id: number;
   title: string;
   content: string;
@@ -31,6 +33,8 @@ export interface CreateRulePayload {
   title: string;
   content: string;
   blogCategoryId: number;
+  image1: string,
+  image2: string
 }
 
 export interface CreateRuleResponse {
@@ -42,6 +46,8 @@ export interface UpdateRulePayload {
   id: number;
   title: string;
   content: string;
+  image1: string,
+  image2: string
 }
 
 export interface UpdateRuleResponse {

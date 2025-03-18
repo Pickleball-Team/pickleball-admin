@@ -163,7 +163,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 3:
         return 'orange';
       default:
-        return 'gray';
+        return 'red';
     }
   };
 
@@ -176,7 +176,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 3:
         return 'Ongoing';
       default:
-        return 'Unknown';
+        return 'Cancelled';
     }
   };
 

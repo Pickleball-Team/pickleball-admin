@@ -27,7 +27,6 @@ const apiRequestConfig: CreateAxiosDefaults<unknown> = {
 
 export const axiosInstance: AxiosInstance = axios.create(apiRequestConfig);
 
-// todo bug is here
 // -- Request --
 axiosInstance.interceptors.request.use(
   (cf) => {

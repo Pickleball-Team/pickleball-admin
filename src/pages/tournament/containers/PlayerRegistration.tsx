@@ -153,6 +153,12 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
 
   const columns: ColumnsType<any> = [
     {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      ...getColumnSearchProps('id'),
+    },
+    {
       title: 'Player',
       dataIndex: ['playerDetails', 'firstName'],
       key: 'firstName',

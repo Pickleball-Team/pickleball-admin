@@ -182,8 +182,8 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
                 <Form.Item name="status" label="Status">
                   <Select>
                     <Option value={1}>Scheduled</Option>
-                    <Option value={2}>Ongoing</Option>
-                    <Option value={3}>Completed</Option>
+                    <Option value={3}>Ongoing</Option>
+                    <Option value={2}>Completed</Option>
                     <Option value={4}>Cancelled</Option>
                   </Select>
                 </Form.Item>

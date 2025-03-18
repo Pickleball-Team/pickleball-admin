@@ -1,19 +1,34 @@
 import { SearchOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
-import { Button, Card, Col, Input, Row, Space, Table, Tag, Select, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Input,
+  Row,
+  Space,
+  Table,
+  Tag,
+  Select,
+  Typography,
+} from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGetAllTournaments } from '../../modules/Tournaments/hooks/useGetAllTournaments';
 import { useUpdateTournament } from '../../modules/Tournaments/hooks/useUpdateTournamen';
 import { Pie } from '@ant-design/charts';
+import { useGetTournamentsBySponsorId } from '../../modules/Tournaments/hooks/useGetTournamentsBySponsorId';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 const { Option } = Select;
 
 type DataIndex = string;
 
 export const OverviewPage = () => {
-  const { data, isLoading, refetch } = useGetAllTournaments();
+  const user = useSelector((state: RootState) => state.authencation.user);
+  const { data, isLoading, refetch } = useGetTournamentsBySponsorId(user?.id ?? 0);
   const { mutate: updateTournament } = useUpdateTournament();
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
@@ -131,7 +146,7 @@ export const OverviewPage = () => {
       render: (status: string) => {
         let color = '';
         let label = '';
-    
+
         switch (status) {
           case 'Scheduled':
             color = 'blue';
@@ -153,7 +168,7 @@ export const OverviewPage = () => {
             color = 'default';
             label = status;
         }
-    
+
         return <Tag color={color}>{label}</Tag>;
       },
     },
@@ -195,7 +210,6 @@ export const OverviewPage = () => {
     },
   ];
 
-
   const totalTournaments = data?.length || 0;
   const pendingTournaments =
     data?.filter((t) => t.status === 'Pending').length || 0;
@@ -210,65 +224,82 @@ export const OverviewPage = () => {
   const doublesTournaments =
     data?.filter((t) => t.type === 'Doubles').length || 0;
 
-    const tournamentTypeData = [
-      { type: 'Singles', value: singlesTournaments },
-      { type: 'Doubles', value: doublesTournaments },
-    ];
-  
-    const tournamentStatusData = [
-      { status: 'Pending', value: pendingTournaments },
-      { status: 'Ongoing', value: ongoingTournaments },
-      { status: 'Completed', value: completedTournaments },
-      { status: 'Disable', value: disabledTournaments },
-    ];
+  const tournamentTypeData = [
+    { type: 'Singles', value: singlesTournaments },
+    { type: 'Doubles', value: doublesTournaments },
+  ];
 
-    const pieConfig = (data: any[], angleField: string, colorField: string) => ({
-      appendPadding: 10,
-      data,
-      angleField,
-      colorField,
-      radius: 1,
-      innerRadius: 0.6,
-      width: 170,
-      height: 170,
-      label: {
-        type: 'inner',
-        offset: '-50%',
-        content: (data: any) =>
-          `${(data.percent * 100).toFixed(0)}%`,
-        style: {
-          fontSize: 14,
-          textAlign: 'center',
-        },
+  const tournamentStatusData = [
+    { status: 'Pending', value: pendingTournaments },
+    { status: 'Ongoing', value: ongoingTournaments },
+    { status: 'Completed', value: completedTournaments },
+    { status: 'Disable', value: disabledTournaments },
+  ];
+
+  const pieConfig = (data: any[], angleField: string, colorField: string) => ({
+    appendPadding: 10,
+    data,
+    angleField,
+    colorField,
+    radius: 1,
+    innerRadius: 0.6,
+    width: 170,
+    height: 170,
+    label: {
+      type: 'inner',
+      offset: '-50%',
+      content: (data: any) => `${(data.percent * 100).toFixed(0)}%`,
+      style: {
+        fontSize: 14,
+        textAlign: 'center',
       },
-      interactions: [{ type: 'element-active' }],
-    });
+    },
+    interactions: [{ type: 'element-active' }],
+  });
 
   return (
     <div>
-    <Typography.Title level={2} style={{ marginBottom: '24px' }}>Tournament Overview</Typography.Title>
+      <Typography.Title level={2} style={{ marginBottom: '24px' }}>
+        Tournament Overview
+      </Typography.Title>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="Total Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Total Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {totalTournaments}
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Active Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Active Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {ongoingTournaments}
               </Card>
             </Col>
           </Row>
           <Row gutter={16} style={{ marginTop: 16 }}>
             <Col span={12}>
-              <Card title="Singles Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Singles Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {singlesTournaments}
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Doubles Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Doubles Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {doublesTournaments}
               </Card>
             </Col>
@@ -277,12 +308,20 @@ export const OverviewPage = () => {
         <Col span={12}>
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="Tournament Types" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Tournament Types"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 <Pie {...pieConfig(tournamentTypeData, 'value', 'type')} />
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Tournament Status" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Tournament Status"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 <Pie {...pieConfig(tournamentStatusData, 'value', 'status')} />
               </Card>
             </Col>
