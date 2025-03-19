@@ -3,6 +3,8 @@ import {
   UserAddOutlined,
   UserDeleteOutlined,
   UserOutlined,
+  ClockCircleOutlined,
+  StopOutlined,
 } from '@ant-design/icons';
 import { Pie } from '@ant-design/plots';
 import type { InputRef } from 'antd';
@@ -17,53 +19,78 @@ import {
   Tag,
   Typography,
   message,
+  Tooltip,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
-import { useRef, useState } from 'react';
-import { RegistrationDetail } from '../../../modules/Tournaments/models';
+import { useRef, useState, useMemo, useEffect } from 'react';
+import { RegistrationDetail, TouramentregistrationStatus } from '../../../modules/Tournaments/models';
 import { useApprovalPlayerTournament } from '../../../modules/Tournaments/hooks/useApprovalPlayerTournament';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 type DataIndex = string;
 
 type PlayersTableProps = {
+  tournamentId: number;
+  tournamentName?: string; // Optional tournament name for display
   registrations: RegistrationDetail[];
   refetch: () => void;
 };
 
-const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
+// Define status color and label mappings
+const statusColors = {
+  [TouramentregistrationStatus.Pending]: 'orange',
+  [TouramentregistrationStatus.Approved]: 'green',
+  [TouramentregistrationStatus.Rejected]: 'red',
+  [TouramentregistrationStatus.Waiting]: 'blue',
+  [TouramentregistrationStatus.Eliminated]: 'black',
+};
+
+const statusLabels = {
+  [TouramentregistrationStatus.Pending]: 'Pending',
+  [TouramentregistrationStatus.Approved]: 'Approved',
+  [TouramentregistrationStatus.Rejected]: 'Rejected',
+  [TouramentregistrationStatus.Waiting]: 'Waiting',
+  [TouramentregistrationStatus.Eliminated]: 'Eliminated',
+};
+
+// Vietnamese descriptions for tooltips
+const statusDescriptions = {
+  [TouramentregistrationStatus.Pending]: 'Đã accept từ partner cho payment',
+  [TouramentregistrationStatus.Approved]: 'Đã payment',
+  [TouramentregistrationStatus.Rejected]: 'Không đồng ý cho tham gia giải đấu',
+  [TouramentregistrationStatus.Waiting]: 'Chờ accept từ partner',
+  [TouramentregistrationStatus.Eliminated]: 'Bị loại',
+};
+
+const PlayersTable = ({ tournamentId, tournamentName, registrations = [], refetch }: PlayersTableProps) => {
   const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
+  const [filteredRegistrations, setFilteredRegistrations] = useState<RegistrationDetail[]>(registrations);
 
-  const { mutate: approvePlayer, status } = useApprovalPlayerTournament();
+  const { mutate: approvePlayer } = useApprovalPlayerTournament();
 
-  const onAccept = (id: number) => {
+  // Handle player status changes
+  const handleStatusChange = (
+    playerId: number, 
+    partnerId: number | undefined,
+    status: TouramentregistrationStatus
+  ) => {
     approvePlayer(
-      { id, isApproved: true },
+      { 
+        tournamentId, // Use the prop tournamentId consistently
+        playerId,
+        partnerId,
+        isApproved: status 
+      },
       {
         onSuccess: () => {
           refetch();
-          message.success('Player approved successfully');
+          message.success(`Player status updated to ${statusLabels[status]}`);
         },
         onError: (error) => {
-          message.error(`Error approving player: ${error.message}`);
-        },
-      }
-    );
-  };
-
-  const onReject = (id: number) => {
-    approvePlayer(
-      { id, isApproved: false },
-      {
-        onSuccess: () => {
-          refetch();
-          message.success('Player rejected successfully');
-        },
-        onError: (error) => {
-          message.error(`Error rejecting player: ${error.message}`);
+          message.error(`Error updating player status: ${error.message}`);
         },
       }
     );
@@ -156,6 +183,7 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+      width: 80,
       ...getColumnSearchProps('id'),
     },
     {
@@ -165,7 +193,7 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
       ...getColumnSearchProps('firstName'),
       render: (_: string, record: RegistrationDetail) => (
         <span>
-          {record.playerDetails?.firstName} {record.playerDetails?.lastName}
+          {record?.playerDetails?.firstName} {record?.playerDetails?.lastName}
         </span>
       ),
     },
@@ -197,55 +225,140 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
       render: (registeredAt: string) => new Date(registeredAt).toLocaleString(),
     },
     {
-      title: 'Is Approved',
-      dataIndex: 'isApproved',
-      key: 'isApproved',
-      filters: [
-        { text: 'Approved', value: true },
-        { text: 'Not Approved', value: false },
-      ],
-      onFilter: (value, record) => record.isApproved === value,
-      render: (isApproved: boolean) =>
-        isApproved ? (
-          <Tag color="green">Approved</Tag>
-        ) : (
-          <Tag color="red">Not Approved</Tag>
-        ),
+      title: 'isApproved',
+      dataIndex: 'status', // Keep using the status data property
+      key: 'status',
+      filters: Object.entries(statusLabels).map(([value, text]) => ({
+        text,
+        value: Number(value),
+      })),
+      onFilter: (value, record) => record.status === value,
+      render: (status: TouramentregistrationStatus) => (
+        <Tooltip title={statusDescriptions[status]}>
+          <Tag color={statusColors[status] || 'default'}>
+            {statusLabels[status] || 'Unknown'}
+          </Tag>
+        </Tooltip>
+      ),
     },
     {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Space>
-          <Button type="primary" onClick={() => onAccept(record.id)}>
-            Accept
-          </Button>
-          <Button danger onClick={() => onReject(record.id)}>
-            Reject
-          </Button>
+        <Space wrap>
+          {/* Approve Button */}
+          <Tooltip title="Set to Approved (Payment received)">
+            <Button 
+              type="primary" 
+              onClick={() => handleStatusChange(
+                record.playerId, 
+                record.partnerId, 
+                TouramentregistrationStatus.Approved
+              )}
+              disabled={record.status === TouramentregistrationStatus.Approved}
+              icon={<UserAddOutlined />}
+            >
+              Approve
+            </Button>
+          </Tooltip>
+          
+          {/* Pending Button */}
+          <Tooltip title="Set to Pending (Accepted by partner, awaiting payment)">
+            <Button 
+              style={{ backgroundColor: statusColors[TouramentregistrationStatus.Pending], color: 'white' }}
+              onClick={() => handleStatusChange(
+                record.playerId,
+                record.partnerId,
+                TouramentregistrationStatus.Pending
+              )}
+              disabled={record.status === TouramentregistrationStatus.Pending}
+            >
+              Pending
+            </Button>
+          </Tooltip>
+          
+          {/* Waiting Button */}
+          <Tooltip title="Set to Waiting (Awaiting partner acceptance)">
+            <Button 
+              style={{ backgroundColor: statusColors[TouramentregistrationStatus.Waiting], color: 'white' }}
+              onClick={() => handleStatusChange(
+                record.playerId,
+                record.partnerId,
+                TouramentregistrationStatus.Waiting
+              )}
+              disabled={record.status === TouramentregistrationStatus.Waiting}
+              icon={<ClockCircleOutlined />}
+            >
+              Waiting
+            </Button>
+          </Tooltip>
+          
+          {/* Rejected Button */}
+          <Tooltip title="Set to Rejected (Denied tournament participation)">
+            <Button 
+              danger
+              onClick={() => handleStatusChange(
+                record.playerId,
+                record.partnerId,
+                TouramentregistrationStatus.Rejected
+              )}
+              disabled={record.status === TouramentregistrationStatus.Rejected}
+              icon={<UserDeleteOutlined />}
+            >
+              Reject
+            </Button>
+          </Tooltip>
+          
+          {/* Eliminated Button */}
+          <Tooltip title="Set to Eliminated (Removed from tournament)">
+            <Button 
+              style={{ backgroundColor: statusColors[TouramentregistrationStatus.Eliminated], color: 'white' }}
+              onClick={() => handleStatusChange(
+                record.playerId,
+                record.partnerId,
+                TouramentregistrationStatus.Eliminated
+              )}
+              disabled={record.status === TouramentregistrationStatus.Eliminated}
+              icon={<StopOutlined />}
+            >
+              Eliminate
+            </Button>
+          </Tooltip>
         </Space>
       ),
     },
   ];
 
-  const totalPlayers = registrations?.length || 0;
-  const approvedPlayers = registrations.filter((r) => r.isApproved).length;
-  const notApprovedPlayers = totalPlayers - approvedPlayers;
+  // Calculate registration stats for display
+  const statusCounts = useMemo(() => {
+    const counts = {
+      total: filteredRegistrations.length,
+      [TouramentregistrationStatus.Pending]: 0,
+      [TouramentregistrationStatus.Approved]: 0,
+      [TouramentregistrationStatus.Rejected]: 0,
+      [TouramentregistrationStatus.Waiting]: 0,
+      [TouramentregistrationStatus.Eliminated]: 0,
+    };
 
-  const data = [
-    {
-      type: 'Approved',
-      value: approvedPlayers,
-    },
-    {
-      type: 'Not Approved',
-      value: notApprovedPlayers,
-    },
-  ];
+    filteredRegistrations.forEach(registration => {
+      const status: TouramentregistrationStatus = registration.status || TouramentregistrationStatus.Pending;
+      counts[status] = (counts[status] || 0) + 1;
+    });
 
-  const config = {
+    return counts;
+  }, [filteredRegistrations]);
+
+  // Prepare data for pie chart
+  const chartData = useMemo(() => {
+    return Object.entries(statusLabels).map(([status, label]) => ({
+      type: label,
+      value: statusCounts[Number(status) as TouramentregistrationStatus] || 0
+    })).filter(item => item.value > 0); // Only show statuses that have at least one player
+  }, [statusCounts]);
+
+  const pieConfig = {
     appendPadding: 10,
-    data,
+    data: chartData,
     angleField: 'value',
     colorField: 'type',
     radius: 1,
@@ -259,57 +372,110 @@ const PlayersTable = ({ registrations = [], refetch }: PlayersTableProps) => {
         fontSize: 14,
       },
     },
-    interactions: [
-      {
-        type: 'element-active',
-      },
-    ],
-    height: 150,
-    width: 250,
+    interactions: [{ type: 'element-active' }],
+    height: 200,
+    width: 300,
+    legend: {
+      position: 'bottom' as 'bottom'
+    }
   };
 
   return (
     <div>
-      <Row gutter={8} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Pie {...config} />
-        </Col>
-        <Col span={6}>
-          <Card title="Total Players" bordered={false} style={{ height: 150 }}>
-            <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>{totalPlayers}</Text>
+      {tournamentName && (
+        <Title level={4} style={{ marginBottom: 16 }}>
+          Player Registrations for: {tournamentName}
+        </Title>
+      )}
+      
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col span={10}>
+          <Card title="Registration Statistics" bordered={false}>
+            <Pie {...pieConfig} />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card
-            title="Approved Players"
-            bordered={false}
-            style={{ height: 150 }}
-          >
-            <UserAddOutlined style={{ fontSize: 24, color: '#52c41a' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>
-              {approvedPlayers}
-            </Text>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card
-            title="Not Approved Players"
-            bordered={false}
-            style={{ height: 150 }}
-          >
-            <UserDeleteOutlined style={{ fontSize: 24, color: '#f5222d' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>
-              {notApprovedPlayers}
-            </Text>
-          </Card>
+        <Col span={14}>
+          <Row gutter={[16, 16]}>
+            <Col span={8}>
+              <Card 
+                title="Total Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#e6f7ff' }}
+              >
+                <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>{statusCounts.total}</Text>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card 
+                title="Approved Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#f6ffed' }}
+              >
+                <UserAddOutlined style={{ fontSize: 24, color: statusColors[TouramentregistrationStatus.Approved] }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>
+                  {statusCounts[TouramentregistrationStatus.Approved]}
+                </Text>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card 
+                title="Pending Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#fff7e6' }}
+              >
+                <ClockCircleOutlined style={{ fontSize: 24, color: statusColors[TouramentregistrationStatus.Pending] }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>
+                  {statusCounts[TouramentregistrationStatus.Pending]}
+                </Text>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card 
+                title="Waiting Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#e6f7ff' }}
+              >
+                <ClockCircleOutlined style={{ fontSize: 24, color: statusColors[TouramentregistrationStatus.Waiting] }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>
+                  {statusCounts[TouramentregistrationStatus.Waiting]}
+                </Text>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card 
+                title="Rejected Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#fff1f0' }}
+              >
+                <UserDeleteOutlined style={{ fontSize: 24, color: statusColors[TouramentregistrationStatus.Rejected] }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>
+                  {statusCounts[TouramentregistrationStatus.Rejected]}
+                </Text>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card 
+                title="Eliminated Players" 
+                bordered={false}
+                headStyle={{ backgroundColor: '#f0f0f0' }}
+              >
+                <StopOutlined style={{ fontSize: 24, color: statusColors[TouramentregistrationStatus.Eliminated] }} />
+                <Text style={{ fontSize: 24, marginLeft: 8 }}>
+                  {statusCounts[TouramentregistrationStatus.Eliminated]}
+                </Text>
+              </Card>
+            </Col>
+          </Row>
         </Col>
       </Row>
+
       <Table
         columns={columns}
-        dataSource={registrations}
+        dataSource={filteredRegistrations}
         rowKey="id"
         style={{ backgroundColor: '#ffffff' }}
+        pagination={{ pageSize: 10 }}
       />
     </div>
   );

@@ -1,27 +1,30 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Api from '../../../configs/api/api';
-import { UpdateApprovalDTO } from '../models';
+import { TouramentregistrationStatus, UpdateApprovalDTO } from '../models';
 
 const putApprovalPlayerTournament = async ({
-  id,
   isApproved,
-}: UpdateApprovalDTO): Promise<UpdateApprovalDTO> => {
+  tournamentId,
+  playerId,
+  partnerId,
+}: UpdateApprovalDTO): Promise<any> => {
   const response = await Api.put(`/PlayerRegistration/ChangeStatus`, {
-    registerID: id,
+    tournamentId,
+    playerId,
+    partnerId,
     isApproved,
   });
-  return response.data as UpdateApprovalDTO;
+  return response.data;
 };
 
 export function useApprovalPlayerTournament() {
   const queryClient = useQueryClient();
   return useMutation<
-    UpdateApprovalDTO,
+    any,
     Error,
-    { id: number; isApproved: boolean }
+    UpdateApprovalDTO
   >({
-    mutationFn: ({ id, isApproved }: UpdateApprovalDTO) =>
-      putApprovalPlayerTournament({ id, isApproved }),
+    mutationFn: (params: UpdateApprovalDTO) => putApprovalPlayerTournament(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['GET_ALL_TOURNAMENTS'] });
     },

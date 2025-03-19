@@ -74,7 +74,6 @@ const TOURNAMENT_ADMIN_ITEMS = [
 const AUTHENTICATION_SYS_ITEMS = [
   { title: 'manager sponsor', path: PATH_AUTHENTICATION.managerSponsor },
   { title: 'block user', path: PATH_AUTHENTICATION.blockUser },
-  { title: 'manager player', path: PATH_AUTHENTICATION.managerPlayer },
   { title: 'sponsor details', path: PATH_AUTHENTICATION.sponsorDetails },
   { title: 'player details', path: PATH_AUTHENTICATION.playerDetails },
 ];

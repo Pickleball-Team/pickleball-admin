@@ -49,6 +49,7 @@ const TournamentDetail = () => {
         </TabPane>
         <TabPane tab="Players" key="2">
           <PlayersTable
+            tournamentId={data.id}
             registrations={data.registrationDetails}
             refetch={refetch}
           />

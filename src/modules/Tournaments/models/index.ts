@@ -29,14 +29,12 @@ export interface TournamentDetail {
 }
 
 export interface RegistrationDetail {
+  [x: string]: any;
+  status: TouramentregistrationStatus;
   partnerId?: number;
   id: number;
   playerId: number;
   paymentId: number;
-  registeredAt: string;
-  isApproved: boolean;
-  playerDetails: PlayerDetail;
-  partnerDetails?: PlayerDetail;
 }
 
 export interface PlayerDetail {
@@ -48,7 +46,10 @@ export interface PlayerDetail {
   avatarUrl: string;
 }
 
-export type TournamentRequest = Omit<Tournament, 'id' | 'status' | 'isAccept' | 'touramentDetails' | 'registrationDetails'>;
+export type TournamentRequest = Omit<
+  Tournament,
+  'id' | 'status' | 'isAccept' | 'touramentDetails' | 'registrationDetails'
+>;
 
 export enum TournamentType {
   Singles = 'Singles',
@@ -96,7 +97,7 @@ export interface MatchRequest {
   matchFormat: number;
   winScore: number;
   isPublic: boolean;
-  roomOnwer: number; 
+  roomOnwer: number;
   player1Id: number;
   player2Id?: number;
   player3Id?: number;
@@ -105,8 +106,17 @@ export interface MatchRequest {
   tournamentId?: number;
 }
 
-export interface UpdateApprovalDTO {
-  id: number;
-  isApproved: boolean;
+export enum TouramentregistrationStatus {
+  Pending = 1, // Da accept tu partner cho payment
+  Approved = 2, // Da payment
+  Rejected = 3, // Ko dong y cho tham gia giai dau
+  Waiting = 4, // Cho accept tu partner
+  Eliminated = 5, // Bi loai
 }
 
+export interface UpdateApprovalDTO {
+  isApproved: TouramentregistrationStatus;
+  tournamentId: number,
+  playerId: number,
+  partnerId?: number;
+}

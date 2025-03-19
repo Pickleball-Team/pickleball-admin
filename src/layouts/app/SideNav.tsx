@@ -76,12 +76,6 @@ const SideNav = ({ ...others }: SiderProps) => {
               <Link to={PATH_AUTHENTICATION.blockUser}>Block User</Link>,
               'blockUser'
             ),
-            getItem(
-              <Link to={PATH_AUTHENTICATION.managerPlayer}>
-                Manager Player
-              </Link>,
-              'managerPlayer'
-            ),
           ]),
           getItem('Blog', 'blog', <BookOutlined />, [
             getItem(<Link to={PATH_BLOG.root}>List</Link>, 'list'),
