@@ -13,8 +13,14 @@ export interface Tournament {
   type: string;
   organizerId: number;
   isAccept: boolean;
-  sponerDetails: TournamentDetail[];
+  entryFee: number;
+  isFree: boolean;
+  isMaxRanking: number;
+  isMinRanking: number;
+  social: string;
+  sponerDetails: TournamentDetail[] | null;
   registrationDetails: RegistrationDetail[];
+  touramentDetails: TournamentDetail[];
 }
 
 export interface TournamentDetail {

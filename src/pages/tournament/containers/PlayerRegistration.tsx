@@ -212,36 +212,36 @@ const PlayersTable = ({ tournamentId, tournamentName, registrations = [], refetc
           {record.partnerDetails?.firstName} {record.partnerDetails?.lastName}
         </span>
       ),
-    },
-    {
+        },
+        {
       title: 'Partner Email',
       dataIndex: ['partnerDetails', 'email'],
       key: 'partnerEmail',
-    },
-    {
+        },
+        {
       title: 'Registered At',
       dataIndex: 'registeredAt',
       key: 'registeredAt',
       render: (registeredAt: string) => new Date(registeredAt).toLocaleString(),
-    },
-    {
-      title: 'isApproved',
-      dataIndex: 'status', // Keep using the status data property
-      key: 'status',
+        },
+        {
+      title: 'Status',
+      dataIndex: 'isApproved', // Changed from status to isApproved
+      key: 'isApproved',
       filters: Object.entries(statusLabels).map(([value, text]) => ({
         text,
         value: Number(value),
       })),
-      onFilter: (value, record) => record.status === value,
-      render: (status: TouramentregistrationStatus) => (
-        <Tooltip title={statusDescriptions[status]}>
-          <Tag color={statusColors[status] || 'default'}>
-            {statusLabels[status] || 'Unknown'}
+      onFilter: (value, record) => record.isApproved === value,
+      render: (isApproved: TouramentregistrationStatus) => (
+        <Tooltip title={statusDescriptions[isApproved]}>
+          <Tag color={statusColors[isApproved] || 'default'}>
+        {statusLabels[isApproved] || 'Unknown'}
           </Tag>
         </Tooltip>
       ),
-    },
-    {
+        },
+        {
       title: 'Action',
       key: 'action',
       render: (_, record) => (

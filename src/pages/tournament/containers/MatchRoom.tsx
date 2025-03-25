@@ -11,6 +11,8 @@ import {
   TeamOutlined,
   TrophyOutlined,
   UserOutlined,
+  TableOutlined,
+  ReadOutlined,
 } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
@@ -46,6 +48,7 @@ import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenu
 import { RootState } from '../../../redux/store';
 import AddMatchModal from './AddMatchModal';
 import UpdateMatchModal from './UpdateMatchModal';
+import MatchScoreModal from './MatchScoreModal';
 import Title from 'antd/es/typography/Title';
 
 const { Text } = Typography;
@@ -78,6 +81,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<IMatch | null>(null);
+  const [isScoreModalVisible, setIsScoreModalVisible] =
+    useState<boolean>(false);
+  const [selectedMatchForScores, setSelectedMatchForScores] =
+    useState<IMatch | null>(null);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -542,16 +549,27 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       title: 'Actions',
       key: 'actions',
       render: (text: any, record: any) => (
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => {
-            setSelectedMatch(record);
-            setIsUpdateModalVisible(true);
-          }}
-        >
-          Update
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setSelectedMatch(record);
+              setIsUpdateModalVisible(true);
+            }}
+          >
+            Update
+          </Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              setSelectedMatchForScores(record);
+              setIsScoreModalVisible(true);
+            }}
+          >
+            Scores
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -863,6 +881,17 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
             setSelectedMatch(null);
           }}
           match={selectedMatch}
+          refetch={refetch}
+        />
+      )}
+      {selectedMatchForScores && (
+        <MatchScoreModal
+          visible={isScoreModalVisible}
+          onClose={() => {
+            setIsScoreModalVisible(false);
+            setSelectedMatchForScores(null);
+          }}
+          match={selectedMatchForScores}
           refetch={refetch}
         />
       )}
