@@ -12,7 +12,7 @@ interface ScoreEntryFormProps {
   onCancel: () => void;
   initialValues: {
     round?: number;
-    currentHaft: number;
+    currentHaft: number; // Note: using currentHaft to match the interface
     team1Score: number;
     team2Score: number;
     note: string;

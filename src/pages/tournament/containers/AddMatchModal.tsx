@@ -359,10 +359,13 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                   ]}
                 >
                   <Select onChange={(value) => setMatchFormat(value)}>
-                    {tournamentDetails?.type == '2' ? (
+                    {tournamentDetails?.type == 'Doubles' ? (
                       <>
                         <Option value={MatchFormat.DoubleFemale}>
                           Double Female
+                        </Option>
+                        <Option value={MatchFormat.DoubleMale}>
+                          Double Male
                         </Option>
                         <Option value={MatchFormat.DoubleMix}>
                           Double Mix
@@ -375,9 +378,6 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                         </Option>
                         <Option value={MatchFormat.SingleFemale}>
                           Single Female
-                        </Option>
-                        <Option value={MatchFormat.DoubleMale}>
-                          Double Male
                         </Option>
                       </>
                     )}

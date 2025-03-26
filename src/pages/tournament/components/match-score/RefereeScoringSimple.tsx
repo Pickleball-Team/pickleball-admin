@@ -1,65 +1,47 @@
 import React from 'react';
-import { Typography, Card, Row, Col, Space, Button, Tag, Divider, Table, Select, Input } from 'antd';
+import { Typography, Card, Row, Col, Space, Button, Tag, Divider, Select, Input } from 'antd';
 import { SaveOutlined, EditOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface RefereeScoreProps {
+interface RefereeScoringSimpleProps {
   currentRound: number;
-  currentSet: number;
   team1Score: number;
   team2Score: number;
   gamePoint: number | null;
-  setsWon: { team1: number; team2: number };
-  setScores: Array<{ set: number; team1: number; team2: number; note?: string; currentHalf?: number }>;
   refereeNotes: string;
   refereeCurrentHalf: number;
   onAddPoint: (team: number, points?: number) => void;
   onSetRefereeNotes: (notes: string) => void;
   onSetRefereeCurrentHalf: (half: number) => void;
-  onFinalizeSet: () => void;
+  onSubmitScores: () => void;
   onUndoLastScore: () => void;
-  onSubmitRoundScores: () => void;
   onCancel: () => void;
   canUndo: boolean;
 }
 
-const RefereeScoring: React.FC<RefereeScoreProps> = ({
+const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
   currentRound,
-  currentSet,
   team1Score,
   team2Score,
   gamePoint,
-  setsWon,
-  setScores,
   refereeNotes,
   refereeCurrentHalf,
   onAddPoint,
   onSetRefereeNotes,
   onSetRefereeCurrentHalf,
-  onFinalizeSet,
+  onSubmitScores,
   onUndoLastScore,
-  onSubmitRoundScores,
   onCancel,
   canUndo,
 }) => {
-  // Helper function to get half text
-  const getHalfText = (half: number) => {
-    switch (half) {
-      case 1: return 'First Half';
-      case 2: return 'Second Half';
-      case 3: return 'Overtime';
-      default: return 'Unknown';
-    }
-  };
-
   return (
     <>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Title level={3}>
-          Round {currentSet}
+          Round {currentRound}
         </Title>
         
         {gamePoint && (
@@ -80,7 +62,6 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
                   <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1890ff', margin: '10px 0' }}>
                     {team1Score}
                   </div>
-                  <Text>Sets won: {setsWon.team1}</Text>
                 </div>
                 
                 <Space>
@@ -116,7 +97,6 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
                   <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#fa8c16', margin: '10px 0' }}>
                     {team2Score}
                   </div>
-                  <Text>Sets won: {setsWon.team2}</Text>
                 </div>
                 
                 <Space>
@@ -169,7 +149,7 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
                     autoSize={{ minRows: 1, maxRows: 6 }} 
                     value={refereeNotes}
                     onChange={e => onSetRefereeNotes(e.target.value)}
-                    placeholder="Add notes about this set..."
+                    placeholder="Add notes about this round..."
                   />
                 </Col>
               </Row>
@@ -178,16 +158,6 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
         </Row>
         
         <Space style={{ marginBottom: 24 }}>
-          <Button 
-            type="default" 
-            icon={<SaveOutlined />} 
-            onClick={onFinalizeSet}
-            disabled={team1Score === 0 && team2Score === 0}
-            size="large"
-          >
-            End Set & Save
-          </Button>
-          
           <Button 
             onClick={onUndoLastScore}
             disabled={!canUndo}
@@ -199,96 +169,6 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
         </Space>
       </div>
       
-      {/* Sets Summary */}
-      {setScores.length > 0 && (
-        <>
-          <Divider orientation="left">Set Scores</Divider>
-          <Table
-            dataSource={setScores}
-            pagination={false}
-            rowKey="set"
-            size="middle"
-            columns={[
-              {
-                title: 'Set',
-                dataIndex: 'set',
-                key: 'set',
-                render: (set) => <Tag color="blue">{`Set ${set}`}</Tag>,
-              },
-              {
-                title: 'Team 1',
-                dataIndex: 'team1',
-                key: 'team1',
-                render: (score) => (
-                  <Text strong style={{ color: '#1890ff' }}>{score}</Text>
-                ),
-              },
-              {
-                title: 'Team 2',
-                dataIndex: 'team2',
-                key: 'team2',
-                render: (score) => (
-                  <Text strong style={{ color: '#fa8c16' }}>{score}</Text>
-                ),
-              },
-              {
-                title: 'Half',
-                dataIndex: 'currentHalf',
-                key: 'currentHalf',
-                render: (half) => {
-                  return <Text>{getHalfText(half || 1)}</Text>;
-                }
-              },
-              {
-                title: 'Winner',
-                key: 'winner',
-                render: (_, record) => (
-                  <Text strong style={{ 
-                    color: record.team1 > record.team2 ? '#1890ff' : record.team2 > record.team1 ? '#fa8c16' : '#000'
-                  }}>
-                    {record.team1 > record.team2 
-                      ? 'Team 1' 
-                      : record.team2 > record.team1 
-                        ? 'Team 2' 
-                        : 'Tie'}
-                  </Text>
-                ),
-              },
-            ]}
-            expandable={{
-              expandedRowRender: (record) => (
-                <p style={{ margin: 0 }}>
-                  <Text strong>Notes:</Text> {record.note || 'No notes'}
-                </p>
-              ),
-            }}
-            summary={() => (
-              <Table.Summary.Row>
-                <Table.Summary.Cell index={0}>
-                  <Text strong>Total</Text>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={1}>
-                  <Text strong style={{ color: '#1890ff' }}>
-                    {setScores.reduce((acc, curr) => acc + curr.team1, 0)}
-                  </Text>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={2}>
-                  <Text strong style={{ color: '#fa8c16' }}>
-                    {setScores.reduce((acc, curr) => acc + curr.team2, 0)}
-                  </Text>
-                </Table.Summary.Cell>
-                <Table.Summary.Cell index={3}></Table.Summary.Cell>
-                <Table.Summary.Cell index={4}>
-                  <Text strong>
-                    Sets: {setsWon.team1} - {setsWon.team2}
-                  </Text>
-                </Table.Summary.Cell>
-              </Table.Summary.Row>
-            )}
-          />
-        </>
-      )}
-      
       <Divider />
       
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -296,8 +176,8 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
           <Button
             type="primary"
             icon={<SaveOutlined />}
-            onClick={onSubmitRoundScores}
-            disabled={setScores.length === 0 && team1Score === 0 && team2Score === 0}
+            onClick={onSubmitScores}
+            disabled={team1Score === 0 && team2Score === 0}
             size="large"
           >
             Submit Round Score
@@ -311,4 +191,4 @@ const RefereeScoring: React.FC<RefereeScoreProps> = ({
   );
 };
 
-export default RefereeScoring;
+export default RefereeScoringSimple;

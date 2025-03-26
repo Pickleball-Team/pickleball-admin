@@ -24,7 +24,7 @@ import ScoreSummary from '../components/common/ScoreSummary';
 import MatchScoreTable from '../components/match-score/MatchScoreTable';
 import ScoreEntryForm from '../components/match-score/ScoreEntryForm';
 import EndMatchPanel from '../components/match-score/EndMatchPanel';
-import RefereeScoring from '../components/match-score/RefereeScoring';
+import RefereeScoringSimple from '../components/match-score/RefereeScoringSimple';
 
 const { TabPane } = Tabs;
 
@@ -46,34 +46,31 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
   const [form] = Form.useForm();
   const { mutateAsync: endMatch } = useEndTournamentMatch();
 
-  // Use our custom hook for match scoring logic
+  // Use our simplified hook for match scoring logic
   const {
     matchScores,
     currentRound,
-    currentSet,
     team1Score,
     team2Score,
-    setScores,
     gamePoint,
     scoringHistory,
     refereeNotes,
     refereeCurrentHalf,
     totalScores,
-    setsWon,
     setRefereeNotes,
     setRefereeCurrentHalf,
     handleAddRound,
     handleEditRound,
     addPointToTeam,
-    finalizeSet,
-    submitRoundScores,
+    submitRefereeScores,
     undoLastScore,
-    cleanupStorageForMatch
+    cleanupStorageForMatch,
+    getWinner
   } = useMatchScoring(match);
 
   // Start editing a round
   const startEditRound = (round: number) => {
-    const scoreToEdit = matchScores.find((score) => score.round === round && !score.isFromReferee);
+    const scoreToEdit = matchScores.find((score) => score.round === round);
     if (scoreToEdit) {
       form.setFieldsValue({
         round: scoreToEdit.round,
@@ -99,37 +96,31 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     setActiveTab('viewScores');
   };
 
-  // Handle ending the match - fix to properly use EndTournamentMatchDTO
+  // Handle ending the match - using EndTournamentMatchDTO
   const handleEndMatch = async () => {
     try {
       // Show loading message
       const loadingMessage = message.loading('Submitting match scores...', 0);
 
       // Create an array of promises for each round score
-      // Only submit non-referee temporary scores
-      const scorePromises = matchScores
-        .filter(score => !score.isFromReferee)
-        .map((score) => {
-          const scoreData: EndTournamentMatchDTO = {
-            matchId: match.id,
-            round: score.round,
-            note: score.note,
-            currentHaft: score.currentHaft,
-            team1Score: score.team1Score,
-            team2Score: score.team2Score,
-          };
+      const scorePromises = matchScores.map((score) => {
+        const scoreData: EndTournamentMatchDTO = {
+          matchId: match.id,
+          round: score.round,
+          note: score.note,
+          currentHaft: score.currentHaft,
+          team1Score: score.team1Score,
+          team2Score: score.team2Score,
+        };
 
-          return endMatch(scoreData);
-        });
+        return endMatch(scoreData);
+      });
 
       // Add final summary data with winner information
       const finalData: EndTournamentMatchDTO = {
         matchId: match.id,
-        round: matchScores.filter(score => !score.isFromReferee).length + 1,
-        note: `Match ended with ${totalScores.team1}-${totalScores.team2}. Winner: ${
-          totalScores.team1 > totalScores.team2 ? 'Team 1' : 
-          totalScores.team2 > totalScores.team1 ? 'Team 2' : 'Tie'
-        }`,
+        round: matchScores.length + 1,
+        note: `Match ended with ${totalScores.team1}-${totalScores.team2}. Winner: ${getWinner()}`,
         currentHaft: 1, // Default to first half for final result
         team1Score: totalScores.team1,
         team2Score: totalScores.team2,
@@ -157,14 +148,6 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     }
   };
 
-  // Determine winner
-  const winner =
-    totalScores.team1 > totalScores.team2
-      ? 'Team 1'
-      : totalScores.team2 > totalScores.team1
-        ? 'Team 2'
-        : 'Tie';
-
   return (
     <Modal
       title={
@@ -173,7 +156,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           <span>Match Scores - {match?.title}</span>
         </div>
       }
-      visible={visible}
+      open={visible}
       onCancel={onClose}
       width={800}
       footer={null}
@@ -204,6 +187,12 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
               onClick={() => {
                 form.resetFields();
                 setEditingRound(null);
+                form.setFieldsValue({
+                  currentHaft: 1,
+                  team1Score: 0,
+                  team2Score: 0,
+                  note: '',
+                });
                 setActiveTab('addScore');
               }}
             >
@@ -270,25 +259,21 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           }
           key="refereeScoring"
         >
-          <RefereeScoring
+          <RefereeScoringSimple
             currentRound={currentRound}
-            currentSet={currentSet}
             team1Score={team1Score}
             team2Score={team2Score}
             gamePoint={gamePoint}
-            setsWon={setsWon}
-            setScores={setScores}
             refereeNotes={refereeNotes}
             refereeCurrentHalf={refereeCurrentHalf}
             onAddPoint={addPointToTeam}
             onSetRefereeNotes={setRefereeNotes}
             onSetRefereeCurrentHalf={setRefereeCurrentHalf}
-            onFinalizeSet={finalizeSet}
-            onUndoLastScore={undoLastScore}
-            onSubmitRoundScores={() => {
-              submitRoundScores();
+            onSubmitScores={() => {
+              submitRefereeScores();
               setActiveTab('viewScores');
             }}
+            onUndoLastScore={undoLastScore}
             onCancel={() => setActiveTab('viewScores')}
             canUndo={scoringHistory.length > 0}
           />

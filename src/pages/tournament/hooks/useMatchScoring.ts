@@ -6,7 +6,7 @@ import { IMatch, EndTournamentMatchDTO } from '../../../modules/Macths/models';
 const MATCH_SCORES_STORAGE_KEY = 'pickleball_match_scores';
 const REFEREE_SCORES_STORAGE_KEY = 'pickleball_referee_scores';
 
-// Define proper interfaces for type safety
+// Simplified MatchScore interface - removed setDetails and isFromReferee
 interface MatchScore {
   matchScoreId: number;
   matchId: number;
@@ -15,16 +15,6 @@ interface MatchScore {
   currentHaft: number;
   team1Score: number;
   team2Score: number;
-  isFromReferee?: boolean; // Flag to identify scores from referee
-  setDetails?: SetScore[]; // Store set details for referee-created scores
-}
-
-interface SetScore {
-  set: number;
-  team1: number;
-  team2: number;
-  note?: string;
-  currentHalf?: number;
 }
 
 interface ScoringHistoryEntry {
@@ -51,14 +41,24 @@ const SAMPLE_MATCH_SCORES: MatchScore[] = [
   },
 ];
 
+// Utility function to normalize half values
+const normalizeHalf = (value: any): number => {
+  if (typeof value === 'number') return value;
+  if (value === undefined || value === null) return 1;
+  const numeric = Number(value);
+  return isNaN(numeric) ? 1 : numeric;
+};
+
 export const useMatchScoring = (match: IMatch | null) => {
+  // Core state
   const [matchScores, setMatchScores] = useState<MatchScore[]>([]);
   const [currentRound, setCurrentRound] = useState<number>(1);
-  const [currentSet, setCurrentSet] = useState<number>(1);
+  
+  // Current score being edited
   const [team1Score, setTeam1Score] = useState<number>(0);
   const [team2Score, setTeam2Score] = useState<number>(0);
-  const [setScores, setSetScores] = useState<SetScore[]>([]);
-  const [gamePoint, setGamePoint] = useState<number | null>(null);
+  
+  // UI state for referee scoring
   const [scoringHistory, setScoringHistory] = useState<ScoringHistoryEntry[]>([]);
   const [refereeNotes, setRefereeNotes] = useState<string>('');
   const [refereeCurrentHalf, setRefereeCurrentHalf] = useState<number>(1);
@@ -98,11 +98,8 @@ export const useMatchScoring = (match: IMatch | null) => {
         try {
           const parsedData = JSON.parse(savedRefereeData);
           setCurrentRound(parsedData.currentRound || 1);
-          setCurrentSet(parsedData.currentSet || 1);
           setTeam1Score(parsedData.team1Score || 0);
           setTeam2Score(parsedData.team2Score || 0);
-          setSetScores(parsedData.setScores || []);
-          setGamePoint(parsedData.gamePoint || null);
           setScoringHistory(parsedData.scoringHistory || []);
           setRefereeNotes(parsedData.refereeNotes || '');
           setRefereeCurrentHalf(parsedData.refereeCurrentHalf || 1);
@@ -125,11 +122,8 @@ export const useMatchScoring = (match: IMatch | null) => {
     if (match?.id) {
       const refereeData = {
         currentRound,
-        currentSet,
         team1Score,
         team2Score,
-        setScores,
-        gamePoint,
         scoringHistory,
         refereeNotes,
         refereeCurrentHalf
@@ -137,8 +131,8 @@ export const useMatchScoring = (match: IMatch | null) => {
       localStorage.setItem(`${REFEREE_SCORES_STORAGE_KEY}_${match.id}`, JSON.stringify(refereeData));
     }
   }, [
-    match?.id, currentRound, currentSet, team1Score, team2Score, 
-    setScores, gamePoint, scoringHistory, refereeNotes, refereeCurrentHalf
+    match?.id, currentRound, team1Score, team2Score, 
+    scoringHistory, refereeNotes, refereeCurrentHalf
   ]);
 
   // Calculate total scores
@@ -150,18 +144,12 @@ export const useMatchScoring = (match: IMatch | null) => {
     { team1: 0, team2: 0 }
   );
 
-  // Calculate sets won by each team
-  const setsWon = setScores.reduce(
-    (acc, set) => {
-      if (set.team1 > set.team2) {
-        return { ...acc, team1: acc.team1 + 1 };
-      } else if (set.team2 > set.team1) {
-        return { ...acc, team2: acc.team2 + 1 };
-      }
-      return acc;
-    },
-    { team1: 0, team2: 0 }
-  );
+  // Determine the winner based on the total score
+  const getWinner = () => {
+    if (totalScores.team1 > totalScores.team2) return 'Team 1';
+    if (totalScores.team2 > totalScores.team1) return 'Team 2';
+    return 'Tie';
+  };
 
   // Add a new round score
   const handleAddRound = (values: {
@@ -229,153 +217,38 @@ export const useMatchScoring = (match: IMatch | null) => {
         timestamp: new Date().toISOString()
       }
     ]);
-    
-    // Check for game point
-    const newTeam1Score = team === 1 ? team1Score + points : team1Score;
-    const newTeam2Score = team === 2 ? team2Score + points : team2Score;
-    
-    if (newTeam1Score >= 10 && newTeam1Score >= newTeam2Score + 2) {
-      setGamePoint(1);
-    } else if (newTeam2Score >= 10 && newTeam2Score >= newTeam1Score + 2) {
-      setGamePoint(2);
-    } else {
-      setGamePoint(null);
-    }
   };
   
-  // Finalize the current set
-  const finalizeSet = (): SetScore | null => {
-    if (team1Score === 0 && team2Score === 0) {
-      message.warning('Cannot save a set with no points');
-      return null;
-    }
-    
-    // Create the new set score
-    const newSetScore: SetScore = {
-      set: currentSet,
-      team1: team1Score,
-      team2: team2Score,
-      note: refereeNotes,
-      currentHalf: refereeCurrentHalf
-    };
-    
-    // Update the setScores array
-    const updatedSetScores = [...setScores, newSetScore];
-    setSetScores(updatedSetScores);
-    
-    // Calculate current round from matchScores, accounting for temporary referee scores
-    const nonRefereeScores = matchScores.filter(score => !score.isFromReferee);
-    const currentRoundNumber = nonRefereeScores.length + 1;
-    
-    // Also create a temporary match score entry to display in match scores table
-    // This helps show progress before final submission
-    const tempMatchScore: MatchScore = {
-      matchScoreId: Math.floor(Math.random() * 1000) + 100 + currentSet,
-      matchId: match?.id || 0,
-      round: currentRoundNumber,
-      note: `Set ${currentSet}: ${refereeNotes || 'No notes'}`,
-      currentHaft: refereeCurrentHalf,
-      team1Score: team1Score,
-      team2Score: team2Score,
-      isFromReferee: true,
-      setDetails: updatedSetScores
-    };
-    
-    // Find if there's already a temporary match score for this round from referee
-    const existingTempIndex = matchScores.findIndex(
-      score => score.isFromReferee && score.round === currentRoundNumber
-    );
-    
-    if (existingTempIndex >= 0) {
-      // Replace the existing temporary score
-      const updatedMatchScores = [...matchScores];
-      updatedMatchScores[existingTempIndex] = tempMatchScore;
-      setMatchScores(updatedMatchScores);
-    } else {
-      // Add a new temporary score
-      setMatchScores(prev => [...prev, tempMatchScore]);
-    }
-    
-    // Reset scores for next set
-    setTeam1Score(0);
-    setTeam2Score(0);
-    setGamePoint(null);
-    setCurrentSet(prev => prev + 1);
-    setRefereeNotes('');
-    
-    message.success(`Set ${currentSet} completed and saved`);
-    return newSetScore;
-  };
-  
-  // Submit round scores
-  const submitRoundScores = (): MatchScore | null => {
+  // Submit referee scores as a new round
+  const submitRefereeScores = (): MatchScore | null => {
     try {
-      // First finalize any current set if there are points
-      if (team1Score > 0 || team2Score > 0) {
-        const result = finalizeSet();
-        if (!result) {
-          return null; // If finalizing the set failed, abort
-        }
-      }
-      
-      if (setScores.length === 0) {
-        message.warning('Please score at least one set before submitting');
+      if (team1Score === 0 && team2Score === 0) {
+        message.warning('Cannot save a round with no points');
         return null;
       }
       
-      // Calculate total scores for the round
-      const roundTotal = setScores.reduce(
-        (acc, set) => ({
-          team1: acc.team1 + set.team1,
-          team2: acc.team2 + set.team2
-        }),
-        { team1: 0, team2: 0 }
-      );
-      
-      // Calculate most frequent half used (mode)
-      const halfCounts = setScores.reduce((acc, set) => {
-        const half = set.currentHalf || 1;
-        acc[half] = (acc[half] || 0) + 1;
-        return acc;
-      }, {} as Record<number, number>);
-      
-      const mostFrequentHalf = Object.entries(halfCounts).sort((a, b) => b[1] - a[1])[0][0];
-      
-      // Compile notes from all sets
-      const combinedNotes = setScores
-        .filter(set => set.note)
-        .map(set => `Set ${set.set}: ${set.note}`)
-        .join('\n');
-      
-      // Find and remove any temporary match scores from referee
-      const filteredMatchScores = matchScores.filter(score => !score.isFromReferee);
-      
-      // Calculate proper round number for the new score
-      const currentRoundNumber = filteredMatchScores.length + 1;
-      
-      // Prepare new score data
+      // Create new score entry directly from referee scoring
       const newScore: MatchScore = {
         matchScoreId: Math.floor(Math.random() * 1000) + 100,
         matchId: match?.id || 0,
-        round: currentRoundNumber,
-        note: combinedNotes || `Round ${currentRoundNumber}: ${setScores.length} sets played`,
-        currentHaft: parseInt(mostFrequentHalf),
-        team1Score: roundTotal.team1,
-        team2Score: roundTotal.team2,
-        setDetails: [...setScores] // Store all set details for reference
+        round: matchScores.length + 1,
+        note: refereeNotes || `Round ${currentRound}`,
+        currentHaft: refereeCurrentHalf,
+        team1Score: team1Score,
+        team2Score: team2Score,
       };
       
-      // Add to match scores (replacing temporary referee scores)
-      setMatchScores([...filteredMatchScores, newScore]);
+      // Add to match scores
+      setMatchScores(prev => [...prev, newScore]);
       
-      // Reset for next round
-      setCurrentRound(currentRoundNumber + 1);
-      setCurrentSet(1);
-      setSetScores([]);
-      setScoringHistory([]);
+      // Reset the referee scoring state
+      setTeam1Score(0);
+      setTeam2Score(0);
       setRefereeNotes('');
+      setCurrentRound(prev => prev + 1);
+      setScoringHistory([]);
       
-      message.success('Round scores submitted successfully');
+      message.success('Round score submitted successfully');
       return newScore;
     } catch (error) {
       console.error('Error submitting round scores:', error);
@@ -406,21 +279,28 @@ export const useMatchScoring = (match: IMatch | null) => {
     }
   };
 
+  // Calculate if a team has game point
+  const gamePoint = (() => {
+    if (team1Score >= 10 && team1Score >= team2Score + 2) {
+      return 1;
+    } else if (team2Score >= 10 && team2Score >= team1Score + 2) {
+      return 2;
+    }
+    return null;
+  })();
+
   // Return value with explicit return type for better TypeScript safety
   return {
     // State
     matchScores,
     currentRound,
-    currentSet,
     team1Score,
     team2Score,
-    setScores,
     gamePoint,
     scoringHistory,
     refereeNotes,
     refereeCurrentHalf,
     totalScores,
-    setsWon,
     
     // Actions
     setMatchScores,
@@ -429,9 +309,9 @@ export const useMatchScoring = (match: IMatch | null) => {
     handleAddRound,
     handleEditRound,
     addPointToTeam,
-    finalizeSet,
-    submitRoundScores,
+    submitRefereeScores,
     undoLastScore,
-    cleanupStorageForMatch
+    cleanupStorageForMatch,
+    getWinner
   };
 };
