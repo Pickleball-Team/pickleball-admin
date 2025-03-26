@@ -12,6 +12,7 @@ interface EndMatchPanelProps {
   totalScores: { team1: number; team2: number };
   onEndMatch: () => void;
   onCancel: () => void;
+  onDeleteRound?: (round: number) => void; // Add this new prop
 }
 
 const EndMatchPanel: React.FC<EndMatchPanelProps> = ({
@@ -19,6 +20,7 @@ const EndMatchPanel: React.FC<EndMatchPanelProps> = ({
   totalScores,
   onEndMatch,
   onCancel,
+  onDeleteRound, // Add this new prop
 }) => {
   return (
     <>
@@ -34,7 +36,12 @@ const EndMatchPanel: React.FC<EndMatchPanelProps> = ({
         <Title level={4}>Score Summary</Title>
         <ScoreSummary team1Score={totalScores.team1} team2Score={totalScores.team2} />
 
-        <MatchScoreTable matchScores={matchScores} hideActions size="small" />
+        <MatchScoreTable 
+          matchScores={matchScores} 
+          hideActions={!onDeleteRound} 
+          onDeleteRound={onDeleteRound} 
+          size="small" 
+        />
         <Divider />
       </div>
 

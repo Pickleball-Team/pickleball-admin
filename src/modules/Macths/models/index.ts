@@ -26,3 +26,15 @@ export interface IMatchScope {
 }
 
 export interface EndTournamentMatchDTO extends IMatchScope {}
+
+export enum WinScore {
+  Eleven = 1,
+  Fifteen = 2,
+  TwentyOne = 3,
+}
+
+export const WinScoreOptions: Map<WinScore, number> = new Map([
+  [WinScore.Eleven, 11],
+  [WinScore.Fifteen, 15],
+  [WinScore.TwentyOne, 21],
+]);

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Table, Typography, Tag, Button } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
+import { Table, Typography, Tag, Button, Space, Popconfirm } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -18,6 +18,7 @@ interface MatchScore {
 interface MatchScoreTableProps {
   matchScores: MatchScore[];
   onEditRound?: (round: number) => void;
+  onDeleteRound?: (round: number) => void; // Add this new prop
   hideActions?: boolean;
   size?: 'default' | 'middle' | 'small';
 }
@@ -25,6 +26,7 @@ interface MatchScoreTableProps {
 const MatchScoreTable: React.FC<MatchScoreTableProps> = ({
   matchScores,
   onEditRound,
+  onDeleteRound, // Add this new prop
   hideActions = false,
   size = 'large'
 }) => {
@@ -89,13 +91,31 @@ const MatchScoreTable: React.FC<MatchScoreTableProps> = ({
     title: 'Actions',
     key: 'actions',
     render: (_: unknown, record: MatchScore) => (
-      <Button
-        icon={<EditOutlined />}
-        onClick={() => onEditRound && onEditRound(record.round)}
-        type="link"
-      >
-        Edit
-      </Button>
+      <Space>
+        <Button
+          icon={<EditOutlined />}
+          onClick={() => onEditRound && onEditRound(record.round)}
+          type="link"
+        >
+          Edit
+        </Button>
+        {onDeleteRound && ( // Only show delete if handler provided
+          <Popconfirm
+            title="Are you sure you want to delete this round?"
+            onConfirm={() => onDeleteRound(record.round)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button
+              icon={<DeleteOutlined />}
+              type="link"
+              danger
+            >
+              Delete
+            </Button>
+          </Popconfirm>
+        )}
+      </Space>
     ),
   };
 

@@ -14,6 +14,7 @@ import {
   PlusOutlined,
   CheckCircleOutlined,
   TeamOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { IMatch, EndTournamentMatchDTO } from '../../../modules/Macths/models';
 import { useEndTournamentMatch } from '../../../modules/Macths/hooks/useEndTournamentMatch';
@@ -57,6 +58,9 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     refereeNotes,
     refereeCurrentHalf,
     totalScores,
+    targetScore,
+    overtimeLimit,
+    hasWinner,
     setRefereeNotes,
     setRefereeCurrentHalf,
     handleAddRound,
@@ -65,7 +69,9 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     submitRefereeScores,
     undoLastScore,
     cleanupStorageForMatch,
-    getWinner
+    getWinner,
+    resetCurrentScores,
+    deleteRoundScore,
   } = useMatchScoring(match);
 
   // Start editing a round
@@ -96,7 +102,6 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     setActiveTab('viewScores');
   };
 
-  // Handle ending the match - using EndTournamentMatchDTO
   const handleEndMatch = async () => {
     try {
       // Show loading message
@@ -116,20 +121,29 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
         return endMatch(scoreData);
       });
 
-      // Add final summary data with winner information
-      const finalData: EndTournamentMatchDTO = {
-        matchId: match.id,
-        round: matchScores.length + 1,
-        note: `Match ended with ${totalScores.team1}-${totalScores.team2}. Winner: ${getWinner()}`,
-        currentHaft: 1, // Default to first half for final result
-        team1Score: totalScores.team1,
-        team2Score: totalScores.team2,
-      };
+      // Execute all promises using Promise.allSettled
+      const results = await Promise.allSettled(scorePromises);
 
-      scorePromises.push(endMatch(finalData));
+      // Handle results
+      const failedRequests = results.filter(
+        (result) => result.status === 'rejected'
+      );
+      const successfulRequests = results.filter(
+        (result) => result.status === 'fulfilled'
+      );
 
-      // Execute all promises in parallel
-      await Promise.all(scorePromises);
+      // Log failed requests for debugging
+      if (failedRequests.length > 0) {
+        console.error('Some API calls failed:', failedRequests);
+        message.warning(
+          `${failedRequests.length} API calls failed. Check the console for details.`
+        );
+      }
+
+      // If all requests failed, show an error message
+      if (successfulRequests.length === 0) {
+        throw new Error('All API calls failed.');
+      }
 
       // Close loading message
       loadingMessage();
@@ -158,7 +172,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       }
       open={visible}
       onCancel={onClose}
-      width={800}
+      width={1100}
       footer={null}
     >
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
@@ -171,11 +185,15 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           }
           key="viewScores"
         >
-          <ScoreSummary team1Score={totalScores.team1} team2Score={totalScores.team2} />
+          <ScoreSummary
+            team1Score={totalScores.team1}
+            team2Score={totalScores.team2}
+          />
 
           <MatchScoreTable
             matchScores={matchScores}
             onEditRound={startEditRound}
+            onDeleteRound={deleteRoundScore} // Add delete handler
           />
 
           <Divider />
@@ -247,6 +265,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             totalScores={totalScores}
             onEndMatch={handleEndMatch}
             onCancel={() => setActiveTab('viewScores')}
+            onDeleteRound={deleteRoundScore} // Add delete handler
           />
         </TabPane>
 
@@ -266,6 +285,9 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             gamePoint={gamePoint}
             refereeNotes={refereeNotes}
             refereeCurrentHalf={refereeCurrentHalf}
+            targetScore={targetScore}
+            overtimeLimit={overtimeLimit}
+            hasWinner={hasWinner}
             onAddPoint={addPointToTeam}
             onSetRefereeNotes={setRefereeNotes}
             onSetRefereeCurrentHalf={setRefereeCurrentHalf}
@@ -276,6 +298,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             onUndoLastScore={undoLastScore}
             onCancel={() => setActiveTab('viewScores')}
             canUndo={scoringHistory.length > 0}
+            onResetScores={resetCurrentScores} // Add reset handler
           />
         </TabPane>
       </Tabs>
