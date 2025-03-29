@@ -25,7 +25,14 @@ export interface IMatchScope {
   team2Score: number;
 }
 
-export interface EndTournamentMatchDTO extends IMatchScope {}
+export interface EndTournamentMatchDTO {
+  matchId: number;
+  round: number;
+  note: string;
+  currentHaft: number;
+  team1Score: number;
+  team2Score: number;
+}
 
 export enum WinScore {
   Eleven = 1,
