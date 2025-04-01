@@ -136,7 +136,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           currentHaft: score.currentHaft,
           team1Score: score.team1Score,
           team2Score: score.team2Score,
-          logs: score.logs,
+          logs:  JSON.stringify(score.logs),
         };
 
         console.log(`Submitting local score for round ${score.round}`);

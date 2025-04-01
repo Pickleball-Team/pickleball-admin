@@ -56,6 +56,7 @@ export interface EndTournamentMatchDTO {
   currentHaft: number;
   team1Score: number;
   team2Score: number;
+  logs:string;
 }
 
 export enum WinScore {
