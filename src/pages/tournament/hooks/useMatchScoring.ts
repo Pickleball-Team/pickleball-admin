@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { message } from 'antd';
-import { IMatch, EndTournamentMatchDTO } from '../../../modules/Macths/models';
+import { IMatch, EndTournamentMatchDTO, MatchDetails } from '../../../modules/Macths/models';
+import { useGetMatchDetails } from '../../../modules/Macths/hooks/useGetMatchDetails';
 
 // Constants for localStorage
 const MATCH_SCORES_STORAGE_KEY = 'pickleball_match_scores';
 const REFEREE_SCORES_STORAGE_KEY = 'pickleball_referee_scores';
+const MAX_ROUNDS_PER_MATCH = 3;
 
 // Win score constants
 export enum WinScore {
@@ -28,6 +30,8 @@ interface MatchScore {
   currentHaft: number;
   team1Score: number;
   team2Score: number;
+  logs?: string;
+  source?: 'api' | 'local';
 }
 
 interface ScoringHistoryEntry {
@@ -36,18 +40,12 @@ interface ScoringHistoryEntry {
   timestamp: string;
 }
 
-interface TeamScores {
-  team1: number;
-  team2: number;
+// Define a log entry interface for type safety
+interface LogEntry {
+  team: 1 | 2;
+  points: number;
+  timestamp: string;
 }
-
-// Utility function to normalize half values
-const normalizeHalf = (value: any): number => {
-  if (typeof value === 'number') return value;
-  if (value === undefined || value === null) return 1;
-  const numeric = Number(value);
-  return isNaN(numeric) ? 1 : numeric;
-};
 
 export const useMatchScoring = (match: IMatch | null) => {
   // Core state
@@ -62,6 +60,16 @@ export const useMatchScoring = (match: IMatch | null) => {
   const [scoringHistory, setScoringHistory] = useState<ScoringHistoryEntry[]>([]);
   const [refereeNotes, setRefereeNotes] = useState<string>('');
   const [refereeCurrentHalf, setRefereeCurrentHalf] = useState<number>(1);
+  
+  // Track data source for showing appropriate UI feedback
+  const [dataSource, setDataSource] = useState<'api' | 'localStorage' | 'new'>('new');
+  
+  // Fetch match details from the API
+  const { 
+    data: matchDetails, 
+    isLoading: isLoadingMatchDetails,
+    isError: isMatchDetailsError
+  } = useGetMatchDetails(match?.id || 0);
 
   // Get target score based on match winScore
   const getTargetScore = (): number => {
@@ -76,55 +84,127 @@ export const useMatchScoring = (match: IMatch | null) => {
     return getTargetScore() + 5;
   };
 
-  // Load match data from localStorage
+  // Load match data - combining API and localStorage
   useEffect(() => {
-    if (match?.id) {
-      // Load match scores
-      const savedScores = localStorage.getItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
-      if (savedScores) {
-        try {
-          const parsedScores = JSON.parse(savedScores);
-          setMatchScores(parsedScores);
-        } catch (e) {
-          console.error('Failed to parse saved match scores', e);
-        }
-      }  else {
-        // For other match IDs, create empty sample data
-        setMatchScores([
-          {
-            matchScoreId: 100 + match?.id,
-            matchId: match?.id,
-            round: 1,
-            note: 'First round',
-            currentHaft: 1,
-            team1Score: 0,
-            team2Score: 0,
-          },
-        ]);
-      }
+    if (!match?.id) return;
+
+    let apiScores: MatchScore[] = [];
+    let localScores: MatchScore[] = [];
     
-      // Load referee scoring data
-      const savedRefereeData = localStorage.getItem(`${REFEREE_SCORES_STORAGE_KEY}_${match.id}`);
-      if (savedRefereeData) {
-        try {
-          const parsedData = JSON.parse(savedRefereeData);
-          setCurrentRound(parsedData.currentRound || 1);
-          setTeam1Score(parsedData.team1Score || 0);
-          setTeam2Score(parsedData.team2Score || 0);
-          setScoringHistory(parsedData.scoringHistory || []);
-          setRefereeNotes(parsedData.refereeNotes || '');
-          setRefereeCurrentHalf(parsedData.refereeCurrentHalf || 1);
-        } catch (e) {
-          console.error('Failed to parse saved referee data', e);
-        }
+    // First check if we have match details from the API
+    if (matchDetails && matchDetails.matchScoreDetails?.length > 0) {
+      // Convert API match score format to our local format
+      apiScores = matchDetails.matchScoreDetails.map(detail => ({
+        matchScoreId: detail.matchScoreId,
+        matchId: match.id,
+        round: detail.round,
+        note: detail.note,
+        currentHaft: detail.currentHaft,
+        team1Score: detail.team1Score,
+        team2Score: detail.team2Score,
+        logs: detail.logs,
+        source: 'api' as const
+      }));
+      
+      console.log('Loaded match scores from API:', apiScores.length);
+    }
+
+    // Check for local storage data regardless of API data
+    const savedScores = localStorage.getItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
+    if (savedScores) {
+      try {
+        const parsedScores = JSON.parse(savedScores);
+        // Mark these scores as coming from localStorage
+        localScores = parsedScores.map((score: MatchScore) => ({
+          ...score,
+          source: 'local' as const
+        }));
+        console.log('Found local scores:', localScores.length);
+      } catch (e) {
+        console.error('Failed to parse saved match scores', e);
       }
     }
-  }, [match?.id]);
+    
+    // Merge scores from both sources, giving priority to API scores
+    const mergedScores = mergeScores(apiScores, localScores);
+    
+    // Check if we have any scores after merging
+    if (mergedScores.length > 0) {
+      setMatchScores(mergedScores);
+      setDataSource(apiScores.length > 0 ? 'api' : 'localStorage');
+      
+      // Set the current round to the next available round number
+      const maxRound = Math.max(...mergedScores.map(score => score.round));
+      setCurrentRound(maxRound + 1);
+    } else {
+      // Do not automatically create an empty first round
+      // Only set empty array if no scores are available
+      setMatchScores([]);
+      setDataSource('new');
+      setCurrentRound(1);
+      console.log('No match scores found - starting with empty state');
+    }
+    
+    // Always load referee scoring data for the current session
+    loadRefereeData();
+    
+  }, [match?.id, matchDetails]);
   
-  // Save match scores to localStorage
+  // Merge API scores and local scores, respecting the round limit
+  const mergeScores = (apiScores: MatchScore[], localScores: MatchScore[]): MatchScore[] => {
+    // Create a map of rounds that exist in API data
+    const apiRounds = new Set(apiScores.map(score => score.round));
+    
+    // Filter local scores to only include rounds that don't exist in API data
+    const uniqueLocalScores = localScores.filter(score => !apiRounds.has(score.round));
+    
+    // Combine API scores and unique local scores
+    let combinedScores = [...apiScores, ...uniqueLocalScores];
+    
+    // Sort by round number
+    combinedScores.sort((a, b) => a.round - b.round);
+    
+    // Enforce maximum round limit
+    if (combinedScores.length > MAX_ROUNDS_PER_MATCH) {
+      console.log(`Limiting scores to ${MAX_ROUNDS_PER_MATCH} rounds`);
+      combinedScores = combinedScores.slice(0, MAX_ROUNDS_PER_MATCH);
+    }
+    
+    return combinedScores;
+  };
+  
+  // Load referee data from localStorage
+  const loadRefereeData = () => {
+    if (!match?.id) return;
+    
+    const savedRefereeData = localStorage.getItem(`${REFEREE_SCORES_STORAGE_KEY}_${match.id}`);
+    if (savedRefereeData) {
+      try {
+        const parsedData = JSON.parse(savedRefereeData);
+        setCurrentRound(parsedData.currentRound || 1);
+        setTeam1Score(parsedData.team1Score || 0);
+        setTeam2Score(parsedData.team2Score || 0);
+        setScoringHistory(parsedData.scoringHistory || []);
+        setRefereeNotes(parsedData.refereeNotes || '');
+        setRefereeCurrentHalf(parsedData.refereeCurrentHalf || 1);
+      } catch (e) {
+        console.error('Failed to parse saved referee data', e);
+      }
+    }
+  };
+  
+  // Save match scores to localStorage - only save non-API scores
   useEffect(() => {
     if (match?.id && matchScores.length > 0) {
-      localStorage.setItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`, JSON.stringify(matchScores));
+      // Only store rounds that don't exist in API data
+      const localScoresToStore = matchScores
+        .filter(score => score.source !== 'api')
+        .map(({ source, ...rest }) => rest); // Remove the source property before storing
+      
+      if (localScoresToStore.length > 0) {
+        localStorage.setItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`, JSON.stringify(localScoresToStore));
+        console.log(`Saved ${localScoresToStore.length} local scores to localStorage`);
+      }
     }
   }, [match?.id, matchScores]);
   
@@ -184,13 +264,20 @@ export const useMatchScoring = (match: IMatch | null) => {
     return null;
   };
 
-  // Add a new round score
+  // Add a new round score - with round limit check
   const handleAddRound = (values: {
     note: string;
     currentHaft: number;
     team1Score: number;
     team2Score: number;
-  }): MatchScore => {
+    logs?: string;
+  }): MatchScore | null => {
+    // Check if we've reached the maximum number of rounds
+    if (matchScores.length >= MAX_ROUNDS_PER_MATCH) {
+      message.error(`Maximum of ${MAX_ROUNDS_PER_MATCH} rounds allowed per match.`);
+      return null;
+    }
+    
     const newScore: MatchScore = {
       matchScoreId: Math.floor(Math.random() * 1000) + 100,
       matchId: match?.id || 0,
@@ -199,6 +286,12 @@ export const useMatchScoring = (match: IMatch | null) => {
       currentHaft: values.currentHaft,
       team1Score: values.team1Score,
       team2Score: values.team2Score,
+      logs: values.logs || JSON.stringify([{
+        team: values.team1Score > values.team2Score ? 1 : 2,
+        points: Math.max(values.team1Score, values.team2Score),
+        timestamp: new Date().toISOString()
+      }]),
+      source: 'local'
     };
 
     setMatchScores(prev => [...prev, newScore]);
@@ -213,6 +306,7 @@ export const useMatchScoring = (match: IMatch | null) => {
       currentHaft: number;
       team1Score: number;
       team2Score: number;
+      logs?: string;
     }, 
     editingRound: number
   ): MatchScore[] => {
@@ -224,6 +318,8 @@ export const useMatchScoring = (match: IMatch | null) => {
             currentHaft: values.currentHaft,
             team1Score: values.team1Score,
             team2Score: values.team2Score,
+            // Preserve existing logs or use new ones if provided
+            logs: values.logs || score.logs
           }
         : score
     );
@@ -241,20 +337,33 @@ export const useMatchScoring = (match: IMatch | null) => {
       setTeam2Score(prev => prev + points);
     }
     
-    // Add to scoring history
+    // Create a log entry
+    const logEntry: LogEntry = {
+      team: team as 1 | 2,
+      points,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Add to scoring history for current session
     setScoringHistory(prev => [
       ...prev,
       {
         team,
         points,
-        timestamp: new Date().toISOString()
+        timestamp: logEntry.timestamp
       }
     ]);
   };
   
-  // Submit referee scores as a new round
+  // Submit referee scores with round limit check
   const submitRefereeScores = (): MatchScore | null => {
     try {
+      // Check if we've reached the maximum number of rounds
+      if (matchScores.length >= MAX_ROUNDS_PER_MATCH) {
+        message.error(`Maximum of ${MAX_ROUNDS_PER_MATCH} rounds allowed per match.`);
+        return null;
+      }
+      
       if (team1Score === 0 && team2Score === 0) {
         message.warning('Cannot save a round with no points');
         return null;
@@ -266,6 +375,9 @@ export const useMatchScoring = (match: IMatch | null) => {
         return null;
       }
       
+      // Convert scoring history to logs string
+      const logsData = JSON.stringify(scoringHistory);
+      
       // Create new score entry directly from referee scoring
       const newScore: MatchScore = {
         matchScoreId: Math.floor(Math.random() * 1000) + 100,
@@ -275,6 +387,8 @@ export const useMatchScoring = (match: IMatch | null) => {
         currentHaft: refereeCurrentHalf,
         team1Score: team1Score,
         team2Score: team2Score,
+        logs: logsData, // Add the logs
+        source: 'local'
       };
       
       // Add to match scores
@@ -310,11 +424,56 @@ export const useMatchScoring = (match: IMatch | null) => {
     setScoringHistory(prev => prev.slice(0, -1));
   };
 
-  // Clean up localStorage
+  // Clean up localStorage - improved to be more selective
   const cleanupStorageForMatch = (): void => {
     if (match?.id) {
-      localStorage.removeItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
-      localStorage.removeItem(`${REFEREE_SCORES_STORAGE_KEY}_${match.id}`);
+      // Only remove local storage entries for this match if we have API data
+      // or if the match is being completely ended
+      if (matchScores.some(score => score.source === 'api')) {
+        // We have API data, so we can safely remove local data
+        console.log(`Cleaning up localStorage for match ${match.id}`);
+        localStorage.removeItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
+        localStorage.removeItem(`${REFEREE_SCORES_STORAGE_KEY}_${match.id}`);
+      } else {
+        // Keep the data in case the API call failed and we need it later
+        console.log(`Keeping localStorage data for match ${match.id} (no API data available)`);
+      }
+    }
+  };
+
+  // Custom method to selectively clean up only submitted rounds
+  const cleanupSubmittedRounds = (): void => {
+    if (match?.id) {
+      // Get existing local scores
+      const savedScores = localStorage.getItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
+      if (savedScores) {
+        try {
+          // Only keep scores that haven't been submitted yet
+          const parsedScores = JSON.parse(savedScores);
+          
+          // Filter to rounds not in our current matchScores (which were just submitted)
+          // This is useful if we're not submitting all scores at once
+          const roundsToKeep = parsedScores.filter((score: any) => {
+            return !matchScores.some(ms => ms.round === score.round && ms.source === 'local');
+          });
+          
+          if (roundsToKeep.length > 0) {
+            // Save the remaining scores
+            localStorage.setItem(
+              `${MATCH_SCORES_STORAGE_KEY}_${match.id}`, 
+              JSON.stringify(roundsToKeep)
+            );
+            console.log(`Keeping ${roundsToKeep.length} unsubmitted rounds in localStorage`);
+          } else {
+            // No scores to keep, remove the entry
+            localStorage.removeItem(`${MATCH_SCORES_STORAGE_KEY}_${match.id}`);
+            console.log(`Removed all local scores for match ${match.id}`);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved match scores during cleanup', e);
+          // In case of error, leave the data intact
+        }
+      }
     }
   };
 
@@ -343,8 +502,14 @@ export const useMatchScoring = (match: IMatch | null) => {
     message.info('Scores reset to zero');
   };
 
-  // Delete a round score (only works for locally stored scores)
+  // Delete a round score - handle different data sources
   const deleteRoundScore = (round: number): void => {
+    // If data was from API, warn user about local changes
+    if (dataSource === 'api') {
+      message.warning('You are modifying data that exists on the server. Changes will only be saved locally until you submit the match.');
+      setDataSource('localStorage');
+    }
+    
     // Filter out the specific round
     const newScores = matchScores.filter(score => score.round !== round);
     
@@ -358,7 +523,23 @@ export const useMatchScoring = (match: IMatch | null) => {
     message.success(`Round ${round} deleted`);
   };
 
-  // Return value with explicit return type for better TypeScript safety
+  // Helper function to parse logs from a match score
+  const getLogsFromMatchScore = (matchScore: MatchScore): LogEntry[] => {
+    if (!matchScore.logs) return [];
+    try {
+      return JSON.parse(matchScore.logs);
+    } catch (e) {
+      console.error('Failed to parse logs:', e);
+      return [];
+    }
+  };
+
+  // Check if we can add more rounds
+  const canAddMoreRounds = (): boolean => {
+    return matchScores.length < MAX_ROUNDS_PER_MATCH;
+  };
+
+  // Return additional information about data source and loading state
   return {
     // State
     matchScores,
@@ -372,9 +553,15 @@ export const useMatchScoring = (match: IMatch | null) => {
     totalScores,
     targetScore: getTargetScore(),
     overtimeLimit: getOvertimeLimit(),
+    maxRounds: MAX_ROUNDS_PER_MATCH,
     
     // Status checks
     hasWinner,
+    isLoadingMatchDetails,
+    isMatchDetailsError,
+    dataSource,
+    matchDetails,
+    canAddMoreRounds,
     
     // Actions
     setMatchScores,
@@ -386,8 +573,10 @@ export const useMatchScoring = (match: IMatch | null) => {
     submitRefereeScores,
     undoLastScore,
     cleanupStorageForMatch,
+    cleanupSubmittedRounds,
     getWinner,
     resetCurrentScores,
-    deleteRoundScore
+    deleteRoundScore,
+    getLogsFromMatchScore
   };
 };

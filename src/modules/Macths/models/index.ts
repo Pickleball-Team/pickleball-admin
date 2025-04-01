@@ -23,6 +23,30 @@ export interface IMatchScope {
   currentHaft: number;
   team1Score: number;
   team2Score: number;
+  logs?: string;
+}
+
+// Match score detail from API
+export interface MatchScoreDetail {
+  matchScoreId: number;
+  round: number;
+  note: string;
+  currentHaft: number;
+  team1Score: number;
+  team2Score: number;
+  logs?: string;
+}
+
+// Match details returned by the API
+export interface MatchDetails {
+  matchId: number;
+  team1Score: number;
+  team2Score: number;
+  winnerId: number | null;
+  loserId: number | null;
+  date: string;
+  urlVideoMatch: string | null;
+  matchScoreDetails: MatchScoreDetail[];
 }
 
 export interface EndTournamentMatchDTO extends IMatchScope {}
