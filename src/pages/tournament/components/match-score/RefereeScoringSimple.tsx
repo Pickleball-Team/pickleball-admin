@@ -1,6 +1,6 @@
 import React from 'react';
-import { Typography, Card, Row, Col, Space, Button, Tag, Divider, Select, Input, Alert } from 'antd';
-import { SaveOutlined, EditOutlined, TrophyOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Typography, Card, Row, Col, Space, Button, Tag, Divider, Select, Input, Alert, Timeline } from 'antd';
+import { SaveOutlined, EditOutlined, TrophyOutlined, ReloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -23,7 +23,9 @@ interface RefereeScoringSimpleProps {
   onUndoLastScore: () => void;
   onCancel: () => void;
   canUndo: boolean;
-  onResetScores: () => void; // Add this new prop
+  onResetScores: () => void;
+  scoringHistory: { team: number; points: number; timestamp: string }[];
+  disableSubmit?: boolean; // Add this new prop
 }
 
 const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
@@ -44,11 +46,12 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
   onCancel,
   canUndo,
   onResetScores,
+  scoringHistory,
+  disableSubmit = false, // Add default value
 }) => {
   const winner = hasWinner();
   const inOvertime = team1Score >= targetScore || team2Score >= targetScore;
-  
-  // Calculate progress messages for each team
+
   const getTeamProgress = (teamScore: number, teamNum: number) => {
     if (teamScore === 0) return '';
     if (winner === teamNum) return 'WINNER!';
@@ -56,19 +59,26 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
     return `${targetScore - teamScore} to win`;
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  };
+
   return (
     <>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={3}>
-          Round {currentRound}
-        </Title>
-        
-        {/* Score Targets */}
+        <Title level={3}>Round {currentRound}</Title>
+
         <div style={{ marginBottom: 16 }}>
-          <Text type="secondary">Target Score: {targetScore} | Overtime Limit: {overtimeLimit}</Text>
+          <Text type="secondary">
+            Target Score: {targetScore} | Overtime Limit: {overtimeLimit}
+          </Text>
         </div>
-        
-        {/* Win Notification */}
+
         {winner && (
           <Alert
             message={`Team ${winner} has won the round!`}
@@ -78,8 +88,8 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
             icon={<TrophyOutlined />}
             style={{ marginBottom: 16 }}
             action={
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 onClick={onSubmitScores}
                 icon={<SaveOutlined />}
               >
@@ -88,41 +98,61 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
             }
           />
         )}
-        
+
         {gamePoint && !winner && (
-          <Tag color="red" style={{ fontSize: '16px', padding: '5px 10px', marginBottom: 16 }}>
+          <Tag
+            color="red"
+            style={{ fontSize: '16px', padding: '5px 10px', marginBottom: 16 }}
+          >
             Game Point - Team {gamePoint}
           </Tag>
         )}
-        
+
         <Row gutter={24} style={{ marginBottom: 24 }}>
           <Col span={12}>
-            <Card 
-              bordered 
-              style={{ background: winner === 1 ? '#d4f7e6' : '#f0f8ff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+            <Card
+              bordered
+              style={{
+                background: winner === 1 ? '#d4f7e6' : '#f0f8ff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
             >
               <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <div>
                   <Text style={{ fontSize: '16px' }}>Team 1</Text>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: winner === 1 ? '#52c41a' : '#1890ff', margin: '10px 0' }}>
+                  <div
+                    style={{
+                      fontSize: '48px',
+                      fontWeight: 'bold',
+                      color: winner === 1 ? '#52c41a' : '#1890ff',
+                      margin: '10px 0',
+                    }}
+                  >
                     {team1Score}
                   </div>
-                  <Text type={winner === 1 ? 'success' : 'secondary'} strong={winner === 1}>
+                  <Text
+                    type={winner === 1 ? 'success' : 'secondary'}
+                    strong={winner === 1}
+                  >
                     {getTeamProgress(team1Score, 1)}
                   </Text>
                 </div>
-                
+
                 <Space>
-                  <Button 
-                    type="primary" 
+                  <Button
+                    type="primary"
                     size="large"
-                    style={{ height: '60px', width: '100px', fontSize: '24px' }}
+                    style={{
+                      height: '60px',
+                      width: '100px',
+                      fontSize: '24px',
+                    }}
                     onClick={() => onAddPoint(1)}
                     disabled={!!winner}
                   >
                     +1
                   </Button>
-                  <Button 
+                  <Button
                     size="large"
                     style={{ height: '60px', width: '60px' }}
                     onClick={() => onAddPoint(1, -1)}
@@ -134,34 +164,53 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
               </Space>
             </Card>
           </Col>
-          
+
           <Col span={12}>
-            <Card 
-              bordered 
-              style={{ background: winner === 2 ? '#d4f7e6' : '#fffbe6', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+            <Card
+              bordered
+              style={{
+                background: winner === 2 ? '#d4f7e6' : '#fffbe6',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              }}
             >
               <Space direction="vertical" size="large" style={{ width: '100%' }}>
                 <div>
                   <Text style={{ fontSize: '16px' }}>Team 2</Text>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: winner === 2 ? '#52c41a' : '#fa8c16', margin: '10px 0' }}>
+                  <div
+                    style={{
+                      fontSize: '48px',
+                      fontWeight: 'bold',
+                      color: winner === 2 ? '#52c41a' : '#fa8c16',
+                      margin: '10px 0',
+                    }}
+                  >
                     {team2Score}
                   </div>
-                  <Text type={winner === 2 ? 'success' : 'secondary'} strong={winner === 2}>
+                  <Text
+                    type={winner === 2 ? 'success' : 'secondary'}
+                    strong={winner === 2}
+                  >
                     {getTeamProgress(team2Score, 2)}
                   </Text>
                 </div>
-                
+
                 <Space>
-                  <Button 
-                    type="primary" 
+                  <Button
+                    type="primary"
                     size="large"
-                    style={{ height: '60px', width: '100px', fontSize: '24px', background: winner === 2 ? '#52c41a' : '#fa8c16', borderColor: winner === 2 ? '#52c41a' : '#fa8c16' }}
+                    style={{
+                      height: '60px',
+                      width: '100px',
+                      fontSize: '24px',
+                      background: winner === 2 ? '#52c41a' : '#fa8c16',
+                      borderColor: winner === 2 ? '#52c41a' : '#fa8c16',
+                    }}
                     onClick={() => onAddPoint(2)}
                     disabled={!!winner}
                   >
                     +1
                   </Button>
-                  <Button 
+                  <Button
                     size="large"
                     style={{ height: '60px', width: '60px' }}
                     onClick={() => onAddPoint(2, -1)}
@@ -174,8 +223,7 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
             </Card>
           </Col>
         </Row>
-        
-        {/* Current Half and Notes fields */}
+
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col span={24}>
             <Card bordered style={{ marginBottom: 16 }}>
@@ -184,8 +232,8 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
                   <div style={{ marginBottom: 8 }}>
                     <Text strong>Current Half</Text>
                   </div>
-                  <Select 
-                    value={refereeCurrentHalf} 
+                  <Select
+                    value={refereeCurrentHalf}
                     onChange={onSetRefereeCurrentHalf}
                     style={{ width: '100%' }}
                   >
@@ -198,10 +246,10 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
                   <div style={{ marginBottom: 8 }}>
                     <Text strong>Notes</Text>
                   </div>
-                  <TextArea 
-                    autoSize={{ minRows: 1, maxRows: 6 }} 
+                  <TextArea
+                    autoSize={{ minRows: 1, maxRows: 6 }}
                     value={refereeNotes}
-                    onChange={e => onSetRefereeNotes(e.target.value)}
+                    onChange={(e) => onSetRefereeNotes(e.target.value)}
                     placeholder="Add notes about this round..."
                   />
                 </Col>
@@ -209,9 +257,50 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
             </Card>
           </Col>
         </Row>
-        
+
+        {scoringHistory.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <Divider orientation="left">Current Round Scoring History</Divider>
+            <Card bordered>
+              <Timeline style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {scoringHistory.map((log, index) => (
+                  <Timeline.Item
+                    key={index}
+                    color={log.team === 1 ? 'blue' : 'orange'}
+                    dot={
+                      log.points > 0 ? undefined : (
+                        <ClockCircleOutlined style={{ fontSize: '16px' }} />
+                      )
+                    }
+                  >
+                    <Space>
+                      <Tag color={log.team === 1 ? 'blue' : 'orange'}>
+                        Team {log.team}
+                      </Tag>
+                      <Text type={log.points > 0 ? 'success' : 'danger'}>
+                        {log.points > 0 ? `+${log.points}` : log.points}
+                      </Text>
+                      <Text type="secondary">{formatTimestamp(log.timestamp)}</Text>
+                    </Space>
+                  </Timeline.Item>
+                ))}
+              </Timeline>
+            </Card>
+          </div>
+        )}
+
+        {disableSubmit && (
+          <Alert
+            message="Cannot Add More Rounds"
+            description="This match has reached the maximum number of allowed rounds."
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
         <Space style={{ marginBottom: 24 }}>
-          <Button 
+          <Button
             onClick={onUndoLastScore}
             disabled={!canUndo || !!winner}
             icon={<EditOutlined />}
@@ -219,9 +308,8 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
           >
             Undo Last Score
           </Button>
-          
-          {/* Add Reset button */}
-          <Button 
+
+          <Button
             onClick={onResetScores}
             icon={<ReloadOutlined />}
             size="large"
@@ -232,23 +320,32 @@ const RefereeScoringSimple: React.FC<RefereeScoringSimpleProps> = ({
           </Button>
         </Space>
       </div>
-      
+
       <Divider />
-      
+
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Space>
           <Button
             type="primary"
             icon={<SaveOutlined />}
             onClick={onSubmitScores}
-            disabled={(team1Score === 0 && team2Score === 0) || !winner}
+            disabled={
+              disableSubmit || (team1Score === 0 && team2Score === 0) || !winner
+            }
             size="large"
+            title={
+              disableSubmit
+                ? "Maximum rounds reached"
+                : (team1Score === 0 && team2Score === 0)
+                ? "Cannot submit with no points"
+                : !winner
+                ? "No winner yet"
+                : "Submit round score"
+            }
           >
             Submit Round Score
           </Button>
-          <Button onClick={onCancel}>
-            Cancel
-          </Button>
+          <Button onClick={onCancel}>Cancel</Button>
         </Space>
       </div>
     </>

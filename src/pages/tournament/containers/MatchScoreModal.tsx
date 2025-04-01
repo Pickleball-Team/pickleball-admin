@@ -8,6 +8,8 @@ import {
   Tabs,
   Divider,
   message,
+  Alert,
+  Spin,
 } from 'antd';
 import {
   TrophyOutlined,
@@ -69,9 +71,16 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
     submitRefereeScores,
     undoLastScore,
     cleanupStorageForMatch,
+    cleanupSubmittedRounds,
     getWinner,
     resetCurrentScores,
     deleteRoundScore,
+    isLoadingMatchDetails,
+    isMatchDetailsError,
+    dataSource,
+    matchDetails,
+    canAddMoreRounds,
+    maxRounds,
   } = useMatchScoring(match);
 
   // Start editing a round
@@ -107,8 +116,19 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       // Show loading message
       const loadingMessage = message.loading('Submitting match scores...', 0);
 
-      // Create an array of promises for each round score
-      const scorePromises = matchScores.map((score) => {
+      // Filter match scores to only include local records
+      const localScores = matchScores.filter(score => score.source === 'local');
+      
+      if (localScores.length === 0) {
+        message.info('No local score changes to submit.');
+        loadingMessage();
+        onClose();
+        refetch();
+        return;
+      }
+
+      // Create an array of promises only for locally created/modified scores
+      const scorePromises = localScores.map((score) => {
         const scoreData: EndTournamentMatchDTO = {
           matchId: match.id,
           round: score.round,
@@ -116,8 +136,10 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           currentHaft: score.currentHaft,
           team1Score: score.team1Score,
           team2Score: score.team2Score,
+          logs:  JSON.stringify(score.logs),
         };
 
+        console.log(`Submitting local score for round ${score.round}`);
         return endMatch(scoreData);
       });
 
@@ -141,18 +163,22 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       }
 
       // If all requests failed, show an error message
-      if (successfulRequests.length === 0) {
+      if (successfulRequests.length === 0 && failedRequests.length > 0) {
         throw new Error('All API calls failed.');
       }
 
       // Close loading message
       loadingMessage();
 
-      // Clean up localStorage
-      cleanupStorageForMatch();
+      // Only clean up the submitted rounds
+      cleanupSubmittedRounds();
 
       // Show success message
-      message.success('Match ended successfully');
+      if (successfulRequests.length > 0) {
+        message.success(`Match ended successfully. Submitted ${successfulRequests.length} rounds.`);
+      } else {
+        message.info('No changes were submitted.');
+      }
 
       // Close modal and refresh data
       onClose();
@@ -161,6 +187,10 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       message.error(`Failed to end match: ${error.message}`);
     }
   };
+
+  // Add a new summary section on the End Match tab
+  const localScoresCount = matchScores.filter(score => score.source === 'local').length;
+  const apiScoresCount = matchScores.filter(score => score.source === 'api').length;
 
   return (
     <Modal
@@ -175,6 +205,55 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       width={1100}
       footer={null}
     >
+      {isLoadingMatchDetails && (
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <Spin size="large" />
+          <div style={{ marginTop: 16 }}>Loading match details from server...</div>
+        </div>
+      )}
+
+      {isMatchDetailsError && (
+        <Alert
+          message="Error Loading Match Data"
+          description="Could not load match data from the server. Using locally stored data instead."
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {dataSource === 'api' && (
+        <Alert
+          message="Loaded from Server"
+          description="Match data was loaded from the server. Any changes will be stored locally until you submit them."
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          banner
+        />
+      )}
+
+      {dataSource === 'localStorage' && !isMatchDetailsError && (
+        <Alert
+          message="Loaded from Local Storage"
+          description="You are viewing locally saved data that has not been submitted to the server."
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          banner
+        />
+      )}
+
+      {!canAddMoreRounds() && (
+        <Alert
+          message={`Maximum Rounds Reached (${maxRounds})`}
+          description={`This match can have a maximum of ${maxRounds} rounds. Please delete an existing round if you need to add a new one.`}
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
         {/* View Scores Tab */}
         <TabPane
@@ -190,11 +269,25 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             team2Score={totalScores.team2}
           />
 
-          <MatchScoreTable
-            matchScores={matchScores}
-            onEditRound={startEditRound}
-            onDeleteRound={deleteRoundScore} // Add delete handler
-          />
+          {matchScores.length === 0 ? (
+            <Alert
+              message="No Rounds Available"
+              description={
+                isLoadingMatchDetails
+                  ? "Loading match data..."
+                  : "This match doesn't have any scored rounds yet. Use the 'Add Round Score' button or 'Referee Scoring' tab to add scores."
+              }
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          ) : (
+            <MatchScoreTable
+              matchScores={matchScores}
+              onEditRound={startEditRound}
+              onDeleteRound={deleteRoundScore}
+            />
+          )}
 
           <Divider />
 
@@ -213,6 +306,8 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
                 });
                 setActiveTab('addScore');
               }}
+              disabled={!canAddMoreRounds()}
+              title={!canAddMoreRounds() ? `Maximum of ${maxRounds} rounds reached` : undefined}
             >
               Add Round Score
             </Button>
@@ -265,7 +360,9 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             totalScores={totalScores}
             onEndMatch={handleEndMatch}
             onCancel={() => setActiveTab('viewScores')}
-            onDeleteRound={deleteRoundScore} // Add delete handler
+            onDeleteRound={deleteRoundScore}
+            localScoresCount={localScoresCount}
+            apiScoresCount={apiScoresCount}
           />
         </TabPane>
 
@@ -278,28 +375,40 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           }
           key="refereeScoring"
         >
-          <RefereeScoringSimple
-            currentRound={currentRound}
-            team1Score={team1Score}
-            team2Score={team2Score}
-            gamePoint={gamePoint}
-            refereeNotes={refereeNotes}
-            refereeCurrentHalf={refereeCurrentHalf}
-            targetScore={targetScore}
-            overtimeLimit={overtimeLimit}
-            hasWinner={hasWinner}
-            onAddPoint={addPointToTeam}
-            onSetRefereeNotes={setRefereeNotes}
-            onSetRefereeCurrentHalf={setRefereeCurrentHalf}
-            onSubmitScores={() => {
-              submitRefereeScores();
-              setActiveTab('viewScores');
-            }}
-            onUndoLastScore={undoLastScore}
-            onCancel={() => setActiveTab('viewScores')}
-            canUndo={scoringHistory.length > 0}
-            onResetScores={resetCurrentScores} // Add reset handler
-          />
+          {!canAddMoreRounds() ? (
+            <Alert
+              message={`Maximum Rounds Reached (${maxRounds})`}
+              description={`This match already has the maximum of ${maxRounds} rounds. Please delete an existing round if you need to add a new one.`}
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          ) : (
+            <RefereeScoringSimple
+              currentRound={currentRound}
+              team1Score={team1Score}
+              team2Score={team2Score}
+              gamePoint={gamePoint}
+              refereeNotes={refereeNotes}
+              refereeCurrentHalf={refereeCurrentHalf}
+              targetScore={targetScore}
+              overtimeLimit={overtimeLimit}
+              hasWinner={hasWinner}
+              onAddPoint={addPointToTeam}
+              onSetRefereeNotes={setRefereeNotes}
+              onSetRefereeCurrentHalf={setRefereeCurrentHalf}
+              onSubmitScores={() => {
+                submitRefereeScores();
+                setActiveTab('viewScores');
+              }}
+              onUndoLastScore={undoLastScore}
+              onCancel={() => setActiveTab('viewScores')}
+              canUndo={scoringHistory.length > 0}
+              onResetScores={resetCurrentScores}
+              scoringHistory={scoringHistory}
+              disableSubmit={!canAddMoreRounds()}
+            />
+          )}
         </TabPane>
       </Tabs>
     </Modal>

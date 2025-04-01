@@ -319,7 +319,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                     { required: true, message: 'Please select the status!' },
                   ]}
                 >
-                  <Select disabled>
+                  <Select>
                     <Option value={1}>Scheduled</Option>
                     <Option value={2}>Ongoing</Option>
                     <Option value={3}>Completed</Option>
