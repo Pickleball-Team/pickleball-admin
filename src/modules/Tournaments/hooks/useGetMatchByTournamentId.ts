@@ -16,5 +16,6 @@ export function useGetMatchByTournamentId(id: number) {
   return useQuery<Match[]>({
     queryKey: [GET_TOURNAMENT_MATCH_BY_ID, id],
     queryFn: () => fetchTournamenMatchtById(id),
+    refetchInterval: 3000,
   });
 }

@@ -44,6 +44,17 @@ const roleNames: Record<number, string> = {
   [UserRole.AdminClub]: 'Admin Club',
 };
 
+// Define role colors
+const roleColors: Record<number, string> = {
+  [UserRole.Player]: '#1890ff',    // Blue
+  [UserRole.Admin]: '#722ed1',     // Purple
+  [UserRole.Sponsor]: '#faad14',   // Gold
+  [UserRole.Referee]: '#eb2f96',   // Pink
+  [UserRole.User]: '#52c41a',      // Green
+  [UserRole.Staff]: '#13c2c2',     // Cyan
+  [UserRole.AdminClub]: '#fa541c', // Orange
+};
+
 // Extend User interface to include roleId
 interface ExtendedUser extends Omit<User, 'roleId'> {
   roleId?: UserRole;
@@ -84,6 +95,7 @@ const BackList: React.FC = () => {
       const roleChartData = Object.keys(roleCountMap).map((roleId) => ({
         type: roleNames[Number(roleId)],
         value: roleCountMap[Number(roleId)],
+        color: roleColors[Number(roleId)]
       }));
       setUsersByRole(roleChartData);
 
@@ -218,6 +230,15 @@ const BackList: React.FC = () => {
     interactions: [{ type: 'element-active' }],
   };
 
+  // Define custom colors for role pie chart
+  const roleColorMap: Record<string, string> = {};
+  Object.entries(roleNames).forEach(([id, name]) => {
+    roleColorMap[name] = roleColors[Number(id)];
+  });
+
+  // Generate role pie chart colors array
+  const roleColorsArray = usersByRole.map(item => roleColorMap[item.type]);
+
   const columns: ColumnsType<ExtendedUser> = [
     {
       title: 'First Name',
@@ -292,7 +313,9 @@ const BackList: React.FC = () => {
       })),
       onFilter: (value, record) => record.roleId === value,
       render: (roleId: UserRole) => (
-        <Tag color="blue">{roleNames[roleId] || 'Unknown'}</Tag>
+        <Tag color={roleColors[roleId] || 'blue'}>
+          {roleNames[roleId] || 'Unknown'}
+        </Tag>
       ),
     },
     {
@@ -341,12 +364,21 @@ const BackList: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
           <Card title="Users by Role" bordered={false}>
-            <Pie {...pieConfig} data={usersByRole} />
+            <Pie 
+              {...pieConfig} 
+              data={usersByRole} 
+              color={roleColorsArray} 
+            />
           </Card>
         </Col>
         <Col xs={24} md={12}>
           <Card title="Users by Status" bordered={false}>
-            <Pie {...pieConfig} data={usersByStatus} colorField="type" color={['#52c41a', '#f5222d']} />
+            <Pie 
+              {...pieConfig} 
+              data={usersByStatus} 
+              colorField="type" 
+              color={['#52c41a', '#f5222d']} 
+            />
           </Card>
         </Col>
       </Row>

@@ -17,5 +17,6 @@ export function useGetAllBillsByTournamentId(tournamentId: number) {
     queryKey: [GET_ALL_BILLS_BY_TOURNAMENT_ID, tournamentId],
     queryFn: () => fetchAllBillsByTournamentId(tournamentId),
     enabled: !!tournamentId,
+    refetchInterval: 3000,
   });
 }

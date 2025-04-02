@@ -19,5 +19,6 @@ export function useGetAllBillBySponnerId(sponnerId: number) {
     queryKey: ['sponsorBills', sponnerId],
     queryFn: () => fetchSponsorBills(sponnerId),
     enabled: !!sponnerId, // Only run query if sponnerId is provided
+    refetchInterval: 3000,
   });
 }

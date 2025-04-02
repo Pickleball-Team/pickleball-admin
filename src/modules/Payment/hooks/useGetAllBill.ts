@@ -18,5 +18,6 @@ export function useGetAllBill() {
   return useQuery<Bill[], Error>({
     queryKey: [GET_ALL_BILLS],
     queryFn: fetchAllBills,
+    refetchInterval: 3000,
   });
 }

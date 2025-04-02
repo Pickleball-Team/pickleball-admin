@@ -14,10 +14,26 @@ import {
   Select,
   message,
   Modal,
+  Spin,
+  Divider,
+  Statistic,
+  Progress,
 } from 'antd';
-import { SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { 
+  SearchOutlined, 
+  UserOutlined, 
+  ReloadOutlined, 
+  PlusCircleFilled, 
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ManOutlined,
+  WomanOutlined,
+  TeamOutlined,
+  PercentageOutlined
+} from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import { Pie, Column } from '@ant-design/charts';
 
 import { RegisterUserRequest } from '../../modules/User/models';
 import { useQueryClient } from '@tanstack/react-query';
@@ -28,22 +44,153 @@ import { useSelector } from 'react-redux';
 import { useGetRefereeBySponnerId } from '../../modules/Refee/hooks/useGetRefereeBySponnerId';
 import { useUpdateReferee } from '../../modules/Refee/hooks/useUpdateRefee';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { Option } = Select;
 
 type DataIndex = string;
 
+const COLORS = ['#52c41a', '#ff4d4f', '#1890ff', '#faad14', '#722ed1', '#13c2c2'];
+
 const RefereesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const user = useSelector((state: RootState) => state.authencation.user);
-  const { data: referees, isLoading, error } = useGetRefereeBySponnerId(user?.id.toString() || '');
+  const { data: referees, isLoading, error, refetch } = useGetRefereeBySponnerId(user?.id.toString() || '');
   const [, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
+  const [refreshing, setRefreshing] = useState(false);
   const searchInput = useRef<InputRef>(null);
   const { mutate: registerUser } = useRegisterRefereesUser();
   const { mutate: updateReferee } = useUpdateReferee();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+
+  const maleCount = referees?.filter(referee => referee.user.gender === 'Male')?.length || 0;
+  const femaleCount = referees?.filter(referee => referee.user.gender === 'Female')?.length || 0;
+  const totalCount = referees?.length || 0;
+
+  const acceptedCount = referees?.filter(referee => referee.isAccept)?.length || 0;
+  const pendingCount = referees?.filter(referee => !referee.isAccept)?.length || 0;
+  const acceptanceRate = totalCount > 0 ? Math.round((acceptedCount / totalCount) * 100) : 0;
+
+  const acceptedMaleCount = referees?.filter(referee => referee.isAccept && referee.user.gender === 'Male')?.length || 0;
+  const acceptedFemaleCount = referees?.filter(referee => referee.isAccept && referee.user.gender === 'Female')?.length || 0;
+  const pendingMaleCount = referees?.filter(referee => !referee.isAccept && referee.user.gender === 'Male')?.length || 0;
+  const pendingFemaleCount = referees?.filter(referee => !referee.isAccept && referee.user.gender === 'Female')?.length || 0;
+
+  const activeInactiveData = [
+    { type: 'Active', value: referees?.filter(referee => referee.user.status)?.length || 0 },
+    { type: 'Inactive', value: referees?.filter(referee => !referee.user.status)?.length || 0 }
+  ];
+
+  const acceptedPendingData = [
+    { type: 'Accepted', value: acceptedCount },
+    { type: 'Pending', value: pendingCount }
+  ];
+
+  const genderData = [
+    { type: 'Male', value: maleCount },
+    { type: 'Female', value: femaleCount }
+  ];
+
+  const detailedBarData = [
+    { category: 'Male', type: 'Accepted', value: acceptedMaleCount },
+    { category: 'Male', type: 'Pending', value: pendingMaleCount },
+    { category: 'Female', type: 'Accepted', value: acceptedFemaleCount },
+    { category: 'Female', type: 'Pending', value: pendingFemaleCount },
+  ];
+
+  const statusPieConfig = {
+    appendPadding: 10,
+    data: acceptedPendingData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    label: {
+      type: 'outer',
+      content: '{name} {percentage}',
+    },
+    color: (datum: any) => {
+      if (datum.type === 'Accepted') return COLORS[0];
+      return COLORS[1];
+    },
+    interactions: [{ type: 'element-active' }],
+    legend: {
+      position: 'bottom' as 'bottom',
+    },
+  };
+
+  const approvalPieConfig = {
+    appendPadding: 10,
+    data: acceptedPendingData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    label: {
+      type: 'outer',
+      content: '{name} {percentage}',
+    },
+    color: (datum: any) => {
+      if (datum.type === 'Accepted') return COLORS[2];
+      return COLORS[3];
+    },
+    interactions: [{ type: 'element-active' }],
+    legend: {
+      position: 'bottom' as 'bottom',
+    },
+  };
+
+  const genderPieConfig = {
+    appendPadding: 10,
+    data: genderData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    label: {
+      type: 'outer',
+      content: '{name} {percentage}',
+    },
+    color: (datum: any) => {
+      if (datum.type === 'Male') return COLORS[4];
+      return COLORS[5];
+    },
+    interactions: [{ type: 'element-active' }],
+    legend: {
+      position: 'bottom' as 'bottom',
+    },
+  };
+
+  const genderApprovalConfig = {
+    data: detailedBarData,
+    isGroup: true,
+    xField: 'category',
+    yField: 'value',
+    seriesField: 'type',
+    color: [COLORS[2], COLORS[3]],
+    label: {
+      position: 'middle' as const,
+      style: {
+        fill: '#FFFFFF',
+        opacity: 0.6,
+      },
+    },
+    legend: {
+      position: 'top' as 'top',
+    },
+    xAxis: {
+      title: { text: 'Gender' },
+    },
+    yAxis: {
+      title: { text: 'Number of Referees' },
+    },
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500);
+  };
 
   const handleSearch = (
     selectedKeys: string[],
@@ -182,19 +329,19 @@ const RefereesPage: React.FC = () => {
       ...getColumnSearchProps('phoneNumber'),
     },
     {
-      title: 'Status',
-      dataIndex: ['user', 'status'],
-      key: 'status',
+      title: 'isAccept',
+      dataIndex: 'isAccept',
+      key: 'isAccept',
       filters: [
-        { text: 'Active', value: true },
-        { text: 'Inactive', value: false },
+        { text: 'Accepted', value: true },
+        { text: 'Ban', value: false },
       ],
-      onFilter: (value, record) => record.user.status === value,
-      render: (status: boolean) =>
-        status ? (
-          <Tag color="green">Active</Tag>
+      onFilter: (value, record) => record.isAccept === value,
+      render: (isAccept: boolean) =>
+        isAccept ? (
+          <Tag color="blue">Accepted</Tag>
         ) : (
-          <Tag color="red">Inactive</Tag>
+          <Tag color="red">Ban</Tag>
         ),
     },
     {
@@ -211,8 +358,8 @@ const RefereesPage: React.FC = () => {
           <Button type="link" onClick={() => handleEdit(record)}>
             Edit
           </Button>
-          {record.isAccept ? (
-            <Button type="dashed" color='red' onClick={() => handleBan(record)}>
+          {record?.isAccept ? (
+            <Button type="primary" danger onClick={() => handleBan(record)}>
               Ban
             </Button>
           ) : (
@@ -226,7 +373,6 @@ const RefereesPage: React.FC = () => {
   ];
 
   const handleEdit = (record: any) => {
-    // Placeholder function for editing a referee
     console.log('Edit referee:', record);
   };
 
@@ -237,6 +383,7 @@ const RefereesPage: React.FC = () => {
         onSuccess: () => {
           message.success('Referee accepted successfully');
           queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+          refetch();
         },
         onError: () => {
           message.error('Failed to accept referee');
@@ -252,6 +399,7 @@ const RefereesPage: React.FC = () => {
         onSuccess: () => {
           message.success('Referee banned successfully');
           queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+          refetch();
         },
         onError: () => {
           message.error('Failed to ban referee');
@@ -275,40 +423,194 @@ const RefereesPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   if (error) {
     console.log(error);
-    
     return <div>Error loading referees</div>;
   }
 
   return (
     <div>
-      <Row gutter={8} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card title="Total Referees" bordered={false} style={{ height: 150 }}>
-            <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>
-              {referees?.length}
-            </Text>
-          </Card>
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
+          <Title level={2}>Referee Management</Title>
         </Col>
-        <Col span={6}>
-          <Button type="primary" onClick={() => setIsModalVisible(true)}>
-            Register Referee
-          </Button>
+        <Col>
+          <Space>
+            <Button 
+              type="primary"
+              icon={<ReloadOutlined spin={refreshing} />}
+              onClick={handleRefresh}
+              loading={refreshing}
+            >
+              Refresh
+            </Button>
+            <Button 
+              type="primary" 
+              icon={<PlusCircleFilled />}
+              onClick={() => setIsModalVisible(true)}
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+              size="large"
+            >
+              Register New Referee
+            </Button>
+          </Space>
         </Col>
       </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col span={6}>
+          <Card 
+            title={
+              <div>
+                <TeamOutlined style={{ marginRight: 8 }} />
+                Total Referees
+              </div>
+            } 
+            bordered={false} 
+            style={{ height: '100%', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}
+          >
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <Text style={{ fontSize: 64, color: '#1890ff', fontWeight: 'bold', display: 'block' }}>
+                {totalCount}
+              </Text>
+              <div style={{ margin: '15px 0' }}>
+                <Tag color="#722ed1" style={{ margin: '5px', fontSize: '14px', padding: '4px 8px' }}>
+                  <ManOutlined /> {maleCount} Male
+                </Tag>
+                <Tag color="#13c2c2" style={{ margin: '5px', fontSize: '14px', padding: '4px 8px' }}>
+                  <WomanOutlined /> {femaleCount} Female
+                </Tag>
+              </div>
+              <div style={{ marginTop: '10px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                <Row align="middle" justify="space-between">
+                  <Col>
+                    <Text type="secondary">Acceptance Rate:</Text>
+                  </Col>
+                  <Col>
+                    <Text strong style={{ color: acceptanceRate > 50 ? '#52c41a' : '#faad14' }}>{acceptanceRate}%</Text>
+                  </Col>
+                </Row>
+              </div>
+              <Divider style={{ margin: '12px 0' }} />
+              <Button type="link" icon={<SearchOutlined />}>
+                View All Details
+              </Button>
+            </div>
+          </Card>
+        </Col>
+
+        <Col span={6}>
+          <Card 
+            title={
+              <div>
+                <PercentageOutlined style={{ marginRight: 8 }} />
+                Acceptance Rate
+              </div>
+            } 
+            bordered={false} 
+            style={{ height: '100%', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}
+          >
+            <Statistic
+              title="Overall Acceptance"
+              value={acceptanceRate}
+              suffix="%"
+              valueStyle={{ color: acceptanceRate > 50 ? '#52c41a' : '#faad14' }}
+            />
+            <Progress percent={acceptanceRate} status={acceptanceRate > 50 ? "success" : "normal"} />
+            
+            <Divider style={{ margin: '12px 0' }} />
+            
+            <Row gutter={16}>
+              <Col span={12}>
+                <Statistic
+                  title="Male Acceptance"
+                  value={maleCount > 0 ? Math.round((acceptedMaleCount / maleCount) * 100) : 0}
+                  suffix="%"
+                  valueStyle={{ fontSize: '16px' }}
+                />
+              </Col>
+              <Col span={12}>
+                <Statistic
+                  title="Female Acceptance"
+                  value={femaleCount > 0 ? Math.round((acceptedFemaleCount / femaleCount) * 100) : 0}
+                  suffix="%"
+                  valueStyle={{ fontSize: '16px' }}
+                />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+        
+        <Col span={6}>
+          <Card 
+            title="Referee Status" 
+            bordered={false}
+            style={{ height: '100%', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}
+          >
+            <div style={{ height: 200 }}>
+              <Pie {...statusPieConfig} />
+            </div>
+          </Card>
+        </Col>
+        
+        <Col span={6}>
+          <Card 
+            title="Gender Distribution" 
+            bordered={false}
+            style={{ height: '100%', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}
+          >
+            <div style={{ height: 200 }}>
+              <Pie {...genderPieConfig} />
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+     
+      <Divider />
+
+      <Card 
+        title="Referee List" 
+        bordered={false}
+        extra={
+          <Button 
+            type="primary" 
+            icon={<PlusCircleFilled />} 
+            onClick={() => setIsModalVisible(true)}
+          >
+            Add New
+          </Button>
+        }
+      >
+        <Table 
+          columns={columns} 
+          dataSource={Array.isArray(referees) ? referees : []} 
+          rowKey="refreeId"
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
+      
       <Modal
-        title="Register Referee"
+        title={
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+            <PlusCircleFilled style={{ color: '#52c41a', marginRight: 8 }} />
+            Register New Referee
+          </div>
+        }
         visible={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
           form.resetFields();
         }}
         footer={null}
+        width={600}
       >
         <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ refereeCode: user?.id }}>
           <Row gutter={16}>
@@ -407,13 +709,18 @@ const RefereesPage: React.FC = () => {
             <Input value={user?.id} disabled />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              size="large"
+              block
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
               Register Referee
             </Button>
           </Form.Item>
         </Form>
       </Modal>
-      <Table columns={columns} dataSource={Array.isArray(referees) ? referees : []} rowKey="refreeId" />
     </div>
   );
 };

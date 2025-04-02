@@ -18,5 +18,6 @@ export function useFetchAllUser(pageNumber: number = 1, pageSize: number = 10, i
   return useQuery<User[]>({
     queryKey: [FETCH_ALL_USERS, pageNumber, pageSize, isOrderByCreateAt],
     queryFn: () => fetchAllUsers(pageNumber, pageSize, isOrderByCreateAt),
+    refetchInterval: 3000,
   });
 }

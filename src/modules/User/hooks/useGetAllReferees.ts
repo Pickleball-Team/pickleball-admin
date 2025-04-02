@@ -12,5 +12,6 @@ export function useGetAllReferees() {
   return useQuery<User[]>({
     queryKey: [FETCH_REFEREES],
     queryFn: fetchAllReferees,
+    refetchInterval: 3000,
   });
 }
