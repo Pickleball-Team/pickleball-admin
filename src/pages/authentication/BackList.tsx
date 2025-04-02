@@ -12,6 +12,9 @@ import {
   Col,
   Select,
   message,
+  Spin,
+  Avatar,
+  Typography
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
@@ -21,6 +24,8 @@ import { useFetchAllUser } from '../../modules/User/hooks/useFetchAllUser';
 import { useUpdateUser } from '../../modules/User/hooks/useUpdateUser';
 import { User } from '../../modules/User/models';
 import { Pie, Column } from '@ant-design/plots';
+
+const { Title, Text } = Typography;
 
 // Define UserRole enum
 enum UserRole {
@@ -56,8 +61,8 @@ const roleColors: Record<number, string> = {
 };
 
 // Extend User interface to include roleId
-interface ExtendedUser extends Omit<User, 'roleId'> {
-  roleId?: UserRole;
+interface ExtendedUser extends User {
+  // roleId is already in the User interface based on your JSON
 }
 
 type DataIndex = keyof ExtendedUser;
@@ -65,7 +70,7 @@ type DataIndex = keyof ExtendedUser;
 const BackList: React.FC = () => {
   const { data: rawData, isLoading, error, refetch } = useFetchAllUser();
   const { mutate: updateUser } = useUpdateUser();
-  const [, setSearchText] = useState<string>('');
+  const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
 
@@ -76,46 +81,32 @@ const BackList: React.FC = () => {
 
   useEffect(() => {
     if (rawData) {
-      // Mock roleId for demonstration since your actual data might not have it yet
-      const extendedData: ExtendedUser[] = rawData.map((user: User) => ({
-        ...user,
-        roleId: Math.floor(Math.random() * 7) + 1 as UserRole, // Random role for demo
-      }));
-
-      setData(extendedData);
+      // No need to mock roleId as it's already in the data
+      setData(rawData as ExtendedUser[]);
 
       // Prepare chart data for roles
       const roleCountMap: Record<number, number> = {};
-      extendedData.forEach((user) => {
+      rawData.forEach((user: ExtendedUser) => {
         if (user.roleId) {
           roleCountMap[user.roleId] = (roleCountMap[user.roleId] || 0) + 1;
         }
       });
       
       const roleChartData = Object.keys(roleCountMap).map((roleId) => ({
-        type: roleNames[Number(roleId)],
+        type: roleNames[Number(roleId)] || `Role ${roleId}`,
         value: roleCountMap[Number(roleId)],
-        color: roleColors[Number(roleId)]
       }));
       setUsersByRole(roleChartData);
 
       // Prepare chart data for status
-      const activeCount = extendedData.filter((user) => user.status).length;
-      const inactiveCount = extendedData.length - activeCount;
+      const activeCount = rawData.filter((user: ExtendedUser) => user.status).length;
+      const inactiveCount = rawData.length - activeCount;
       setUsersByStatus([
         { type: 'Active', value: activeCount },
         { type: 'Inactive', value: inactiveCount },
       ]);
     }
   }, [rawData]);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error loading users</div>;
-  }
 
   const getColumnSearchProps = (dataIndex: DataIndex): ColumnType<ExtendedUser> => ({
     filterDropdown: ({
@@ -228,6 +219,11 @@ const BackList: React.FC = () => {
       content: '{name} {percentage}',
     },
     interactions: [{ type: 'element-active' }],
+    tooltip: {
+      formatter: (datum:any) => {
+        return { name: datum.type, value: `${datum.value} users` };
+      }
+    }
   };
 
   // Define custom colors for role pie chart
@@ -237,20 +233,24 @@ const BackList: React.FC = () => {
   });
 
   // Generate role pie chart colors array
-  const roleColorsArray = usersByRole.map(item => roleColorMap[item.type]);
+  const roleColorsArray = usersByRole.map(item => roleColorMap[item.type] || '#1890ff');
 
   const columns: ColumnsType<ExtendedUser> = [
     {
-      title: 'First Name',
-      dataIndex: 'firstName',
-      key: 'firstName',
-      ...getColumnSearchProps('firstName'),
+      title: 'Avatar',
+      dataIndex: 'avatarUrl',
+      key: 'avatarUrl',
+      render: (avatarUrl: string) => (
+        <Avatar src={avatarUrl} size={40} icon={<UserOutlined />} />
+      ),
     },
     {
-      title: 'Last Name',
-      dataIndex: 'lastName',
-      key: 'lastName',
-      ...getColumnSearchProps('lastName'),
+      title: 'Name',
+      key: 'fullName',
+      render: (_, record) => (
+        <span>{`${record.firstName} ${record.lastName}`}</span>
+      ),
+      ...getColumnSearchProps('firstName'),
     },
     {
       title: 'Email',
@@ -313,10 +313,10 @@ const BackList: React.FC = () => {
       })),
       onFilter: (value, record) => record.roleId === value,
       render: (roleId: UserRole) => (
-        <Tag color={roleColors[roleId] || 'blue'}>
-          {roleNames[roleId] || 'Unknown'}
+        <Tag color={roleColors[roleId]} icon={<UserOutlined />}>
+          {roleNames[roleId] || `Role ${roleId}`}
         </Tag>
-      ),
+      )
     },
     {
       title: 'Gender',
@@ -327,6 +327,12 @@ const BackList: React.FC = () => {
         { text: 'Female', value: 'Female' },
       ],
       onFilter: (value, record) => record.gender === value,
+    },
+    {
+      title: 'Phone',
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
+      ...getColumnSearchProps('phoneNumber'),
     },
     {
       title: 'Status',
@@ -346,7 +352,7 @@ const BackList: React.FC = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (record: ExtendedUser) => (
+      render: (_, record: ExtendedUser) => (
         <Button
           type="primary"
           danger={record.status}
@@ -358,12 +364,31 @@ const BackList: React.FC = () => {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" tip="Loading user data..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <Title level={3} type="danger">Error loading users</Title>
+        <Text type="secondary">There was a problem fetching user data. Please try again later.</Text>
+        <br /><br />
+        <Button type="primary" onClick={() => refetch()}>Try Again</Button>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h2>User Statistics</h2>
+      <Title level={2}>User Statistics</Title>
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
-          <Card title="Users by Role" bordered={false}>
+          <Card title={<Title level={4}>Users by Role</Title>} bordered={false}>
             <Pie 
               {...pieConfig} 
               data={usersByRole} 
@@ -372,7 +397,7 @@ const BackList: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} md={12}>
-          <Card title="Users by Status" bordered={false}>
+          <Card title={<Title level={4}>Users by Status</Title>} bordered={false}>
             <Pie 
               {...pieConfig} 
               data={usersByStatus} 
@@ -383,12 +408,13 @@ const BackList: React.FC = () => {
         </Col>
       </Row>
       
-      <h2>User List</h2>
+      <Title level={2}>User List</Title>
       <Table
         columns={columns}
         dataSource={data}
         rowKey="id"
         style={{ backgroundColor: '#ffffff' }}
+        pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `Total ${total} users` }}
       />
     </div>
   );
