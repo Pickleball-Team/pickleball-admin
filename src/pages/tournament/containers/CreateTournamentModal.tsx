@@ -15,8 +15,9 @@ import {
   Divider,
   message,
   Switch,
+  Tooltip,
 } from 'antd';
-import { PlusCircleOutlined, UploadOutlined } from '@ant-design/icons';
+import { PlusCircleOutlined, UploadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { TournamentRequest } from '../../../modules/Tournaments/models';
 import dayjs from 'dayjs'; // Replace moment with dayjs
 import type { Dayjs } from 'dayjs'; // Import Dayjs type
@@ -31,16 +32,16 @@ const { TextArea } = Input;
 const sampleTournamentData = {
   name: 'Giải Đấu Thể Thao Online 2025',
   location: 'Hà Nội, Việt Nam',
-  maxPlayer: 100,
+  maxPlayer: 16, // Changed from 100 to 16
   description:
     'Một giải đấu thể thao trực tuyến lớn dành cho tất cả mọi người, nơi các game thủ có thể thể hiện kỹ năng của mình.',
   banner:
     'https://pickleball360.com.vn/wp-content/uploads/2024/08/banner-pickleball-the-thaoPyRa4.webp',
   note: 'Hãy đăng ký trước ngày 10 tháng 4 để đảm bảo chỗ tham gia!',
   isMinRanking: 1,
-  isMaxRanking: 10,
+  isMaxRanking: 9, // Changed from 10 to 9
   social: 'https://facebook.com/example',
-  totalPrize: 5000000,
+  totalPrize: undefined, // Changed from 5000000 to undefined to let users input
   isFree: true,
   entryFee: 0,
   type: 1, // Doubles
@@ -101,10 +102,10 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
       type: values.type, // 0 for Singles, 1 for Doubles, 2 for Mixed
       organizerId: organizerId,
       isMinRanking: values.isMinRanking || 1,
-      isMaxRanking: values.isMaxRanking || 10,
+      isMaxRanking: values.isMaxRanking || 9, // Changed default from 10 to 9
       social: values.social || 'No social links provided',
       isFree: values.isFree === undefined ? true : values.isFree,
-      // Ensure entryFee is consistent with isFree
+      // Ensure entryFee is consistent with isFree, with new min value of 10000
       entryFee: values.isFree ? 0 : values.entryFee || 10000,
     };
 
@@ -232,6 +233,7 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               rules={[
                 { required: true, message: 'Please select maximum players' },
               ]}
+              initialValue={16} // Explicitly set default to 16
             >
               <Select
                 placeholder="Select maximum players"
@@ -246,10 +248,23 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
           <Col span={8}>
             <Form.Item
               name="totalPrize"
-              label="Total Prize"
+              label={
+                <span>
+                  Total Prize{' '}
+                  <Tooltip title="Enter the total prize money for the tournament">
+                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                  </Tooltip>
+                </span>
+              }
               rules={[{ required: true, message: 'Please enter total prize' }]}
             >
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber
+                min={0}
+                style={{ width: '100%' }}
+                placeholder="Enter prize amount"
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value: string | undefined) => value ? Number(value.replace(/[^\d]/g, '')) : 0}
+              />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -270,7 +285,7 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
             </Form.Item>
           </Col>
         </Row>
-
+              
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -278,9 +293,11 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               label="Minimum Ranking"
               rules={[
                 { required: true, message: 'Please enter minimum ranking' },
+                { type: 'number', min: 1, max: 9, message: 'Ranking must be between 1 and 9' }
               ]}
+              initialValue={1} // Set minimum ranking to 1
             >
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} max={9} style={{ width: '100%' }} precision={0} />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -289,9 +306,19 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               label="Maximum Ranking"
               rules={[
                 { required: true, message: 'Please enter maximum ranking' },
+                { type: 'number', min: 1, max: 9, message: 'Ranking must be between 1 and 9' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue('isMinRanking') <= value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Max ranking must be greater than or equal to min ranking'));
+                  },
+                }),
               ]}
+              initialValue={9} // Set maximum ranking to 9
             >
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} max={9} style={{ width: '100%' }} precision={0} />
             </Form.Item>
           </Col>
         </Row>
@@ -369,7 +396,14 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
         </Form.Item>
         <Form.Item
           name="isFree"
-          label="Free Tournament"
+          label={
+            <span>
+              Free Tournament{' '}
+              <Tooltip title="Toggle between free and paid tournament">
+                <InfoCircleOutlined style={{ color: '#1890ff' }} />
+              </Tooltip>
+            </span>
+          }
           valuePropName="checked"
         >
           <Switch
@@ -379,6 +413,9 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               setIsFree(checked);
               if (checked) {
                 form.setFieldsValue({ entryFee: 0 });
+              } else {
+                // Set default entry fee when switching to paid
+                form.setFieldsValue({ entryFee: 10000 });
               }
             }}
           />
@@ -386,10 +423,37 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
         {!isFree && (
           <Form.Item
             name="entryFee"
-            label="Entry Fee"
-            rules={[{ required: true, message: 'Please enter entry fee' }]}
+            label={
+              <span>
+                Entry Fee{' '}
+                <Tooltip title="Entry fee must be between 10,000 and 1,000,000">
+                  <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                </Tooltip>
+              </span>
+            }
+            rules={[
+              { required: true, message: 'Please enter entry fee' },
+              {
+                validator: (_, value) => {
+                  if (value >= 10000 && value <= 1000000) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error('Entry fee must be between 10,000 and 1,000,000')
+                  );
+                },
+              },
+            ]}
+            initialValue={10000} // Set initial entry fee to 10,000
           >
-            <InputNumber min={0} style={{ width: '100%' }} />
+            <InputNumber
+              min={10000}
+              max={1000000}
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value: string | undefined) => value ? Number(value.replace(/[^\d]/g, '')) : 10000}
+              addonAfter="VND"
+            />
           </Form.Item>
         )}
 

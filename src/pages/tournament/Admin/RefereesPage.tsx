@@ -299,7 +299,7 @@ const RefereesPage: React.FC = () => {
     );
   }
 
-  const activeReferees = referees?.filter(ref => ref.user?.status === true)?.length || 0;
+  const activeReferees = referees?.filter(ref => ref.status === true)?.length || 0;
   const inactiveReferees = (referees?.length || 0) - activeReferees;
 
   return (

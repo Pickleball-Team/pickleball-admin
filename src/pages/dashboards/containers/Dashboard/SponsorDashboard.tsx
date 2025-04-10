@@ -7,19 +7,20 @@ import { useGetVenueBySponnerId } from '../../../../modules/Venues/hooks/useGetV
 import { useGetRefereeBySponnerId } from '../../../../modules/Refee/hooks/useGetRefereeBySponnerId';
 import { Column } from '@ant-design/charts';
 import { useGetAllBillBySponnerId } from '../../../../modules/Payment/hooks/useGetAllBillBySponnerId';
+import { User } from '../../../../modules/User/models';
 
 const { TabPane } = Tabs;
 
 interface SponsorDashboardProps {
-  user: any;
+  user: User | null;
 }
 
 const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState('ongoing');
-  const { data: sponsorTournaments = [], isLoading: isLoadingTournaments } = useGetTournamentsBySponsorId(user?.id);
-  const { data: sponsorVenues = [], isLoading: isLoadingVenues } = useGetVenueBySponnerId(user?.id);
-  const { data: sponsorReferees = [], isLoading: isLoadingReferees } = useGetRefereeBySponnerId(user?.id);
-  const { data: sponnerBill } = useGetAllBillBySponnerId(user?.id);
+  const { data: sponsorTournaments = [], isLoading: isLoadingTournaments } = useGetTournamentsBySponsorId(user?.id || 0);
+  const { data: sponsorVenues = [], isLoading: isLoadingVenues } = useGetVenueBySponnerId(user?.id || 0);
+  const { data: sponsorReferees = [], isLoading: isLoadingReferees } = useGetRefereeBySponnerId(user?.id?.toString() || '');
+  const { data: sponnerBill } = useGetAllBillBySponnerId(user?.id || 0);
 
   const statistics = useMemo(() => {
     if (!sponsorTournaments || !Array.isArray(sponsorTournaments)) {
@@ -33,7 +34,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
     const ongoing = sponsorTournaments.filter(tournament => tournament.status === 'Ongoing').length;
     const completed = sponsorTournaments.filter(tournament => tournament.status === 'Completed').length;
     const totalPlayers = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.registrationDetails?.length || 0), 0);
-    const totalPrizeMoney = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.prize ? Number(tournament.prize) : 0), 0);
+    const totalPrizeMoney = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.totalPrize ? Number(tournament.totalPrize) : 0), 0);
 
     return {
       total: sponsorTournaments.length,
@@ -54,7 +55,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       endDate: tournament.endDate ? new Date(tournament.endDate).toLocaleDateString() : 'N/A',
       players: tournament.registrationDetails?.length || 'N/A',
       status: tournament.status,
-      prize: tournament.prize ? `$${Number(tournament.prize).toLocaleString()}` : 'N/A',
+      prize: tournament.totalPrize ? `$${Number(tournament.totalPrize).toLocaleString()}` : 'N/A',
       location: tournament.location || 'N/A',
       type: tournament.type
     }));

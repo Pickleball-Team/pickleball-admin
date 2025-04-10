@@ -184,19 +184,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       return Math.floor(playerCount / 2); // Roughly estimate teams based on player count
     };
 
-    // Calculate total revenue from all tournaments
-    const calculateRevenue = () => {
-      if (!tournamentsData || !Array.isArray(tournamentsData) || tournamentsData.length === 0) return 0;
-      return tournamentsData.reduce((sum, tournament) => {
-        return sum + (tournament.prize ? Number(tournament.prize) : 0);
-      }, 0);
-    };
+    // Calculate revenue from billing data instead of prize money
+    const totalRevenue = billsData && Array.isArray(billsData) ? 
+                        billsData.reduce((sum, bill) => {
+                          return sum + (bill?.amount || 0);
+                        }, 0) : 0;
 
     return {
       tournaments: tournamentsData && Array.isArray(tournamentsData) ? tournamentsData.length : 0,
       users: usersData && Array.isArray(usersData) ? usersData.length : 0,
       teams: getTeamsCount(),
-      revenue: calculateRevenue(),
+      revenue: totalRevenue,
       pendingTournaments: tournamentsData && Array.isArray(tournamentsData) ? 
                           tournamentsData.filter(t => t.status === 'Pending').length : 0,
       ongoingTournaments: tournamentsData && Array.isArray(tournamentsData) ? 
