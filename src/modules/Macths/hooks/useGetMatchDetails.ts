@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Api from '../../../configs/api/api';
-import { GET_MATCH_DETAILS } from '../constants';
 import { MatchDetails } from '../models';
+import { GET_MATCH_DETAILS } from '../constants';
 
 /**
  * Fetches detailed information for a specific match

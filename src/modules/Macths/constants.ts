@@ -1,3 +1,7 @@
+export const CREATE_MATCH = 'CREATE_MATCH';
+export const GET_MATCH_DETAILS = 'GET_MATCH_DETAILS';
+export const CREATE_TOURNAMENT = 'CREATE_TOURNAMENT';
+export const GET_ALL_TOURNAMENTS = 'GET_ALL_TOURNAMENTS';
 // Match formats enum to match backend
 export enum MatchFormat {
   SingleMale = 1,
