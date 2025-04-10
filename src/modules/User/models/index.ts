@@ -40,7 +40,7 @@ export interface User {
   status: boolean;
   roleId: number;
   refreshToken: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   createAt?: Date;
   refreshTokenExpiryTime: Date;
 }
