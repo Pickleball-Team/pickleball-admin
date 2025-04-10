@@ -1,40 +1,52 @@
-import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
   Modal,
   Select,
+  Checkbox,
   Collapse,
   Row,
   Col,
   Button,
   message,
   Switch,
+  Space,
   Tooltip,
 } from 'antd';
 import seedrandom from 'seedrandom';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees';
 import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
 import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
 import { useCreateMatch } from '../../../modules/Macths/hooks/useCreateMatch';
 import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
 import { DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useGetRefereeBySponnerId } from '../../../modules/Refee/hooks/useGetRefereeBySponnerId';
-import { 
-  MatchFormat, 
-  MATCH_FORMAT_NAMES, 
-  TOURNAMENT_TYPE_TO_FORMAT,
-  MatchCategory,
-  MatchStatus,
-  WinScore
-} from '../../../modules/Macths/constants';
 
 const { Option } = Select;
 const { Panel } = Collapse;
 const { TextArea } = Input;
 
 // Enum for Match Format to match backend
+enum MatchFormat {
+  SingleMale = 1,
+  SingleFemale = 2,
+  DoubleMale = 3,
+  DoubleFemale = 4,
+  DoubleMix = 5,
+}
+
+// Factory for MatchFormat with descriptive names
+const MatchFormatFactory = {
+  [MatchFormat.SingleMale]: 1,
+  [MatchFormat.SingleFemale]: 2,
+  [MatchFormat.DoubleMale]: 3,
+  [MatchFormat.DoubleFemale]: 4,
+  [MatchFormat.DoubleMix]: 5,
+};
+
 type AddMatchModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -72,41 +84,25 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const user = useSelector((state: RootState) => state.authencation.user);
-  const [matchFormat, setMatchFormat] = useState<MatchFormat>(MatchFormat.SingleMale);
+  const [matchFormat, setMatchFormat] = useState<number>(
+    MatchFormat.SingleMale
+  );
   const [selectedTeams, setSelectedTeams] = useState<{
     [key: string]: number | undefined;
   }>({});
   const [hideAssignedTeams, setHideAssignedTeams] = useState<boolean>(true);
   const [assignedTeams, setAssignedTeams] = useState<number[]>([]);
 
-  const { data: referees } = useGetRefereeBySponnerId(user?.id?.toString() || '');
-  const { data: tournamentDetails, refetch: refetchTournament } = useGetTournamentById(tournamentId);
+  const { data: referees } = useGetRefereeBySponnerId(
+    user?.id?.toString() || ''
+  );
+  const { data: tournamentDetails } = useGetTournamentById(tournamentId);
   const { data: venues } = useGetVenueBySponnerId(user?.id || 0);
+
   
+  console.log(referees);
+
   const { mutate: createMatch, isError, error } = useCreateMatch();
-
-  // Re-fetch tournament details when tournament ID changes
-  useEffect(() => {
-    if (tournamentId) {
-      refetchTournament();
-    }
-  }, [tournamentId, refetchTournament]);
-
-  // Determine the correct match format based on tournament type
-  useEffect(() => {
-    if (tournamentDetails?.type) {
-      // Get the appropriate match format from our mapping or default to SingleMale
-      const defaultFormat = TOURNAMENT_TYPE_TO_FORMAT[tournamentDetails.type] || MatchFormat.SingleMale;
-      
-      // Update the state
-      setMatchFormat(defaultFormat);
-      
-      // Update the form field
-      form.setFieldsValue({
-        matchFormat: defaultFormat
-      });
-    }
-  }, [tournamentDetails, form]);
 
   // Load assigned teams from localStorage when component mounts
   useEffect(() => {
@@ -265,14 +261,16 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
     message.success('Cleared all assigned teams');
   };
 
+  // @ts-ignore
+  const formatType = MatchFormatFactory[tournamentDetails?.type] || 1;
+
   return (
     <Modal
       title="Add Match"
       visible={visible}
       onOk={handleOk}
       onCancel={handleCancel}
-      width={800}
-      destroyOnClose={true}
+      width={800} // Make the modal wider
     >
       <Form
         form={form}
@@ -280,14 +278,11 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
         initialValues={{
           title: 'PickerPall champion',
           description: 'This is a sample description for the match.',
-          matchCategory: MatchCategory.Tournament,
+          matchCategory: 3,
           isPublic: false,
-          winScore: WinScore.ElevenPoints,
-          status: MatchStatus.Scheduled,
-          // This will be overridden by the useEffect
-          matchFormat: MatchFormat.SingleMale
+          winScore: 1,
+          status: 1,
         }}
-        key={`match-form-${tournamentId}`}
       >
         <Collapse defaultActiveKey={['1']}>
           <Panel header="Match Details" key="1">
@@ -315,9 +310,9 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                   ]}
                 >
                   <Select>
-                    <Option value={WinScore.ElevenPoints}>11</Option>
-                    <Option value={WinScore.FifteenPoints}>15</Option>
-                    <Option value={WinScore.TwentyOnePoints}>21</Option>
+                    <Option value={1}>11</Option>
+                    <Option value={2}>15</Option>
+                    <Option value={3}>21</Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -343,10 +338,10 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                   ]}
                 >
                   <Select>
-                    <Option value={MatchStatus.Scheduled}>Scheduled</Option>
-                    <Option value={MatchStatus.Ongoing}>Ongoing</Option>
-                    <Option value={MatchStatus.Completed}>Completed</Option>
-                    <Option value={MatchStatus.Disabled}>Disable</Option>
+                    <Option value={1}>Scheduled</Option>
+                    <Option value={2}>Ongoing</Option>
+                    <Option value={3}>Completed</Option>
+                    <Option value={4}>Disable</Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -364,9 +359,9 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                   ]}
                 >
                   <Select disabled>
-                    <Option value={MatchCategory.Competitive}>Competitive</Option>
-                    <Option value={MatchCategory.Custom}>Custom</Option>
-                    <Option value={MatchCategory.Tournament}>Tournament</Option>
+                    <Option value={1}>Competitive</Option>
+                    <Option value={2}>Custom</Option>
+                    <Option value={3}>Tournament</Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -374,6 +369,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                 <Form.Item
                   name="matchFormat"
                   label="Match Format"
+                  initialValue={formatType}
                   rules={[
                     {
                       required: true,
@@ -381,22 +377,40 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                     },
                   ]}
                 >
-                  <Select 
+                  <Select
+                    disabled
                     onChange={(value) => setMatchFormat(value)}
                     placeholder={`Default format based on tournament type: ${tournamentDetails?.type}`}
-                    disabled
                   >
-                    {/* Show appropriate options based on determined type */}
-                    {matchFormat <= MatchFormat.SingleFemale ? (
+                    {tournamentDetails?.type === 'Singles' ? (
                       <>
-                        <Option value={MatchFormat.SingleMale}>{MATCH_FORMAT_NAMES[MatchFormat.SingleMale]}</Option>
-                        <Option value={MatchFormat.SingleFemale}>{MATCH_FORMAT_NAMES[MatchFormat.SingleFemale]}</Option>
+                        <Option value={MatchFormat.SingleMale}>
+                          Single Male
+                        </Option>
+                        <Option value={MatchFormat.SingleFemale}>
+                          Single Female
+                        </Option>
+                      </>
+                    ) : tournamentDetails?.type === 'Doubles' ? (
+                      <>
+                        <Option value={MatchFormat.DoubleMale}>
+                          Double Male
+                        </Option>
+                        <Option value={MatchFormat.DoubleFemale}>
+                          Double Female
+                        </Option>
                       </>
                     ) : (
                       <>
-                        <Option value={MatchFormat.DoubleMale}>{MATCH_FORMAT_NAMES[MatchFormat.DoubleMale]}</Option>
-                        <Option value={MatchFormat.DoubleFemale}>{MATCH_FORMAT_NAMES[MatchFormat.DoubleFemale]}</Option>
-                        <Option value={MatchFormat.DoubleMix}>{MATCH_FORMAT_NAMES[MatchFormat.DoubleMix]}</Option>
+                        <Option value={MatchFormat.DoubleMale}>
+                          Double Male
+                        </Option>
+                        <Option value={MatchFormat.DoubleFemale}>
+                          Double Female
+                        </Option>
+                        <Option value={MatchFormat.DoubleMix}>
+                          Double Mix
+                        </Option>
                       </>
                     )}
                   </Select>
