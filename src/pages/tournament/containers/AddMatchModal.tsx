@@ -23,6 +23,7 @@ import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenu
 import { useCreateMatch } from '../../../modules/Macths/hooks/useCreateMatch';
 import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
 import { DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useGetRefereeBySponnerId } from '../../../modules/Refee/hooks/useGetRefereeBySponnerId';
 
 const { Option } = Select;
 const { Panel } = Collapse;
@@ -83,11 +84,12 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
   const [hideAssignedTeams, setHideAssignedTeams] = useState<boolean>(true);
   const [assignedTeams, setAssignedTeams] = useState<number[]>([]);
 
-  const { data: referees } = useGetAllReferees();
+  const { data: referees } = useGetRefereeBySponnerId(user?.id?.toString() || '');
   const { data: tournamentDetails } = useGetTournamentById(tournamentId);
   const { data: venues } = useGetVenueBySponnerId(user?.id || 0);
   const { data: matchs } = useGetMatchByTournamentId(tournamentId);
-
+  console.log(referees);
+  
   const { mutate: createMatch, isError, error } = useCreateMatch();
 
   // Load assigned teams from localStorage when component mounts
@@ -352,6 +354,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                 <Form.Item
                   name="matchFormat"
                   label="Match Format"
+                  initialValue={tournamentDetails?.type}
                   rules={[
                     {
                       required: true,
@@ -359,27 +362,25 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                     },
                   ]}
                 >
-                  <Select onChange={(value) => setMatchFormat(value)}>
-                    {tournamentDetails?.type == 'DoublesMix' ? (
+                  <Select 
+                    onChange={(value) => setMatchFormat(value)}
+                    placeholder={`Default format based on tournament type: ${tournamentDetails?.type}`}
+                  >
+                    {tournamentDetails?.type === 'Singles' ? (
                       <>
-                        <Option value={MatchFormat.DoubleFemale}>
-                          Double Female
-                        </Option>
-                        <Option value={MatchFormat.DoubleMale}>
-                          Double Male
-                        </Option>
-                        <Option value={MatchFormat.DoubleMix}>
-                          Double Mix
-                        </Option>
+                        <Option value={MatchFormat.SingleMale}>Single Male</Option>
+                        <Option value={MatchFormat.SingleFemale}>Single Female</Option>
+                      </>
+                    ) : tournamentDetails?.type === 'Doubles' ? (
+                      <>
+                        <Option value={MatchFormat.DoubleMale}>Double Male</Option>
+                        <Option value={MatchFormat.DoubleFemale}>Double Female</Option>
                       </>
                     ) : (
                       <>
-                        <Option value={MatchFormat.SingleMale}>
-                          Single Male
-                        </Option>
-                        <Option value={MatchFormat.SingleFemale}>
-                          Single Female
-                        </Option>
+                        <Option value={MatchFormat.DoubleMale}>Double Male</Option>
+                        <Option value={MatchFormat.DoubleFemale}>Double Female</Option>
+                        <Option value={MatchFormat.DoubleMix}>Double Mix</Option>
                       </>
                     )}
                   </Select>
@@ -408,14 +409,14 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
                 >
                   <Select showSearch optionFilterProp="children">
                     {referees?.map((referee) => (
-                      <Option key={referee.id} value={referee.id}>
+                      <Option key={referee.user.id} value={referee.user.id}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <img
-                            src={referee.avatarUrl}
+                            src={referee.user.avatarUrl}
                             alt="avatar"
                             style={{ width: 20, height: 20, marginRight: 8 }}
                           />
-                          {referee.firstName} {referee.lastName}
+                          {referee.user.firstName} {referee.user.lastName}
                         </div>
                       </Option>
                     ))}

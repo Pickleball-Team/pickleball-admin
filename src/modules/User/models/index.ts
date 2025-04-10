@@ -45,6 +45,17 @@ export interface User {
   refreshTokenExpiryTime: Date;
 }
 
+export interface Refee {
+  refreeId: number;
+  user: User;
+  refreeCode: string;
+  refreeLevel: string | null;
+  refreeNote: string | null;
+  createdAt: string;
+  lastUpdatedAt: string;
+  isAccept: boolean;
+  tournamentReferees: any[] | null;
+}
 
 export interface UpdateUserRequest {
   userId: number;
