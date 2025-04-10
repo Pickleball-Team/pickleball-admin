@@ -25,14 +25,15 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useCreateTournament } from '../../modules/Tournaments/hooks/useCreateTournament';
 import { TournamentRequest } from '../../modules/Tournaments/models';
+import { useGetTournamentByRefeeId } from '../../modules/Tournaments/hooks/useGetTournamentByRefeeId';
 
 const { Title } = Typography;
 
 type DataIndex = string;
 
-export const OverviewPage = () => {
+export const ReFeerPage = () => {
   const user = useSelector((state: RootState) => state.authencation.user);
-  const { data, isLoading, refetch } = useGetTournamentsBySponsorId(
+  const { data, isLoading, refetch } = useGetTournamentByRefeeId(
     user?.id ?? 0
   );
   const [searchText, setSearchText] = useState<string>('');
@@ -303,7 +304,7 @@ export const OverviewPage = () => {
       render: (_, record) => (
         <div style={{ padding: '6px 0' }}>
           <Button type="link" style={{ padding: '4px 0' }}>
-            <Link to={`/tournament/${record.id}`}>Details</Link>
+            <Link to={`/refeer/${record.id}`}>Details</Link>
           </Button>
         </div>
       ),
@@ -358,21 +359,6 @@ export const OverviewPage = () => {
     interactions: [{ type: 'element-active' }],
   });
 
-  const handleCreateTournament = (tournamentData: TournamentRequest) => {
-    createTournament(tournamentData, {
-      onSuccess: () => {
-        message.success('Tournament created successfully!');
-        setIsCreateModalVisible(false);
-        refetch();
-      },
-      onError: (error: any) => {
-        message.error(
-          `Failed to create tournament: ${error.message || 'Unknown error'}`
-        );
-      },
-    });
-  };
-
   return (
     <div style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
       <div
@@ -386,14 +372,6 @@ export const OverviewPage = () => {
         <Typography.Title level={2} style={{ margin: 0 }}>
           Tournament Overview
         </Typography.Title>
-        <Button
-          type="primary"
-          icon={<PlusCircleOutlined />}
-          onClick={() => setIsCreateModalVisible(true)}
-          size="large"
-        >
-          Create Tournament
-        </Button>
       </div>
 
       <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -499,4 +477,4 @@ export const OverviewPage = () => {
   );
 };
 
-export default OverviewPage;
+export default ReFeerPage;

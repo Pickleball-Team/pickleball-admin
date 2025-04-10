@@ -6,7 +6,7 @@ import PlayersTable from './containers/PlayerRegistration';
 
 const { TabPane } = Tabs;
 
-const TournamentDetail = () => {
+const ReefeerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading, error, refetch } = useGetTournamentById(
     Number(id || 0)
@@ -55,4 +55,4 @@ const TournamentDetail = () => {
   );
 };
 
-export default TournamentDetail;
+export default ReefeerDetail;

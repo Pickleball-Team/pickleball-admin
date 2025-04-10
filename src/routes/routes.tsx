@@ -49,6 +49,9 @@ import TournamentAdminDetail from '../pages/tournament/Admin/Detail.tsx';
 import { PaymentAdminLayout } from '../layouts/payment/index.admin.tsx';
 import PaymentAdmin from '../pages/payment/All/index.tsx';
 import PaymentSponner from '../pages/payment/Sponner/index.tsx';
+import { RefeerLayout } from '../layouts/refee/index.tsx';
+import { ReFeerPage } from '../pages/refee/OverviewPage.tsx';
+import ReefeerDetail from '../pages/refee/Detail.tsx';
 
 // Custom scroll restoration function
 export const ScrollToTop: React.FC = () => {
@@ -229,6 +232,10 @@ const router = createBrowserRouter([
         index: true,
         element: <PaymentAdmin />,
       },
+      {
+        path: ':id',
+        element: <DetailAdminPage />,
+      },
     ],
   },
   {
@@ -242,7 +249,22 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: '/refeer',
+    element: <PageWrapper children={<RefeerLayout />} />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        element: <ReFeerPage />,
+      },
+      {
+        path: ':id',
+        element: <ReefeerDetail />,
+      },
 
+    ],
+  },
   {
     path: '/auth',
     errorElement: <ErrorPage />,

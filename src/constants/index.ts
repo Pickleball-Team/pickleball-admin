@@ -28,7 +28,8 @@ import {
   PATH_TOURNAMENT,
   PATH_AUTHENTICATION,
   PATH_ADMIN_TOURNAMENT,
-  PATH_PAYMENT, // Import PATH_TOURNAMENT
+  PATH_PAYMENT,
+  PATH_REFEE, // Import PATH_TOURNAMENT
 } from './routes.ts';
 
 const DASHBOARD_ITEMS = [
@@ -81,6 +82,9 @@ const AUTHENTICATION_SYS_ITEMS = [
 const BLOG_ITEMS = [{ title: 'Blog list', path: PATH_BLOG.root }];
 const PAYMENT_ITEMS = [{ title: 'Payments list', path: PATH_PAYMENT.root }];
 const PAYMENT_ADMIN_ITEMS = [{ title: 'Payments list', path: PATH_PAYMENT.root }];
+const REEREER_ITEMS = [
+  { title: 'Referees list', path: PATH_REFEE.root },
+]
 
 export {
   PATH_CALENDAR,
@@ -118,4 +122,5 @@ export {
   BLOG_ITEMS,
   PAYMENT_ITEMS,
   PAYMENT_ADMIN_ITEMS,
+  REEREER_ITEMS
 };

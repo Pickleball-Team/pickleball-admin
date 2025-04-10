@@ -27,6 +27,7 @@ const ROOTS_TOURNAMENT = '/tournament';
 const ROOTS_AUTHENCATION = '/authencation';
 const ROOTS_PAYMENT = '/payment';
 const ROOTS_ADMIN = '/admin';
+const ROOTS_REFEE = '/refeer';
 
 export const PATH_LANDING = {
   root: ROOTS_LANDING,
@@ -251,6 +252,9 @@ export const PATH_AUTHENTICATION = {
   playerDetails: path(ROOTS_AUTHENCATION, `/manager-player/:id`),
 };
 
+export const PATH_REFEE = {
+  root: ROOTS_REFEE,
+};
 export const PATH_PAYMENT = {
   root: ROOTS_PAYMENT,
 };

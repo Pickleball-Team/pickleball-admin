@@ -1,4 +1,4 @@
-import { BookOutlined, TrophyOutlined, UserOutlined } from '@ant-design/icons';
+import { BookOutlined, TrophyOutlined, UserOutlined, CalendarOutlined, HistoryOutlined, TeamOutlined } from '@ant-design/icons';
 import { ConfigProvider, Layout, Menu, MenuProps, SiderProps } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -12,6 +12,7 @@ import {
   PATH_BLOG,
   PATH_PAYMENT,
   PATH_TOURNAMENT,
+  PATH_REFEE,
 } from '../../constants/routes.ts';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store.ts';
@@ -98,6 +99,13 @@ const SideNav = ({ ...others }: SiderProps) => {
             getItem(<Link to={PATH_ADMIN_PAYMENT.root}>List</Link>, 'List'),
           ]),
         ]
+      : user?.roleId === 4
+      ? [
+        getItem(
+          <Link to={PATH_REFEE.root}>Dashboard</Link>,
+          'refOverview'
+        ),
+        ]
       : [
           getItem('Tournament', 'tournament', <TrophyOutlined />, [
             getItem(
@@ -124,6 +132,8 @@ const SideNav = ({ ...others }: SiderProps) => {
     'corporate',
     'user-profile',
     'tournament',
+    'refee',
+    'profile',
   ];
 
   return (

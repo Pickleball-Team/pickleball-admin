@@ -1,48 +1,47 @@
-import React, { useState, useRef } from 'react';
+import { Pie } from '@ant-design/charts';
+import {
+  EditOutlined,
+  ManOutlined,
+  PercentageOutlined,
+  PlusCircleFilled,
+  ReloadOutlined,
+  SearchOutlined,
+  TeamOutlined,
+  WomanOutlined
+} from '@ant-design/icons';
+import type { InputRef } from 'antd';
 import {
   Button,
+  Card,
+  Col,
+  DatePicker,
+  Divider,
+  Form,
   Input,
+  message,
+  Modal,
+  Progress,
+  Row,
+  Select,
   Space,
+  Spin,
+  Statistic,
   Table,
   Tag,
   Typography,
-  Row,
-  Col,
-  Card,
-  Form,
-  DatePicker,
-  Select,
-  message,
-  Modal,
-  Spin,
-  Divider,
-  Statistic,
-  Progress,
 } from 'antd';
-import { 
-  SearchOutlined, 
-  UserOutlined, 
-  ReloadOutlined, 
-  PlusCircleFilled, 
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ManOutlined,
-  WomanOutlined,
-  TeamOutlined,
-  PercentageOutlined
-} from '@ant-design/icons';
-import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
-import { Pie, Column } from '@ant-design/charts';
+import React, { useRef, useState } from 'react';
 
-import { RegisterUserRequest } from '../../modules/User/models';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRegisterRefereesUser } from '../../modules/User/hooks/useRegisterUser';
+import { RegisterUserRequest } from '../../modules/User/models';
 
-import { RootState } from '../../redux/store';
 import { useSelector } from 'react-redux';
 import { useGetRefereeBySponnerId } from '../../modules/Refee/hooks/useGetRefereeBySponnerId';
 import { useUpdateReferee } from '../../modules/Refee/hooks/useUpdateRefee';
+import { RefereeResponse } from '../../modules/Refee/models';
+import { RootState } from '../../redux/store';
 
 const { Text, Title } = Typography;
 const { Option } = Select;
@@ -50,6 +49,11 @@ const { Option } = Select;
 type DataIndex = string;
 
 const COLORS = ['#52c41a', '#ff4d4f', '#1890ff', '#faad14', '#722ed1', '#13c2c2'];
+
+interface EditRefereeFormData {
+  refreeLevel: string | null;
+  refreeNote: string | null;
+}
 
 const RefereesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -62,7 +66,10 @@ const RefereesPage: React.FC = () => {
   const { mutate: registerUser } = useRegisterRefereesUser();
   const { mutate: updateReferee } = useUpdateReferee();
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [currentReferee, setCurrentReferee] = useState<RefereeResponse | null>(null);
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   const maleCount = referees?.filter(referee => referee.user.gender === 'Male')?.length || 0;
   const femaleCount = referees?.filter(referee => referee.user.gender === 'Female')?.length || 0;
@@ -274,7 +281,88 @@ const RefereesPage: React.FC = () => {
       ),
   });
 
-  const columns: ColumnsType<any> = [
+  const handleEdit = (record: RefereeResponse) => {
+    setCurrentReferee(record);
+    editForm.setFieldsValue({
+      refreeLevel: record.refreeLevel || '',
+      refreeNote: record.refreeNote || '',
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditSubmit = (values: EditRefereeFormData) => {
+    if (!currentReferee) return;
+    
+    updateReferee(
+      { 
+        id: currentReferee.refreeId, 
+        data: { 
+          refreeLevel: values.refreeLevel || undefined,
+          refreeNote: values.refreeNote || undefined,
+          isAccept: currentReferee.isAccept 
+        } 
+      },
+      {
+        onSuccess: () => {
+          message.success('Referee updated successfully');
+          setIsEditModalVisible(false);
+          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+          refetch();
+        },
+        onError: () => {
+          message.error('Failed to update referee');
+        },
+      }
+    );
+  };
+
+  const handleAccept = (record: RefereeResponse) => {
+    updateReferee(
+      { id: record.refreeId, data: { isAccept: true } },
+      {
+        onSuccess: () => {
+          message.success('Referee accepted successfully');
+          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+          refetch();
+        },
+        onError: () => {
+          message.error('Failed to accept referee');
+        },
+      }
+    );
+  };
+
+  const handleBan = (record: RefereeResponse) => {
+    updateReferee(
+      { id: record.refreeId, data: { isAccept: false } },
+      {
+        onSuccess: () => {
+          message.success('Referee banned successfully');
+          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+          refetch();
+        },
+        onError: () => {
+          message.error('Failed to ban referee');
+        },
+      }
+    );
+  };
+
+  const onFinish = (values: RegisterUserRequest) => {
+    registerUser({ ...values, refereeCode: `${user?.id}` }, {
+      onSuccess: () => {
+        message.success('Referee registered successfully');
+        setIsModalVisible(false);
+        form.resetFields();
+        queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
+      },
+      onError: () => {
+        message.error('Failed to register referee');
+      },
+    });
+  };
+
+  const columns: ColumnsType<RefereeResponse> = [
     {
       title: 'Avatar',
       dataIndex: ['user', 'avatarUrl'],
@@ -329,41 +417,55 @@ const RefereesPage: React.FC = () => {
       ...getColumnSearchProps('phoneNumber'),
     },
     {
-      title: 'isAccept',
+      title: 'Status',
       dataIndex: 'isAccept',
       key: 'isAccept',
       filters: [
         { text: 'Accepted', value: true },
-        { text: 'Ban', value: false },
+        { text: 'Banned', value: false },
       ],
       onFilter: (value, record) => record.isAccept === value,
       render: (isAccept: boolean) =>
         isAccept ? (
-          <Tag color="blue">Accepted</Tag>
+          <Tag color="green">Accepted</Tag>
         ) : (
-          <Tag color="red">Ban</Tag>
+          <Tag color="red">Banned</Tag>
         ),
     },
     {
       title: 'Referee Code',
       dataIndex: 'refreeCode',
       key: 'refreeCode',
-      render: (refreeCode: string) => <span>{refreeCode}</span>,
+    },
+    {
+      title: 'Level',
+      dataIndex: 'refreeLevel',
+      key: 'refreeLevel',
+      render: (level: string | null) => level || 'Not set',
     },
     {
       title: 'Action',
       key: 'action',
-      render: (record: any) => (
+      render: (_, record: RefereeResponse) => (
         <Space size="middle">
-          <Button type="link" onClick={() => handleEdit(record)}>
+          <Button 
+            type="primary" 
+            icon={<EditOutlined />} 
+            onClick={() => handleEdit(record)}
+            style={{ backgroundColor: '#1890ff' }}
+          >
             Edit
           </Button>
-          {record?.isAccept ? (
+          {record.isAccept ? (
             <Button type="primary" danger onClick={() => handleBan(record)}>
               Ban
             </Button>
           ) : (
-            <Button type="primary" onClick={() => handleAccept(record)}>
+            <Button 
+              type="primary" 
+              onClick={() => handleAccept(record)}
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
               Accept
             </Button>
           )}
@@ -371,56 +473,6 @@ const RefereesPage: React.FC = () => {
       ),
     },
   ];
-
-  const handleEdit = (record: any) => {
-    console.log('Edit referee:', record);
-  };
-
-  const handleAccept = (record: any) => {
-    updateReferee(
-      { id: record.refreeId, data: { isAccept: true } },
-      {
-        onSuccess: () => {
-          message.success('Referee accepted successfully');
-          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
-          refetch();
-        },
-        onError: () => {
-          message.error('Failed to accept referee');
-        },
-      }
-    );
-  };
-
-  const handleBan = (record: any) => {
-    updateReferee(
-      { id: record.refreeId, data: { isAccept: false } },
-      {
-        onSuccess: () => {
-          message.success('Referee banned successfully');
-          queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
-          refetch();
-        },
-        onError: () => {
-          message.error('Failed to ban referee');
-        },
-      }
-    );
-  };
-
-  const onFinish = (values: RegisterUserRequest) => {
-    registerUser({ ...values, refereeCode: `${user?.id}` }, {
-      onSuccess: () => {
-        message.success('Referee registered successfully');
-        setIsModalVisible(false);
-        form.resetFields();
-        queryClient.invalidateQueries({ queryKey: ['GET_REFEREE_BY_SPONNER_ID', user?.id.toString()] });
-      },
-      onError: () => {
-        message.error('Failed to register referee');
-      },
-    });
-  };
 
   if (isLoading) {
     return (
@@ -711,6 +763,110 @@ const RefereesPage: React.FC = () => {
               Register Referee
             </Button>
           </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={
+          <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+            <EditOutlined style={{ color: '#1890ff', marginRight: 8 }} />
+            Edit Referee Details
+          </div>
+        }
+        visible={isEditModalVisible}
+        onCancel={() => {
+          setIsEditModalVisible(false);
+          editForm.resetFields();
+          setCurrentReferee(null);
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form 
+          form={editForm} 
+          layout="vertical" 
+          onFinish={handleEditSubmit}
+        >
+          <Row gutter={16}>
+            <Col span={24}>
+              <div className="referee-info-display" style={{ marginBottom: 24, padding: 16, backgroundColor: '#f9f9f9', borderRadius: 4 }}>
+                <Row gutter={[8, 8]}>
+                  <Col span={6}>
+                    <img 
+                      src={currentReferee?.user.avatarUrl} 
+                      alt="avatar" 
+                      style={{ width: '100%', borderRadius: '50%' }}
+                    />
+                  </Col>
+                  <Col span={18}>
+                    <Title level={4} style={{ margin: 0 }}>
+                      {currentReferee?.user.firstName} {currentReferee?.user.lastName}
+                    </Title>
+                    <Text type="secondary">{currentReferee?.user.email}</Text>
+                    <div style={{ marginTop: 8 }}>
+                      <Tag color={currentReferee?.isAccept ? "green" : "red"}>
+                        {currentReferee?.isAccept ? "Accepted" : "Banned"}
+                      </Tag>
+                      <Tag color="blue">Code: {currentReferee?.refreeCode}</Tag>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="refreeLevel"
+                label="Referee Level"
+                help="e.g. Beginner, Intermediate, Advanced, Professional"
+              >
+                <Select allowClear>
+                  <Option value="Beginner">Beginner</Option>
+                  <Option value="Intermediate">Intermediate</Option>
+                  <Option value="Advanced">Advanced</Option>
+                  <Option value="Professional">Professional</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="refreeNote"
+                label="Notes"
+              >
+                <Input.TextArea rows={4} placeholder="Additional notes about this referee" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item>
+                <Button 
+                  onClick={() => {
+                    setIsEditModalVisible(false);
+                    editForm.resetFields();
+                    setCurrentReferee(null);
+                  }}
+                  block
+                >
+                  Cancel
+                </Button>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item>
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  block
+                >
+                  Update Referee
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>

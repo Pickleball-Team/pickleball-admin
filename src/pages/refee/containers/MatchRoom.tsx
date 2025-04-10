@@ -1,7 +1,6 @@
 import {
   CalendarOutlined,
   EditOutlined,
-  FileAddOutlined,
   FilterOutlined,
   LockFilled,
   MailFilled,
@@ -9,10 +8,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
   TeamOutlined,
-  TrophyOutlined,
-  UserOutlined,
-  TableOutlined,
-  ReadOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
@@ -21,35 +17,32 @@ import {
   Button,
   Card,
   Col,
-  Divider,
   Empty,
   Input,
+  Progress,
   Row,
   Select,
   Space,
   Statistic,
   Table,
+  Tabs,
   Tag,
   Tooltip,
-  Typography,
-  Tabs,
-  Progress,
+  Typography
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import Title from 'antd/es/typography/Title';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { IMatch } from '../../../modules/Macths/models';
-import { useGetMatchByTournamentId } from '../../../modules/Tournaments/hooks/useGetMatchByTournamentId';
+import { useGetMatchByRefereeId } from '../../../modules/Tournaments/hooks/useGetMatchByRefereeId';
 import { Match, Member } from '../../../modules/Tournaments/models';
+import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees';
 import { fetchUserById } from '../../../modules/User/hooks/useGetUserById';
 import { User } from '../../../modules/User/models';
-import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees';
-import { useGetVenueBySponnerId } from '../../../modules/Venues/hooks/useGetVenueBySponnerId';
+import { useGetVenueAll } from '../../../modules/Venues/hooks/useGetAllVenus';
 import { RootState } from '../../../redux/store';
-import AddMatchModal from './AddMatchModal';
-import UpdateMatchModal from './UpdateMatchModal';
-import MatchScoreModal from './MatchScoreModal';
-import Title from 'antd/es/typography/Title';
+import MatchScoreModal from '../../tournament/containers/MatchScoreModal';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -69,9 +62,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     isLoading: isLoadingMatches,
     error: errorMatches,
     refetch,
-  } = useGetMatchByTournamentId(Number(id));
-  const { data: venues } = useGetVenueBySponnerId(user?.id || 0);
+  } = useGetMatchByRefereeId(user?.id ?? 0);
+  
   const { data: referees } = useGetAllReferees();
+  const { data: venues } = useGetVenueAll();
   const [userDetails, setUserDetails] = useState<any[]>([]);
   const [filteredDetails, setFilteredDetails] = useState<Match[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('All');
@@ -100,8 +94,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     return {
       totalMatches: matchData.length,
       scheduled: matchData.filter((match) => match.status === 1).length,
-      ongoing: matchData.filter((match) => match.status === 3).length,
-      completed: matchData.filter((match) => match.status === 2).length,
+      ongoing: matchData.filter((match) => match.status === 2).length,
+      completed: matchData.filter((match) => match.status === 3).length,
     };
   }, [matchData]);
 
@@ -166,9 +160,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return 'blue';
       case 2:
-        return 'green';
-      case 3:
         return 'orange';
+      case 3:
+        return 'green';
       default:
         return 'red';
     }
@@ -179,9 +173,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return 'Scheduled';
       case 2:
-        return 'Completed';
-      case 3:
         return 'Ongoing';
+      case 3:
+        return 'Completed';
       default:
         return 'Cancelled';
     }
@@ -192,9 +186,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return <CalendarOutlined />;
       case 2:
-        return <TrophyOutlined />;
-      case 3:
         return <TeamOutlined />;
+      case 3:
+        return <TrophyOutlined />;
       default:
         return null;
     }
@@ -327,7 +321,6 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
         const color = getResultTagColor(status);
         const text = getStatusText(status);
         const icon = getStatusIcon(status);
-
         return (
           <Tag color={color} icon={icon}>
             {text}
@@ -336,8 +329,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       },
       filters: [
         { text: 'Scheduled', value: 1 },
-        { text: 'Completed', value: 2 },
-        { text: 'Ongoing', value: 3 },
+        { text: 'Completed', value: 3 },
+        { text: 'Ongoing', value: 2 },
       ],
       onFilter: (value, record) => record.status === value,
     },
@@ -690,16 +683,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
             Match Management
           </Title>
         }
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
-            size="large"
-          >
-            Add Match
-          </Button>
-        }
+        
         style={{ marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
       >
         <Row gutter={[16, 16]} align="middle">
@@ -714,10 +698,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                 <Option value="1">
                   <CalendarOutlined /> Scheduled
                 </Option>
-                <Option value="3">
+                <Option value="2">
                   <TeamOutlined /> Ongoing
                 </Option>
-                <Option value="2">
+                <Option value="3">
                   <TrophyOutlined /> Completed
                 </Option>
               </Select>
@@ -790,7 +774,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
               <TeamOutlined /> Ongoing ({statistics.ongoing})
             </span>
           }
-          key="3"
+          key="2"
         />
         <TabPane
           tab={
@@ -798,7 +782,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
               <TrophyOutlined /> Completed ({statistics.completed})
             </span>
           }
-          key="2"
+          key="3"
         />
       </Tabs>
 
@@ -865,25 +849,6 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
           ),
         }}
       />
-
-      {/* Add/Update Match Modals */}
-      <AddMatchModal
-        tournamentId={id}
-        visible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        refetch={refetch}
-      />
-      {selectedMatch && (
-        <UpdateMatchModal
-          visible={isUpdateModalVisible}
-          onClose={() => {
-            setIsUpdateModalVisible(false);
-            setSelectedMatch(null);
-          }}
-          match={selectedMatch}
-          refetch={refetch}
-        />
-      )}
       {selectedMatchForScores && (
         <MatchScoreModal
           visible={isScoreModalVisible}

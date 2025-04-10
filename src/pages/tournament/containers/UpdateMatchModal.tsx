@@ -219,6 +219,7 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
                   borderColor: '#1890ff',
                   boxShadow: '0 0 0 2px rgba(24,144,255,0.2)',
                 }}
+                disabled
                 onChange={handleStatusChange}
               >
                 <Option value={1}>Scheduled</Option>

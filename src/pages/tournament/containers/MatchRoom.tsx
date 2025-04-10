@@ -100,8 +100,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     return {
       totalMatches: matchData.length,
       scheduled: matchData.filter((match) => match.status === 1).length,
-      ongoing: matchData.filter((match) => match.status === 3).length,
-      completed: matchData.filter((match) => match.status === 2).length,
+      ongoing: matchData.filter((match) => match.status === 2).length,
+      completed: matchData.filter((match) => match.status === 3).length,
     };
   }, [matchData]);
 
@@ -166,9 +166,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return 'blue';
       case 2:
-        return 'green';
-      case 3:
         return 'orange';
+      case 3:
+        return 'green';
       default:
         return 'red';
     }
@@ -179,9 +179,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return 'Scheduled';
       case 2:
-        return 'Completed';
-      case 3:
         return 'Ongoing';
+      case 3:
+        return 'Completed';
       default:
         return 'Cancelled';
     }
@@ -192,9 +192,9 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       case 1:
         return <CalendarOutlined />;
       case 2:
-        return <TrophyOutlined />;
-      case 3:
         return <TeamOutlined />;
+      case 3:
+        return <TrophyOutlined />;
       default:
         return null;
     }
@@ -336,8 +336,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       },
       filters: [
         { text: 'Scheduled', value: 1 },
-        { text: 'Completed', value: 2 },
-        { text: 'Ongoing', value: 3 },
+        { text: 'Ongoing', value: 2 },
+        { text: 'Completed', value: 3 },
       ],
       onFilter: (value, record) => record.status === value,
     },
@@ -714,10 +714,10 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                 <Option value="1">
                   <CalendarOutlined /> Scheduled
                 </Option>
-                <Option value="3">
+                <Option value="2">
                   <TeamOutlined /> Ongoing
                 </Option>
-                <Option value="2">
+                <Option value="3">
                   <TrophyOutlined /> Completed
                 </Option>
               </Select>
@@ -741,8 +741,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                     : filterStatus === '1'
                       ? 'Scheduled Matches'
                       : filterStatus === '2'
-                        ? 'Completed Matches'
-                        : 'Ongoing Matches'}
+                        ? 'Ongoing Matches'
+                        : 'Completed Matches'}
                 </Text>
               </Badge>
             </div>
@@ -790,7 +790,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
               <TeamOutlined /> Ongoing ({statistics.ongoing})
             </span>
           }
-          key="3"
+          key="2"
         />
         <TabPane
           tab={
@@ -798,7 +798,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
               <TrophyOutlined /> Completed ({statistics.completed})
             </span>
           }
-          key="2"
+          key="3"
         />
       </Tabs>
 
