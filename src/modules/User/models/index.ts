@@ -29,6 +29,7 @@ export interface LoginResponse {
 }
 
 export interface User {
+  user: any;
   id: number;
   firstName: string;
   lastName: string;

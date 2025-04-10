@@ -131,7 +131,7 @@ const SideNav = ({ ...others }: SiderProps) => {
       <Logo
         color="blue"
         asLink
-        href={PATH_LANDING.root}
+        href={'/dashboards/default'}
         justify="center"
         gap="small"
         imgSize={{ h: 28, w: 28 }}

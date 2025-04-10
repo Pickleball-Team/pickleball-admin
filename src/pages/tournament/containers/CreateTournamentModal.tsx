@@ -105,7 +105,7 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
       social: values.social || 'No social links provided',
       isFree: values.isFree === undefined ? true : values.isFree,
       // Ensure entryFee is consistent with isFree
-      entryFee: values.isFree ? 0 : values.entryFee || 1000,
+      entryFee: values.isFree ? 0 : values.entryFee || 10000,
     };
 
     // Log the data being sent to help debug

@@ -1,6 +1,19 @@
 import { SearchOutlined, CalendarOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
-import { Button, Card, Col, Input, Row, Space, Table, Tag, Select, Typography, Badge, Tooltip } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Input,
+  Row,
+  Space,
+  Table,
+  Tag,
+  Select,
+  Typography,
+  Badge,
+  Tooltip,
+} from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -105,7 +118,7 @@ export const OverviewPage = () => {
   const handleAccept = async (id: number) => {
     try {
       updateTournament(
-        { id, data: { isAccept: true, status: "Scheduled"  } },
+        { id, data: { isAccept: true, status: 'Scheduled' } },
         {
           onSuccess: () => {
             console.log(`Accepted tournament with id: ${id}`);
@@ -124,7 +137,7 @@ export const OverviewPage = () => {
   const handleReject = async (id: number) => {
     try {
       updateTournament(
-        { id, data: { isAccept: false , status: "Disable"} },
+        { id, data: { isAccept: false, status: 'Disable' } },
         {
           onSuccess: () => {
             console.log(`Rejected tournament with id: ${id}`);
@@ -147,7 +160,7 @@ export const OverviewPage = () => {
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -163,7 +176,7 @@ export const OverviewPage = () => {
   const getStatusBadge = (status: string) => {
     let color = '';
     let statusColor = '';
-    
+
     switch (status) {
       case 'Scheduled':
         statusColor = 'blue';
@@ -189,7 +202,7 @@ export const OverviewPage = () => {
         statusColor = 'default';
         color = 'default';
     }
-    
+
     return { color, statusColor };
   };
 
@@ -200,9 +213,13 @@ export const OverviewPage = () => {
       key: 'name',
       ...getColumnSearchProps('name'),
       render: (text: string, record: any) => (
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}
+        >
           <span style={{ fontWeight: 'bold' }}>{text}</span>
-          <span style={{ fontSize: '12px', color: '#888' }}>{record.location}</span>
+          <span style={{ fontSize: '12px', color: '#888' }}>
+            {record.location}
+          </span>
         </div>
       ),
       width: 220,
@@ -211,14 +228,20 @@ export const OverviewPage = () => {
       title: 'Period',
       key: 'period',
       render: (_, record) => (
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}
+        >
           <div>
-            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span> {formatDate(record.startDate)}
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span>{' '}
+            {formatDate(record.startDate)}
           </div>
           <div style={{ marginTop: 4 }}>
-            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span> {formatDate(record.endDate)}
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span>{' '}
+            {formatDate(record.endDate)}
             {isDatePassed(record.endDate) && (
-              <Tag color="red" style={{ marginLeft: 8 }}>Expired</Tag>
+              <Tag color="red" style={{ marginLeft: 8 }}>
+                Expired
+              </Tag>
             )}
           </div>
         </div>
@@ -229,7 +252,9 @@ export const OverviewPage = () => {
       title: 'Type / Players',
       key: 'typeAndPlayers',
       render: (_, record) => (
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}
+        >
           <Tag color="processing">{record.type}</Tag>
           <span style={{ fontSize: '12px', marginTop: 4 }}>
             Max: <strong>{record.maxPlayer}</strong> players
@@ -249,10 +274,17 @@ export const OverviewPage = () => {
       render: (_, record) => {
         const { color, statusColor } = getStatusBadge(record.status);
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '6px 0',
+            }}
+          >
             <Badge color={statusColor} text={record.status} />
             <span style={{ fontSize: '12px', marginTop: 8 }}>
-              Prize: <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
+              Prize:{' '}
+              <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
             </span>
           </div>
         );
@@ -279,7 +311,7 @@ export const OverviewPage = () => {
       render: (isAccept: boolean, record) => {
         // Check if end date has passed
         const endDatePassed = isDatePassed(record.endDate);
-        
+
         if (endDatePassed) {
           return (
             <Tooltip title="Tournament has ended">
@@ -287,23 +319,30 @@ export const OverviewPage = () => {
             </Tooltip>
           );
         }
-        
+
         return isAccept ? (
-          <Button 
-            danger 
-            onClick={() => handleReject(record.id)}
-            style={{ width: '100%' }}
-          >
-            Reject
-          </Button>
+          <>
+            <Tag color="success">Approved</Tag>
+          </>
         ) : (
-          <Button 
-            type="primary" 
-            onClick={() => handleAccept(record.id)}
-            style={{ width: '100%' }}
-          >
-            Accept
-          </Button>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+             <Button
+              type="primary"
+              onClick={() => handleAccept(record.id)}
+              style={{ width: '100%',marginBottom: 2 }}
+            >
+              Accept
+            </Button>
+            <Button
+              danger
+              onClick={() => handleReject(record.id)}
+              style={{ width: '100%', marginBottom: 2 }}
+            >
+              Reject
+            </Button>
+            <br/>
+           
+          </div>
         );
       },
       width: 120,
@@ -360,8 +399,7 @@ export const OverviewPage = () => {
     label: {
       type: 'inner',
       offset: '-50%',
-      content: (data: any) =>
-        `${(data.percent * 100).toFixed(0)}%`,
+      content: (data: any) => `${(data.percent * 100).toFixed(0)}%`,
       style: {
         fontSize: 14,
         textAlign: 'center',
@@ -384,29 +422,45 @@ export const OverviewPage = () => {
           Tournament Overview
         </Typography.Title>
       </div>
-      
+
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="Total Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Total Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {totalTournaments}
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Active Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Active Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {ongoingTournaments}
               </Card>
             </Col>
           </Row>
           <Row gutter={16} style={{ marginTop: 16 }}>
             <Col span={12}>
-              <Card title="Singles Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Singles Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {singlesTournaments}
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Doubles Tournaments" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Doubles Tournaments"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 {doublesTournaments}
               </Card>
             </Col>
@@ -415,20 +469,35 @@ export const OverviewPage = () => {
         <Col span={12}>
           <Row gutter={16}>
             <Col span={12}>
-              <Card title="Tournament Types" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Tournament Types"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 <Pie {...pieConfig(tournamentTypeData, 'value', 'type')} />
               </Card>
             </Col>
             <Col span={12}>
-              <Card title="Tournament Status" bordered={false} style={{ backgroundColor: '#ffffff' }}>
+              <Card
+                title="Tournament Status"
+                bordered={false}
+                style={{ backgroundColor: '#ffffff' }}
+              >
                 <Pie {...pieConfig(tournamentStatusData, 'value', 'status')} />
               </Card>
             </Col>
           </Row>
         </Col>
       </Row>
-      
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+      <div
+        style={{
+          marginBottom: 16,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Button
           type="primary"
           onClick={() => refetch()}
@@ -436,26 +505,26 @@ export const OverviewPage = () => {
         >
           Refresh Data
         </Button>
-        
+
         <Typography.Text type="secondary">
           Showing {data?.length || 0} tournaments
         </Typography.Text>
       </div>
-      
+
       <Table
         columns={columns}
         dataSource={data}
         loading={isLoading}
         rowKey="id"
-        style={{ 
-          backgroundColor: '#ffffff', 
+        style={{
+          backgroundColor: '#ffffff',
           borderRadius: '8px',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
         }}
-        pagination={{ 
+        pagination={{
           pageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} tournaments`
+          showTotal: (total) => `Total ${total} tournaments`,
         }}
         size="middle"
         bordered={false}
