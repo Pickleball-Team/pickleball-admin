@@ -39,7 +39,7 @@ const FEATURES = [
   },
   {
     title: '60+ UI components',
-    description: 'Almost 60+ UI Components being given with ScorePickel Pack.',
+    description: 'Almost 60+ UI Components being given with ScorePickle Pack.',
     icon: AppstoreOutlined,
   },
   {
@@ -50,7 +50,7 @@ const FEATURES = [
   {
     title: '500+ font icons',
     description:
-      'Lots of Icon Fonts are included here in the package of ScorePickel.',
+      'Lots of Icon Fonts are included here in the package of ScorePickle.',
     icon: BorderOutlined,
   },
   {

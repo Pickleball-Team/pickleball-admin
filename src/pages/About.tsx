@@ -78,7 +78,7 @@ export const AboutPage = () => {
         <Card>
           <Flex vertical gap="small">
             <Title level={3} className="m-0">
-              ScorePickel
+              ScorePickle
             </Title>
             <Text>
               A dynamic and versatile multipurpose dashboard template built
