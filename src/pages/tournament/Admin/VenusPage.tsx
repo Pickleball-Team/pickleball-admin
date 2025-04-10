@@ -255,7 +255,7 @@ export const VenusPage = () => {
           <Form.Item
             name="capacity"
             label="Capacity"
-            initialValue={100}
+            initialValue={4}
             rules={[{ required: true, message: 'Please input the capacity!' }]}
           >
             <InputNumber min={1} style={{ width: '100%' }} />

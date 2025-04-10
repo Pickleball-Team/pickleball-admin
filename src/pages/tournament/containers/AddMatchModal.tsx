@@ -264,6 +264,7 @@ const AddMatchModal: React.FC<AddMatchModalProps> = ({
           matchCategory: 3,
           isPublic: false,
           winScore: 1,
+          status: 1,
         }}
       >
         <Collapse defaultActiveKey={['1']}>

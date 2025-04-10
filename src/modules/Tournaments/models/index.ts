@@ -52,10 +52,25 @@ export interface PlayerDetail {
   avatarUrl: string;
 }
 
-export type TournamentRequest = Omit<
-  Tournament,
-  'id' | 'status' | 'isAccept' | 'touramentDetails' | 'registrationDetails'
->;
+export interface TournamentRequest {
+  id?: number;
+  name: string;
+  location: string;
+  maxPlayer: number;
+  description: string;
+  banner: string;
+  note: string;
+  totalPrize: number;
+  startDate: string | Date;
+  endDate: string | Date;
+  type: number; // 0 for Singles, 1 for Doubles, 2 for Mixed
+  organizerId: number;
+  isMinRanking?: number;
+  isMaxRanking?: number;
+  social?: string;
+  isFree?: boolean;
+  entryFee?: number;
+}
 
 export enum TournamentType {
   Singles = 'Singles',

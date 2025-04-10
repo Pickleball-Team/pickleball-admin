@@ -579,15 +579,7 @@ const RefereesPage: React.FC = () => {
       <Card 
         title="Referee List" 
         bordered={false}
-        extra={
-          <Button 
-            type="primary" 
-            icon={<PlusCircleFilled />} 
-            onClick={() => setIsModalVisible(true)}
-          >
-            Add New
-          </Button>
-        }
+      
       >
         <Table 
           columns={columns} 

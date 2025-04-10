@@ -25,8 +25,7 @@ import { useUpdateTournament } from '../../../modules/Tournaments/hooks/useUpdat
 import useCloudinaryUpload from '../../../modules/Cloudinary/Macths/hooks/useCloudinaryUpload';
 
 const { Option } = Select;
-const { TextArea } = Input;
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 type TournamentInfoFormProps = {
   data: any;
@@ -45,6 +44,10 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
   // Watch for banner URL changes
   const bannerUrl = Form.useWatch('banner', form);
   
+  // Check if tournament is editable - only status can be changed if not editable
+  const isEdit = data.status === 'Scheduled' || data.status === 'Pending';
+  const isFieldDisabled = !isEdit;
+  
   // Update preview when banner URL changes
   useEffect(() => {
     if (bannerUrl) {
@@ -59,11 +62,21 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
     }
   }, [data?.banner]);
 
+  // Handle form values when isFree changes
+  useEffect(() => {
+    const isFree = form.getFieldValue('isFree');
+    if (isFree) {
+      form.setFieldsValue({ entryFee: 0 });
+    }
+  }, [form.getFieldValue('isFree')]);
+
   const handleFinish = (values: any) => {
     const updatedValues = {
       ...values,
       startDate: values.startDate ? values.startDate.toISOString() : null,
       endDate: values.endDate ? values.endDate.toISOString() : null,
+      // Ensure isFree and entryFee are consistent
+      entryFee: values.isFree ? 0 : values.entryFee,
     };
 
     // Filter out unchanged fields
@@ -117,59 +130,18 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
         startDate: data?.startDate ? moment(data?.startDate) : null,
         endDate: data?.endDate ? moment(data?.endDate) : null,
         banner: data?.banner,
-        description: data?.description,
         type: data?.type,
         entryFee: data?.entryFee,
         isFree: data?.isFree,
         social: data?.social,
+        isMinRanking: data?.isMinRanking,
+        isMaxRanking: data?.isMaxRanking
       }}
       onFinish={handleFinish}
     >
-      {/* Section 1: Basic Tournament Information */}
-      <Card 
-        className="section-card" 
-        title={<><InfoCircleOutlined /> Basic Information</>}
-        style={{ marginBottom: 24 }}
-      >
-        <Row gutter={16}>
-          <Col span={16}>
-            <Form.Item
-              name="name"
-              label="Tournament Name"
-              rules={[{ required: true, message: 'Please input the name!' }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="type"
-              label="Tournament Type"
-              rules={[{ required: true, message: 'Please select the tournament type!' }]}
-            >
-              <Select>
-                <Option value="Singles">Singles</Option>
-                <Option value="Doubles">Doubles</Option>
-                <Option value="Mixed">Mixed</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={24}>
-            <Form.Item
-              name="location"
-              label="Location"
-              rules={[{ required: true, message: 'Please input the location!' }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
-      </Card>
 
-      {/* Section 2: Tournament Schedule & Status */}
-      <Card 
+            {/* Section 2: Tournament Schedule & Status */}
+            <Card 
         className="section-card" 
         title={<><CalendarOutlined /> Schedule & Status</>}
         style={{ marginBottom: 24 }}
@@ -195,7 +167,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Start Date"
               rules={[{ required: true, message: 'Please select the start date!' }]}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -204,11 +176,55 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="End Date"
               rules={[{ required: true, message: 'Please select the end date!' }]}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
         </Row>
       </Card>
+      {/* Section 1: Basic Tournament Information */}
+      <Card 
+        className="section-card" 
+        title={<><InfoCircleOutlined /> Basic Information</>}
+        style={{ marginBottom: 24 }}
+      >
+        <Row gutter={16}>
+          <Col span={16}>
+            <Form.Item
+              name="name"
+              label="Tournament Name"
+              rules={[{ required: true, message: 'Please input the name!' }]}
+            >
+              <Input disabled={isFieldDisabled} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="type"
+              label="Tournament Type"
+              rules={[{ required: true, message: 'Please select the tournament type!' }]}
+            >
+              <Select disabled={isFieldDisabled}>
+                <Option value={0}>Singles</Option>
+                <Option value={1}>Doubles</Option>
+                <Option value={2}>Mixed</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              name="location"
+              label="Location"
+              rules={[{ required: true, message: 'Please input the location!' }]}
+            >
+              <Input disabled={isFieldDisabled} />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Card>
+
+
 
       {/* Section 3: Tournament Details */}
       <Card 
@@ -223,7 +239,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Total Prize"
               rules={[{ required: true, message: 'Please input the total prize!' }]}
             >
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber min={0} style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -232,7 +248,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Max Players"
               rules={[{ required: true, message: 'Please input the max players!' }]}
             >
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -241,7 +257,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Entry Fee"
               rules={[{ required: true, message: 'Please input the entry fee!' }]}
             >
-              <InputNumber min={0} style={{ width: '100%' }} disabled={Form.useWatch('isFree', form)} />
+              <InputNumber min={0} style={{ width: '100%' }} disabled={Form.useWatch('isFree', form) || isFieldDisabled} />
             </Form.Item>
           </Col>
         </Row>
@@ -252,33 +268,38 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Free Tournament"
               valuePropName="checked"
             >
-              <Switch />
+              <Switch disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
         </Row>
       </Card>
 
-      {/* Section 4: Player Requirements (Read Only) */}
+      {/* Section 4: Player Requirements */}
       <Card 
         className="section-card" 
         title={<><TeamOutlined /> Player Requirements</>}
-        style={{ marginBottom: 24, background: '#f9f9f9' }}
+        style={{ marginBottom: 24 }}
       >
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label="Minimum Ranking">
-              <Text>{data?.isMinRanking || '0'}</Text>
+            <Form.Item
+              name="isMinRanking"
+              label="Minimum Ranking"
+              rules={[{ required: true, message: 'Please input the minimum ranking!' }]}
+            >
+              <InputNumber min={0} max={10} style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item label="Maximum Ranking">
-              <Text>{data?.isMaxRanking || 'N/A'}</Text>
+            <Form.Item
+              name="isMaxRanking"
+              label="Maximum Ranking"
+              rules={[{ required: true, message: 'Please input the maximum ranking!' }]}
+            >
+              <InputNumber min={0} max={10} style={{ width: '100%' }} disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
         </Row>
-        <Text type="secondary">
-          Note: Ranking requirements can only be modified from the tournament settings.
-        </Text>
       </Card>
 
       {/* Section 5: Media & Social */}
@@ -293,7 +314,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               name="social"
               label="Social Media Link"
             >
-              <Input placeholder="https://example.com/social" />
+              <Input placeholder="https://example.com/social" disabled={isFieldDisabled} />
             </Form.Item>
           </Col>
         </Row>
@@ -305,8 +326,8 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
             onChange={e => setBannerInputType(e.target.value)}
             style={{ marginBottom: 16 }}
           >
-            <Radio.Button value="url"><LinkOutlined /> URL</Radio.Button>
-            <Radio.Button value="upload"><UploadOutlined /> Upload</Radio.Button>
+            <Radio.Button value="url" disabled={isFieldDisabled}><LinkOutlined /> URL</Radio.Button>
+            <Radio.Button value="upload" disabled={isFieldDisabled}><UploadOutlined /> Upload</Radio.Button>
           </Radio.Group>
           
           {bannerInputType === 'url' ? (
@@ -315,7 +336,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               noStyle
               rules={[{ required: true, message: 'Please input the banner URL!' }]}
             >
-              <Input placeholder="https://example.com/banner.jpg" />
+              <Input placeholder="https://example.com/banner.jpg" disabled={isFieldDisabled} />
             </Form.Item>
           ) : (
             <Form.Item
@@ -330,6 +351,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
                   showUploadList={false}
                   beforeUpload={handleBannerUpload}
                   accept="image/*"
+                  disabled={isFieldDisabled}
                 >
                   <p className="ant-upload-drag-icon">
                     <UploadOutlined />
@@ -353,20 +375,6 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
             />
           </div>
         )}
-      </Card>
-
-      {/* Section 6: Additional Information */}
-      <Card 
-        className="section-card" 
-        title="Additional Information"
-        style={{ marginBottom: 24 }}
-      >
-        <Form.Item
-          name="description"
-          label="Description"
-        >
-          <TextArea rows={4} placeholder="Enter tournament description here..." />
-        </Form.Item>
       </Card>
       
       {/* Submit Button */}

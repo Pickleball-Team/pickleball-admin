@@ -1,6 +1,6 @@
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, CalendarOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
-import { Button, Card, Col, Input, Row, Space, Table, Tag, Select, Typography } from 'antd';
+import { Button, Card, Col, Input, Row, Space, Table, Tag, Select, Typography, Badge, Tooltip } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -140,101 +140,185 @@ export const OverviewPage = () => {
     }
   };
 
+  // Helper function to format dates
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Helper to check if date has passed
+  const isDatePassed = (dateStr: string): boolean => {
+    if (!dateStr) return false;
+    const today = new Date();
+    const endDate = new Date(dateStr);
+    return endDate < today;
+  };
+
+  // Helper to get status badge
+  const getStatusBadge = (status: string) => {
+    let color = '';
+    let statusColor = '';
+    
+    switch (status) {
+      case 'Scheduled':
+        statusColor = 'blue';
+        color = 'blue';
+        break;
+      case 'Ongoing':
+        statusColor = 'orange';
+        color = 'orange';
+        break;
+      case 'Completed':
+        statusColor = 'green';
+        color = 'green';
+        break;
+      case 'Disable':
+        statusColor = 'red';
+        color = 'red';
+        break;
+      case 'Pending':
+        statusColor = 'gold';
+        color = 'gold';
+        break;
+      default:
+        statusColor = 'default';
+        color = 'default';
+    }
+    
+    return { color, statusColor };
+  };
+
   const columns: ColumnsType<any> = [
     {
-      title: 'Name',
+      title: 'Tournament',
       dataIndex: 'name',
       key: 'name',
       ...getColumnSearchProps('name'),
+      render: (text: string, record: any) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}>
+          <span style={{ fontWeight: 'bold' }}>{text}</span>
+          <span style={{ fontSize: '12px', color: '#888' }}>{record.location}</span>
+        </div>
+      ),
+      width: 220,
     },
     {
-      title: 'Location',
-      dataIndex: 'location',
-      key: 'location',
-      ...getColumnSearchProps('location'),
+      title: 'Period',
+      key: 'period',
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div>
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span> {formatDate(record.startDate)}
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span> {formatDate(record.endDate)}
+            {isDatePassed(record.endDate) && (
+              <Tag color="red" style={{ marginLeft: 8 }}>Expired</Tag>
+            )}
+          </div>
+        </div>
+      ),
+      width: 220,
     },
     {
-      title: 'Max Players',
-      dataIndex: 'maxPlayer',
-      key: 'maxPlayer',
-    },
-    {
-      title: 'Total Prize',
-      dataIndex: 'totalPrize',
-      key: 'totalPrize',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        let color = '';
-        let label = '';
-
-        switch (status) {
-          case 'Scheduled':
-            color = 'blue';
-            label = 'Scheduled';
-            break;
-          case 'Ongoing':
-            color = 'orange';
-            label = 'Ongoing';
-            break;
-          case 'Completed':
-            color = 'green';
-            label = 'Completed';
-            break;
-          case 'Disable':
-            color = 'red';
-            label = 'Disable';
-            break;
-          default:
-            color = 'default';
-            label = status;
-        }
-
-        return <Tag color={color}>{label}</Tag>;
-      },
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
+      title: 'Type / Players',
+      key: 'typeAndPlayers',
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <Tag color="processing">{record.type}</Tag>
+          <span style={{ fontSize: '12px', marginTop: 4 }}>
+            Max: <strong>{record.maxPlayer}</strong> players
+          </span>
+        </div>
+      ),
       filters: [
         { text: 'Singles', value: 'Singles' },
         { text: 'Doubles', value: 'Doubles' },
       ],
       onFilter: (value, record) => record.type.indexOf(value as string) === 0,
-      render: (type: string) => (
-        <Tag color={type === 'Singles' ? 'blue' : 'purple'}>{type}</Tag>
-      ),
+      width: 140,
     },
     {
-      title: 'Is Accepted',
+      title: 'Status / Prize',
+      key: 'statusPrize',
+      render: (_, record) => {
+        const { color, statusColor } = getStatusBadge(record.status);
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+            <Badge color={statusColor} text={record.status} />
+            <span style={{ fontSize: '12px', marginTop: 8 }}>
+              Prize: <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
+            </span>
+          </div>
+        );
+      },
+      filters: [
+        { text: 'Scheduled', value: 'Scheduled' },
+        { text: 'Ongoing', value: 'Ongoing' },
+        { text: 'Completed', value: 'Completed' },
+        { text: 'Disable', value: 'Disable' },
+        { text: 'Pending', value: 'Pending' },
+      ],
+      onFilter: (value, record) => record.status === value,
+      width: 150,
+    },
+    {
+      title: 'Approval',
       dataIndex: 'isAccept',
       key: 'isAccept',
       filters: [
-        { text: 'Accepted', value: true },
-        { text: 'Not Accepted', value: false },
+        { text: 'Approved', value: true },
+        { text: 'Pending', value: false },
       ],
       onFilter: (value, record) => record.isAccept === value,
-      render: (isAccept: boolean, record) =>
-        isAccept ? (
-          <Button danger onClick={() => handleReject(record.id)}>
+      render: (isAccept: boolean, record) => {
+        // Check if end date has passed
+        const endDatePassed = isDatePassed(record.endDate);
+        
+        if (endDatePassed) {
+          return (
+            <Tooltip title="Tournament has ended">
+              <Tag color="gray">Expired</Tag>
+            </Tooltip>
+          );
+        }
+        
+        return isAccept ? (
+          <Button 
+            danger 
+            onClick={() => handleReject(record.id)}
+            style={{ width: '100%' }}
+          >
             Reject
           </Button>
         ) : (
-          <Button type="primary" onClick={() => handleAccept(record.id)}>
+          <Button 
+            type="primary" 
+            onClick={() => handleAccept(record.id)}
+            style={{ width: '100%' }}
+          >
             Accept
           </Button>
-        ),
+        );
+      },
+      width: 120,
     },
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => (
-        <Link to={`/tournament/admin/${record.id}`}>Detail</Link>
+      render: (_, record) => (
+        <div style={{ padding: '6px 0' }}>
+          <Button type="link" style={{ padding: '4px 0' }}>
+            <Link to={`/tournament/admin/${record.id}`}>Details</Link>
+          </Button>
+        </div>
       ),
+      width: 100,
     },
   ];
 
@@ -288,7 +372,19 @@ export const OverviewPage = () => {
 
   return (
     <div style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
-      <Title level={2} style={{ marginBottom: '24px' }}>Tournament Overview</Title>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}
+      >
+        <Typography.Title level={2} style={{ margin: 0 }}>
+          Tournament Overview
+        </Typography.Title>
+      </div>
+      
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Row gutter={16}>
@@ -331,19 +427,38 @@ export const OverviewPage = () => {
           </Row>
         </Col>
       </Row>
-      <Button
-        type="primary"
-        onClick={() => refetch()}
-        style={{ marginBottom: 16 }}
-      >
-        Refetch
-      </Button>
+      
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button
+          type="primary"
+          onClick={() => refetch()}
+          icon={<SearchOutlined />}
+        >
+          Refresh Data
+        </Button>
+        
+        <Typography.Text type="secondary">
+          Showing {data?.length || 0} tournaments
+        </Typography.Text>
+      </div>
+      
       <Table
         columns={columns}
         dataSource={data}
         loading={isLoading}
         rowKey="id"
-        style={{ backgroundColor: '#ffffff' }}
+        style={{ 
+          backgroundColor: '#ffffff', 
+          borderRadius: '8px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+        }}
+        pagination={{ 
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} tournaments`
+        }}
+        size="middle"
+        bordered={false}
       />
     </div>
   );

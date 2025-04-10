@@ -6,17 +6,23 @@ import { CREATE_TOURNAMENT, GET_ALL_TOURNAMENTS } from '../../Macths/constants';
 const createTournament = async (
   tournament: TournamentRequest
 ): Promise<Tournament> => {
-  const response = await Api.post<Tournament>('Tournament/Create', tournament);
+  const response = await Api.post<Tournament>('Tourament/Create', tournament);
   return response.data;
 };
 
 export function useCreateTournament() {
   const queryClient = useQueryClient();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: createTournament,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [CREATE_TOURNAMENT] });
       queryClient.invalidateQueries({ queryKey: [GET_ALL_TOURNAMENTS] });
     },
   });
+  
+  return {
+    ...mutation,
+    mutate: mutation.mutate,
+    isLoading: mutation.isPending,
+  };
 }

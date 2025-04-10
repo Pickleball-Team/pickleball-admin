@@ -1,4 +1,4 @@
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
   Button,
@@ -9,8 +9,10 @@ import {
   Space,
   Table,
   Tag,
-  Select,
   Typography,
+  message,
+  Tooltip,
+  Badge,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useRef, useState } from 'react';
@@ -21,18 +23,29 @@ import { Pie } from '@ant-design/charts';
 import { useGetTournamentsBySponsorId } from '../../modules/Tournaments/hooks/useGetTournamentsBySponsorId';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import { useCreateTournament } from '../../modules/Tournaments/hooks/useCreateTournament';
+import { TournamentRequest } from '../../modules/Tournaments/models';
+import { useQueryClient } from '@tanstack/react-query';
+import CreateTournamentModal from './containers/CreateTournamentModal';
 
-const { Option } = Select;
+const { Title } = Typography;
 
 type DataIndex = string;
 
 export const OverviewPage = () => {
   const user = useSelector((state: RootState) => state.authencation.user);
-  const { data, isLoading, refetch } = useGetTournamentsBySponsorId(user?.id ?? 0);
-  const { mutate: updateTournament } = useUpdateTournament();
+  const { data, isLoading, refetch } = useGetTournamentsBySponsorId(
+    user?.id ?? 0
+  );
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const searchInput = useRef<InputRef>(null);
+  const queryClient = useQueryClient();
+  const { mutate: createTournament, isLoading: isCreating } =
+    useCreateTournament();
+
+  // Tournament creation state
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
 
   const handleSearch = (
     selectedKeys: string[],
@@ -116,97 +129,188 @@ export const OverviewPage = () => {
       ),
   });
 
+  // Helper function to format dates
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Helper to get status badge
+  const getStatusBadge = (status: string) => {
+    let color = '';
+    let statusColor = '';
+    
+    switch (status) {
+      case 'Scheduled':
+        statusColor = 'blue';
+        color = 'blue';
+        break;
+      case 'Ongoing':
+        statusColor = 'orange';
+        color = 'orange';
+        break;
+      case 'Completed':
+        statusColor = 'green';
+        color = 'green';
+        break;
+      case 'Disable':
+        statusColor = 'red';
+        color = 'red';
+        break;
+      case 'Pending':
+        statusColor = 'gold';
+        color = 'gold';
+        break;
+      default:
+        statusColor = 'default';
+        color = 'default';
+    }
+    
+    return { color, statusColor };
+  };
+
   const columns: ColumnsType<any> = [
     {
-      title: 'Name',
+      title: 'Tournament',
       dataIndex: 'name',
       key: 'name',
       ...getColumnSearchProps('name'),
+      render: (text: string, record: any) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}>
+          <span style={{ fontWeight: 'bold' }}>{text}</span>
+          <span style={{ fontSize: '12px', color: '#888' }}>{record.location}</span>
+        </div>
+      ),
+      width: 220,
     },
     {
-      title: 'Location',
-      dataIndex: 'location',
-      key: 'location',
-      ...getColumnSearchProps('location'),
-    },
-    {
-      title: 'Max Players',
-      dataIndex: 'maxPlayer',
-      key: 'maxPlayer',
-    },
-    {
-      title: 'Total Prize',
-      dataIndex: 'totalPrize',
-      key: 'totalPrize',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        let color = '';
-        let label = '';
-
-        switch (status) {
-          case 'Scheduled':
-            color = 'blue';
-            label = 'Scheduled';
-            break;
-          case 'Ongoing':
-            color = 'orange';
-            label = 'Ongoing';
-            break;
-          case 'Completed':
-            color = 'green';
-            label = 'Completed';
-            break;
-          case 'Disable':
-            color = 'red';
-            label = 'Disable';
-            break;
+      title: 'Period',
+      key: 'period',
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div>
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span> {formatDate(record.startDate)}
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span> {formatDate(record.endDate)}
+          </div>
+        </div>
+      ),
+      width: 220,
+        },
+        {
+      title: 'Type / Players',
+      key: 'typeAndPlayers',
+      render: (_, record) => {
+        // Determine tag color based on tournament type
+        let typeColor = '';
+        switch (record.type) {
+          case 'SinglesMale':
+        typeColor = 'blue';
+        break;
+          case 'SinglesFemale':
+        typeColor = 'magenta';
+        break;
+          case 'DoublesMale':
+        typeColor = 'geekblue';
+        break;
+          case 'DoublesFemale':
+        typeColor = 'purple';
+        break;
+          case 'DoublesMix':
+        typeColor = 'cyan';
+        break;
           default:
-            color = 'default';
-            label = status;
+        typeColor = 'default';
         }
 
-        return <Tag color={color}>{label}</Tag>;
+        // Format display name for better readability
+        const formatTypeName = (type: string) => {
+          if (!type) return 'Unknown';
+          
+          // Insert space before capital letters and capitalize first letter
+          return type.replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^./, str => str.toUpperCase());
+        };
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+        <Tag color={typeColor}>{formatTypeName(record.type)}</Tag>
+        <span style={{ fontSize: '12px', marginTop: 4 }}>
+          Max: <strong>{record.maxPlayer}</strong> players
+        </span>
+          </div>
+        );
       },
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
       filters: [
-        { text: 'Singles', value: 'Singles' },
-        { text: 'Doubles', value: 'Doubles' },
+        { text: 'Singles Male', value: 'SinglesMale' },
+        { text: 'Singles Female', value: 'SinglesFemale' },
+        { text: 'Doubles Male', value: 'DoublesMale' },
+        { text: 'Doubles Female', value: 'DoublesFemale' },
+        { text: 'Doubles Mix', value: 'DoublesMix' },
       ],
-      onFilter: (value, record) => record.type.indexOf(value as string) === 0,
-      render: (type: string) => (
-        <Tag color={type === 'Singles' ? 'blue' : 'purple'}>{type}</Tag>
-      ),
+      onFilter: (value, record) => record.type === value,
+      width: 160,
+        },
+        {
+      title: 'Status / Prize',
+      key: 'statusPrize',
+      render: (_, record) => {
+        const { color, statusColor } = getStatusBadge(record.status);
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+            <Badge color={statusColor} text={record.status} />
+            <span style={{ fontSize: '12px', marginTop: 8 }}>
+              Prize: <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
+            </span>
+          </div>
+        );
+      },
+      filters: [
+        { text: 'Scheduled', value: 'Scheduled' },
+        { text: 'Ongoing', value: 'Ongoing' },
+        { text: 'Completed', value: 'Completed' },
+        { text: 'Disable', value: 'Disable' },
+        { text: 'Pending', value: 'Pending' },
+      ],
+      onFilter: (value, record) => record.status === value,
+      width: 150,
     },
     {
-      title: 'Is Accepted',
+      title: 'Approval',
       dataIndex: 'isAccept',
       key: 'isAccept',
       filters: [
-        { text: 'Accepted', value: true },
-        { text: 'Not Accepted', value: false },
+        { text: 'Approved', value: true },
+        { text: 'Pending', value: false },
       ],
       onFilter: (value, record) => record.isAccept === value,
-      render: (isAccept: boolean, record) =>
-        isAccept ? (
-          <Tag color="green">Accepted</Tag>
-        ) : (
-          <Tag color="blue-inverse">Pending</Tag>
-        ),
+      render: (isAccept: boolean) => (
+        <div style={{ padding: '6px 0' }}>
+          <Tag color={isAccept ? "success" : "processing"} style={{ margin: 0 }}>
+            {isAccept ? "Approved" : "Pending"}
+          </Tag>
+        </div>
+      ),
+      width: 120,
     },
     {
       title: 'Action',
       key: 'action',
-      render: (text, record) => (
-        <Link to={`/tournament/${record.id}`}>Detail</Link>
+      render: (_, record) => (
+        <div style={{ padding: '6px 0' }}>
+          <Button type="link" style={{ padding: '4px 0' }}>
+            <Link to={`/tournament/${record.id}`}>Details</Link>
+          </Button>
+        </div>
       ),
+      width: 100,
     },
   ];
 
@@ -257,11 +361,44 @@ export const OverviewPage = () => {
     interactions: [{ type: 'element-active' }],
   });
 
+  const handleCreateTournament = (tournamentData: TournamentRequest) => {
+    createTournament(tournamentData, {
+      onSuccess: () => {
+        message.success('Tournament created successfully!');
+        setIsCreateModalVisible(false);
+        refetch();
+      },
+      onError: (error: any) => {
+        message.error(
+          `Failed to create tournament: ${error.message || 'Unknown error'}`
+        );
+      },
+    });
+  };
+
   return (
-    <div>
-      <Typography.Title level={2} style={{ marginBottom: '24px' }}>
-        Tournament Overview
-      </Typography.Title>
+    <div style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}
+      >
+        <Typography.Title level={2} style={{ margin: 0 }}>
+          Tournament Overview
+        </Typography.Title>
+        <Button
+          type="primary"
+          icon={<PlusCircleOutlined />}
+          onClick={() => setIsCreateModalVisible(true)}
+          size="large"
+        >
+          Create Tournament
+        </Button>
+      </div>
+
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={12}>
           <Row gutter={16}>
@@ -328,19 +465,47 @@ export const OverviewPage = () => {
           </Row>
         </Col>
       </Row>
-      <Button
-        type="primary"
-        onClick={() => refetch()}
-        style={{ marginBottom: 16 }}
-      >
-        Refetch
-      </Button>
+
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button
+          type="primary"
+          onClick={() => refetch()}
+          icon={<SearchOutlined />}
+        >
+          Refresh Data
+        </Button>
+        
+        <Typography.Text type="secondary">
+          Showing {data?.length || 0} tournaments
+        </Typography.Text>
+      </div>
+
       <Table
         columns={columns}
         dataSource={data}
         loading={isLoading}
         rowKey="id"
-        style={{ backgroundColor: '#ffffff' }}
+        style={{ 
+          backgroundColor: '#ffffff', 
+          borderRadius: '8px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+        }}
+        pagination={{ 
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} tournaments`
+        }}
+        size="middle"
+        bordered={false}
+      />
+
+      {/* Tournament Creation Modal */}
+      <CreateTournamentModal
+        visible={isCreateModalVisible}
+        onCancel={() => setIsCreateModalVisible(false)}
+        onSubmit={handleCreateTournament}
+        isSubmitting={isCreating}
+        organizerId={user?.id ?? 0}
       />
     </div>
   );
