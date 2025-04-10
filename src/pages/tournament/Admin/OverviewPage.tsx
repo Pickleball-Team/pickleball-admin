@@ -105,7 +105,7 @@ export const OverviewPage = () => {
   const handleAccept = async (id: number) => {
     try {
       updateTournament(
-        { id, data: { isAccept: true } },
+        { id, data: { isAccept: true, status: "Scheduled"  } },
         {
           onSuccess: () => {
             console.log(`Accepted tournament with id: ${id}`);
@@ -124,7 +124,7 @@ export const OverviewPage = () => {
   const handleReject = async (id: number) => {
     try {
       updateTournament(
-        { id, data: { isAccept: false } },
+        { id, data: { isAccept: false , status: "Disable"} },
         {
           onSuccess: () => {
             console.log(`Rejected tournament with id: ${id}`);

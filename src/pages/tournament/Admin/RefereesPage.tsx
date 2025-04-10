@@ -14,8 +14,12 @@ import {
   Select,
   message,
   Modal,
+  Avatar,
+  Tooltip,
+  Divider,
+  Badge,
 } from 'antd';
-import { SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined, PlusOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useQueryClient } from '@tanstack/react-query';
@@ -27,7 +31,7 @@ import { useUpdateReferee } from '../../../modules/Refee/hooks/useUpdateRefee';
 import { RegisterUserRequest } from '../../../modules/User/models';
 import { useGetAllReferees } from '../../../modules/User/hooks/useGetAllReferees';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 const { Option } = Select;
 
 type DataIndex = string;
@@ -128,106 +132,110 @@ const RefereesPage: React.FC = () => {
 
   const columns: ColumnsType<any> = [
     {
-      title: 'Avatar',
-      dataIndex: ['user', 'avatarUrl'],
-      key: 'avatarUrl',
-      render: (avatarUrl: string) => (
-        <img
-          src={avatarUrl}
-          alt="avatar"
-          style={{ width: 50, height: 50, borderRadius: '50%' }}
-        />
+      title: 'Referee',
+      key: 'referee',
+      render: (_, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
+          <Avatar 
+            size={48} 
+            src={record.user?.avatarUrl} 
+            icon={<UserOutlined />}
+            style={{ marginRight: 16 }}
+          />
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
+              {record.user?.firstName} {record.user?.lastName}
+            </div>
+            <div style={{ color: '#888', fontSize: '12px' }}>
+              Code: {record.refreeCode}
+            </div>
+          </div>
+        </div>
       ),
+      width: 220,
     },
     {
-      title: 'First Name',
-      dataIndex: ['user', 'firstName'],
-      key: 'firstName',
-      ...getColumnSearchProps('firstName'),
+      title: 'Contact Information',
+      key: 'contactInfo',
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div>
+            <MailOutlined style={{ marginRight: 8, color: '#1890ff' }} /> 
+            {record.user?.email}
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <PhoneOutlined style={{ marginRight: 8, color: '#52c41a' }} /> 
+            {record.user?.phoneNumber || 'N/A'}
+          </div>
+        </div>
+      ),
+      width: 220,
     },
     {
-      title: 'Last Name',
-      dataIndex: ['user', 'lastName'],
-      key: 'lastName',
-      ...getColumnSearchProps('lastName'),
-    },
-    {
-      title: 'Email',
-      dataIndex: ['user', 'email'],
-      key: 'email',
-      ...getColumnSearchProps('email'),
-    },
-    {
-      title: 'Date of Birth',
-      dataIndex: ['user', 'dateOfBirth'],
-      key: 'dateOfBirth',
-      render: (dateOfBirth: string) =>
-        new Date(dateOfBirth).toLocaleDateString(),
-    },
-    {
-      title: 'Gender',
-      dataIndex: ['user', 'gender'],
-      key: 'gender',
-      filters: [
-        { text: 'Male', value: 'Male' },
-        { text: 'Female', value: 'Female' },
-      ],
-      onFilter: (value, record) => record.user.gender === value,
-    },
-    {
-      title: 'Phone Number',
-      dataIndex: ['user', 'phoneNumber'],
-      key: 'phoneNumber',
-      ...getColumnSearchProps('phoneNumber'),
-    },
-    {
+      title: 'Personal Details',
+      key: 'personalDetails',
+      render: (_, record) => (
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div>
+            <span style={{ fontWeight: 500 }}>DoB:</span> {' '}
+            {record.user?.dateOfBirth ? new Date(record.user.dateOfBirth).toLocaleDateString() : 'N/A'}
+          </div>
+          <div style={{ marginTop: 4 }}>
+            <span style={{ fontWeight: 500 }}>Gender:</span> {' '}
+            <Tag color="blue">{record.user?.gender}</Tag>
+          </div>
+        </div>
+      ),
+      width: 180,
+        },
+        {
       title: 'Status',
-      dataIndex: ['user', 'status'],
       key: 'status',
       filters: [
         { text: 'Active', value: true },
         { text: 'Inactive', value: false },
       ],
-      onFilter: (value, record) => record.user.status === value,
-      render: (status: boolean) =>
-        status ? (
-          <Tag color="green">Active</Tag>
-        ) : (
-          <Tag color="red">Inactive</Tag>
-        ),
-    },
-    {
-      title: 'Referee Code',
-      dataIndex: 'refreeCode',
-      key: 'refreeCode',
-      render: (refreeCode: string) => <span>{refreeCode}</span>,
-    },
-    {
+      onFilter: (value, record) => record.isAccept === value,
+      render: (_, record) => (
+        <div style={{ padding: '6px 0' }}>
+          {record.isAccept ? (
+        <Badge status="success" text={<Text strong style={{ color: '#52c41a' }}>Active</Text>} />
+          ) : (
+        <Badge status="error" text={<Text strong style={{ color: '#f5222d' }}>Inactive</Text>} />
+          )}
+        </div>
+      ),
+      width: 120,
+        },
+        {
       title: 'Action',
       key: 'action',
-      render: (record: any) => (
-        <Space size="middle">
-          <Button type="link" onClick={() => handleEdit(record)}>
-            Edit
-          </Button>
-          {record.isAccept ? (
-            <Button type="dashed" color='red' onClick={() => handleBan(record)}>
-              Ban
-            </Button>
-          ) : (
-            <Button type="primary" onClick={() => handleAccept(record)}>
-              Accept
-            </Button>
-          )}
-        </Space>
+      render: (_, record) => (
+        <div style={{ padding: '6px 0' }}>
+          <Space>
+            {record.isAccept ? (
+              <Button 
+                danger 
+                size="small" 
+                onClick={() => handleBan(record)}
+              >
+                Ban
+              </Button>
+            ) : (
+              <Button 
+                type="primary" 
+                size="small" 
+                onClick={() => handleAccept(record)}
+              >
+                Accept
+              </Button>
+            )}
+          </Space>
+        </div>
       ),
+      width: 120,
     },
   ];
-
-  const handleEdit = (record: any) => {
-    // Placeholder function for editing a referee
-    console.log('Edit referee:', record);
-  };
 
   const handleAccept = (record: any) => {
     updateReferee(
@@ -274,44 +282,129 @@ const RefereesPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ padding: 24, display: 'flex', justifyContent: 'center' }}>
+        <Typography.Title level={4}>Loading referees data...</Typography.Title>
+      </div>
+    );
   }
 
   if (error) {
     console.log(error);
     
-    return <div>Error loading referees</div>;
+    return (
+      <div style={{ padding: 24, display: 'flex', justifyContent: 'center' }}>
+        <Typography.Title level={4} type="danger">Error loading referees data</Typography.Title>
+      </div>
+    );
   }
 
+  const activeReferees = referees?.filter(ref => ref.user?.status === true)?.length || 0;
+  const inactiveReferees = (referees?.length || 0) - activeReferees;
+
   return (
-    <div>
-      <Row gutter={8} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card title="Total Referees" bordered={false} style={{ height: 150 }}>
-            <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-            <Text style={{ fontSize: 24, marginLeft: 8 }}>
-              {referees?.length}
-            </Text>
+    <div style={{ padding: '24px', backgroundColor: '#f0f2f5' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <Title level={2} style={{ margin: 0 }}>Referees Management</Title>
+        <Button 
+          type="primary" 
+          icon={<PlusOutlined />}
+          onClick={() => setIsModalVisible(true)}
+          size="large"
+        >
+          Register New Referee
+        </Button>
+      </div>
+      
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={8}>
+          <Card bordered={false} style={{ height: 120, borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <Text type="secondary">Total Referees</Text>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                <UserOutlined style={{ fontSize: 32, color: '#1890ff', marginRight: 16 }} />
+                <Text style={{ fontSize: 32, fontWeight: 'bold' }}>
+                  {referees?.length || 0}
+                </Text>
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col span={6}>
-          <Button type="primary" onClick={() => setIsModalVisible(true)}>
-            Register Referee
-          </Button>
+        <Col span={8}>
+          <Card bordered={false} style={{ height: 120, borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <Text type="secondary">Active Referees</Text>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                <UserOutlined style={{ fontSize: 32, color: '#52c41a', marginRight: 16 }} />
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#52c41a' }}>
+                  {activeReferees}
+                </Text>
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card bordered={false} style={{ height: 120, borderRadius: 8, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <Text type="secondary">Inactive Referees</Text>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                <UserOutlined style={{ fontSize: 32, color: '#f5222d', marginRight: 16 }} />
+                <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#f5222d' }}>
+                  {inactiveReferees}
+                </Text>
+              </div>
+            </div>
+          </Card>
         </Col>
       </Row>
+      
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['GET_ALL_REFEREES'] })}
+            icon={<SearchOutlined />}
+          >
+            Refresh Data
+          </Button>
+        </Space>
+        
+        <Typography.Text type="secondary">
+          Showing {referees?.length || 0} referees
+        </Typography.Text>
+      </div>
+      
+      <Table 
+        columns={columns} 
+        dataSource={Array.isArray(referees) ? referees : []} 
+        rowKey="refreeId" 
+        style={{ 
+          backgroundColor: '#ffffff', 
+          borderRadius: '8px',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+        }}
+        pagination={{ 
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} referees`
+        }}
+        size="middle"
+      />
+      
       <Modal
-        title="Register Referee"
+        title="Register New Referee"
         visible={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
           form.resetFields();
         }}
         footer={null}
+        width={600}
       >
         <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ refereeCode: user?.id }}>
+          <Divider orientation="left">Personal Information</Divider>
           <Row gutter={16}>
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item
                 name="FirstName"
                 label="First Name"
@@ -322,7 +415,7 @@ const RefereesPage: React.FC = () => {
                 <Input />
               </Form.Item>
             </Col>
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item
                 name="LastName"
                 label="Last Name"
@@ -333,50 +426,14 @@ const RefereesPage: React.FC = () => {
                 <Input />
               </Form.Item>
             </Col>
-            <Col span={24}>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
               <Form.Item name="SecondName" label="Second Name">
                 <Input />
               </Form.Item>
             </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
-              <Form.Item
-                name="Email"
-                label="Email"
-                rules={[{ required: true, message: 'Please input the email!' }]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="Password"
-                label="Password"
-                rules={[
-                  { required: true, message: 'Please input the password!' },
-                ]}
-              >
-                <Input.Password />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="DateOfBirth"
-                label="Date of Birth"
-                rules={[
-                  {
-                    required: true,
-                    message: 'Please input the date of birth!',
-                  },
-                ]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item
                 name="Gender"
                 label="Gender"
@@ -390,7 +447,23 @@ const RefereesPage: React.FC = () => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={24}>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="DateOfBirth"
+                label="Date of Birth"
+                rules={[
+                  {
+                    required: true,
+                    message: 'Please input the date of birth!',
+                  },
+                ]}
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
               <Form.Item
                 name="PhoneNumber"
                 label="Phone Number"
@@ -402,17 +475,52 @@ const RefereesPage: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+          
+          <Divider orientation="left">Account Information</Divider>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="Email"
+                label="Email"
+                rules={[{ required: true, message: 'Please input the email!' }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="Password"
+                label="Password"
+                rules={[
+                  { required: true, message: 'Please input the password!' },
+                ]}
+              >
+                <Input.Password />
+              </Form.Item>
+            </Col>
+          </Row>
+          
           <Form.Item name="refereeCode" label="Referee Code">
             <Input value={user?.id} disabled />
           </Form.Item>
+          
           <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Register Referee
-            </Button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Space>
+                <Button onClick={() => {
+                  setIsModalVisible(false);
+                  form.resetFields();
+                }}>
+                  Cancel
+                </Button>
+                <Button type="primary" htmlType="submit">
+                  Register Referee
+                </Button>
+              </Space>
+            </div>
           </Form.Item>
         </Form>
       </Modal>
-      <Table columns={columns} dataSource={Array.isArray(referees) ? referees : []} rowKey="refreeId" />
     </div>
   );
 };
