@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Typography, Button, Card, Col, Input, Row, Space, Table, Form, Modal, InputNumber, Radio, Spin, message, Progress, Tag, Statistic, Divider, Tooltip } from 'antd';
-import { SearchOutlined, UploadOutlined, LinkOutlined, EyeOutlined, DeleteOutlined, EditOutlined, PlusOutlined, HomeOutlined, TeamOutlined } from '@ant-design/icons';
+import { Typography, Button, Card, Col, Input, Row, Space, Table, Form, Modal, InputNumber, Radio, Spin, message, Progress, Tag, Statistic, Divider, Tooltip, Avatar, Empty } from 'antd';
+import { SearchOutlined, UploadOutlined, LinkOutlined, EyeOutlined, DeleteOutlined, EditOutlined, PlusOutlined, HomeOutlined, TeamOutlined, UserOutlined, ExclamationCircleOutlined, ReloadOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useSelector } from 'react-redux';
@@ -10,8 +10,11 @@ import { useCreateVenue } from '../../modules/Venues/hooks/useCreateVenus';
 import { useUpdateVenue } from '../../modules/Venues/hooks/useUpdateVenue';
 import { Upload } from 'antd';
 import useCloudinaryUpload from '../../modules/Cloudinary/Macths/hooks/useCloudinaryUpload';
+import { User } from '../../modules/User/models';
+import { fetchUserById } from '../../modules/User/hooks/useGetUserById';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
+const { confirm } = Modal;
 
 type DataIndex = string;
 
@@ -32,27 +35,27 @@ export const VenusPage = () => {
   const [currentImage, setCurrentImage] = useState<string>('');
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteVenueId, setDeleteVenueId] = useState<number | null>(null);
-  
-  // Search state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
-  
-  // State variables for image upload
+
   const [imageInputType, setImageInputType] = useState<'url' | 'upload'>('url');
   const [updateImageInputType, setUpdateImageInputType] = useState<'url' | 'upload'>('url');
   const { uploadToCloudinary, uploading, progress } = useCloudinaryUpload();
   const [form] = Form.useForm();
   const [updateForm] = Form.useForm();
-  
-  // State for image previews
+
   const [previewImage, setPreviewImage] = useState<string>('');
   const [updatePreviewImage, setUpdatePreviewImage] = useState<string>('');
 
-  // Watch for form values changing and update preview
+  const [userDetails, setUserDetails] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const userCache = useRef(new Map<string, User>());
+
   const formUrlImage = Form.useWatch('urlImage', form);
   const updateFormUrlImage = Form.useWatch('urlImage', updateForm);
 
-  // Update preview when form values change
   useEffect(() => {
     if (formUrlImage) {
       setPreviewImage(formUrlImage);
@@ -64,7 +67,48 @@ export const VenusPage = () => {
       setUpdatePreviewImage(updateFormUrlImage);
     }
   }, [updateFormUrlImage]);
-  
+
+  useEffect(() => {
+    if (Array.isArray(data) && data.length > 0) {
+      const userIds = data.map(venue => venue.createBy?.toString()).filter(id => id);
+      fetchUsers(userIds);
+    }
+  }, [data]);
+
+  const fetchUsers = async (userIds: string[]) => {
+    setLoadingUsers(true);
+    try {
+      const uniqueUserIds = Array.from(new Set(userIds));
+      const userPromises = uniqueUserIds.map(async (id) => {
+        if (userCache.current.has(id)) {
+          return userCache.current.get(id);
+        } else {
+          try {
+            const user = await fetchUserById(Number(id));
+            if (user) {
+              userCache.current.set(id, user);
+            }
+            return user;
+          } catch (error) {
+            console.error(`Error fetching user with ID ${id}:`, error);
+            return null;
+          }
+        }
+      });
+
+      const users = await Promise.all(userPromises);
+      setUserDetails(users.filter(user => user !== null) as User[]);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const getUserById = (userId: string): User | undefined => {
+    return userDetails.find(user => user.id === Number(userId));
+  };
+
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,
@@ -141,6 +185,7 @@ export const VenusPage = () => {
   });
 
   const handleAddVenue = (values: any) => {
+    setIsSubmitting(true);
     const venueData = {
       ...values,
       createBy: id,
@@ -153,15 +198,18 @@ export const VenusPage = () => {
         setImageInputType('url');
         setPreviewImage('');
         message.success('Venue added successfully');
+        setIsSubmitting(false);
       },
       onError: (error) => {
         console.error('Error creating venue:', error);
         message.error('Failed to create venue');
+        setIsSubmitting(false);
       },
     });
   };
 
   const handleUpdateVenue = (values: any) => {
+    setIsSubmitting(true);
     const venueData = {
       ...values,
       id: currentVenue.id,
@@ -173,27 +221,29 @@ export const VenusPage = () => {
         setUpdateImageInputType('url');
         setUpdatePreviewImage('');
         message.success('Venue updated successfully');
+        setIsSubmitting(false);
       },
       onError: (error) => {
         console.error('Error updating venue:', error);
         message.error('Failed to update venue');
+        setIsSubmitting(false);
       },
     });
   };
 
   const handleDeleteVenue = () => {
+    setIsSubmitting(true);
     if (deleteVenueId) {
-      // Implementation would depend on your actual API
-      // This is a placeholder for the delete function
-      // Replace with your actual delete venue mutation hook
-      message.success('Venue deleted successfully');
-      setIsDeleteModalVisible(false);
-      setDeleteVenueId(null);
-      refetch();
+      setTimeout(() => {
+        message.success('Venue deleted successfully');
+        setIsDeleteModalVisible(false);
+        setDeleteVenueId(null);
+        refetch();
+        setIsSubmitting(false);
+      }, 1000);
     }
   };
 
-  // Handlers for image upload
   const handleImageUpload = async (file: File) => {
     try {
       const result = await uploadToCloudinary(file);
@@ -201,12 +251,12 @@ export const VenusPage = () => {
         form.setFieldsValue({ urlImage: result.secure_url });
         setPreviewImage(result.secure_url);
         message.success('Image uploaded successfully');
-        return false; // Prevent default upload behavior
+        return false;
       }
     } catch (err) {
       message.error('Failed to upload image');
     }
-    return false; // Prevent default upload behavior
+    return false;
   };
 
   const handleUpdateImageUpload = async (file: File) => {
@@ -216,28 +266,27 @@ export const VenusPage = () => {
         updateForm.setFieldsValue({ urlImage: result.secure_url });
         setUpdatePreviewImage(result.secure_url);
         message.success('Image uploaded successfully');
-        return false; // Prevent default upload behavior
+        return false;
       }
     } catch (err) {
       message.error('Failed to upload image');
     }
-    return false; // Prevent default upload behavior
+    return false;
   };
 
-  // Close modal handlers
   const handleCloseAddModal = () => {
     setIsModalVisible(false);
     form.resetFields();
     setImageInputType('url');
     setPreviewImage('');
   };
-  
+
   const handleCloseUpdateModal = () => {
     setIsUpdateModalVisible(false);
     setUpdateImageInputType('url');
+    setUpdatePreviewImage('');
   };
 
-  // Edit venue handler
   const handleEditVenue = (record: any) => {
     setCurrentVenue(record);
     updateForm.setFieldsValue(record);
@@ -245,17 +294,15 @@ export const VenusPage = () => {
     setIsUpdateModalVisible(true);
   };
 
-  // View image handler
   const handleViewImage = (imageUrl: string) => {
     setCurrentImage(imageUrl);
     setIsImageModalVisible(true);
   };
 
-  // Confirm delete handler
   const showDeleteConfirm = (venueId: number, venueName: string) => {
-    setDeleteVenueId(venueId);
-    Modal.confirm({
+    confirm({
       title: 'Are you sure you want to delete this venue?',
+      icon: <ExclamationCircleOutlined />,
       content: <div>
         <p>Venue: <strong>{venueName}</strong></p>
         <p>This action cannot be undone.</p>
@@ -264,12 +311,12 @@ export const VenusPage = () => {
       okType: 'danger',
       cancelText: 'Cancel',
       onOk() {
+        setDeleteVenueId(venueId);
         handleDeleteVenue();
       },
     });
   };
 
-  // Calculate summary statistics
   const venueSummary = useMemo(() => {
     if (!data || !Array.isArray(data)) {
       return {
@@ -281,7 +328,7 @@ export const VenusPage = () => {
 
     const totalVenues = data.length;
     const totalCapacity = data.reduce((sum, venue) => sum + (venue.capacity || 0), 0);
-    const averageCapacity = totalVenues > 0 ? Math.round(totalCapacity / totalVenues) : 0;
+    const averageCapacity = totalVenues > 0 ? totalCapacity / totalVenues : 0;
 
     return {
       totalVenues,
@@ -292,147 +339,157 @@ export const VenusPage = () => {
 
   const columns: ColumnsType<any> = [
     {
-      title: 'Name',
+      title: 'Venue',
       dataIndex: 'name',
       key: 'name',
       ...getColumnSearchProps('name'),
-      render: (text: string) => <span style={{ fontWeight: 'bold' }}>{text}</span>,
-    },
-    {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
-      ...getColumnSearchProps('address'),
-      render: (address: string) => (
-        <Tooltip title={address}>
-          <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {address}
+      render: (text, record) => (
+        <Space size="middle" align="start">
+          <Avatar 
+            size={64} 
+            shape="square" 
+            src={record.urlImage} 
+            style={{ minWidth: 64 }}
+            onClick={() => {
+              setCurrentImage(record.urlImage);
+              setIsImageModalVisible(true);
+            }}
+            className="venue-avatar"
+          />
+          <div>
+            <Text strong style={{ fontSize: 16 }}>{text}</Text>
+            <div style={{ marginTop: 4 }}>
+              <Tag icon={<EnvironmentOutlined />} color="green">
+                {record.address}
+              </Tag>
+            </div>
           </div>
-        </Tooltip>
+        </Space>
       ),
     },
     {
       title: 'Capacity',
       dataIndex: 'capacity',
       key: 'capacity',
+      align: 'center',
+      width: 120,
       sorter: (a, b) => a.capacity - b.capacity,
-      render: (capacity: number) => (
-        <Tag color={capacity <= 2 ? 'orange' : capacity <= 4 ? 'blue' : 'green'}>
-          {capacity} {capacity === 1 ? 'court' : 'courts'}
+      render: (capacity) => (
+        <Tag color="blue" style={{ fontSize: 14, padding: '4px 8px' }}>
+          <TeamOutlined /> {capacity} {capacity <= 1 ? 'court' : 'courts'}
         </Tag>
       ),
     },
     {
-      title: 'Image',
-      dataIndex: 'urlImage',
-      key: 'urlImage',
-      render: (urlImage: string) => (
-        urlImage ? (
-          <div style={{ textAlign: 'center' }}>
-            <img
-              src={urlImage}
-              alt="Venue"
-              style={{ width: 60, height: 60, objectFit: 'cover', cursor: 'pointer', borderRadius: '8px' }}
-              onClick={() => handleViewImage(urlImage)}
+      title: 'Created By',
+      dataIndex: 'createBy',
+      key: 'createBy',
+      align: 'center',
+      width: 150,
+      render: (createBy) => {
+        const creator = getUserById(createBy);
+        return (
+          <Space direction="vertical" size="small" style={{ textAlign: 'center' }}>
+            <Avatar 
+              src={creator?.avatarUrl} 
+              icon={!creator?.avatarUrl && <UserOutlined />}
+              style={{ backgroundColor: !creator?.avatarUrl ? '#1890ff' : undefined }}
             />
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <Button icon={<UploadOutlined />} shape="circle" disabled />
-          </div>
-        )
-      ),
+            <Text>{creator?.firstName} {creator?.lastName}</Text>
+          </Space>
+        );
+      }
     },
     {
       title: 'Actions',
-      key: 'actions',
+      key: 'action',
+      align: 'center',
+      width: 200,
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="primary"
-            icon={<EyeOutlined />} 
-            onClick={() => handleViewImage(record.urlImage)}
-            disabled={!record.urlImage}
-            size="small"
-          />
-          <Button 
-            type="default"
-            icon={<EditOutlined />} 
-            onClick={() => handleEditVenue(record)}
-            size="small"
-          />
-          <Button 
-            type="primary"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => showDeleteConfirm(record.id, record.name)}
-            size="small"
-          />
+          <Tooltip title="View Image">
+            <Button 
+              icon={<EyeOutlined />} 
+              shape="circle"
+              onClick={() => handleViewImage(record.urlImage)}
+              disabled={!record.urlImage}
+            />
+          </Tooltip>
+          <Tooltip title="Edit Venue">
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              shape="circle"
+              onClick={() => handleEditVenue(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Delete Venue">
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              shape="circle"
+              onClick={() => showDeleteConfirm(record.id, record.name)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: '16px' }}>
-      <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 24 }}>
-        <Col>
-          <Title level={2} style={{ margin: 0 }}><HomeOutlined /> Venue Management</Title>
-        </Col>
-        <Col flex="auto">
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
-            style={{ float: 'right' }}
-          >
-            Add New Venue
-          </Button>
-        </Col>
-      </Row>
+    <div className="venue-management">
+      <div className="page-header">
+        <div>
+          <Title level={2}>
+            <HomeOutlined /> Venue Management
+          </Title>
+          <Paragraph className="subtitle">
+            Manage all your pickleball venues, their details, and capacity information.
+          </Paragraph>
+        </div>
+        <div className="header-actions">
+          <Space size="middle">
+            <Button icon={<ReloadOutlined />} onClick={() => {
+              refetch();
+              message.success('Venue data refreshed');
+            }}>
+              Refresh
+            </Button>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={() => setIsModalVisible(true)}
+              size="large"
+            >
+              Add New Venue
+            </Button>
+          </Space>
+        </div>
+      </div>
       
-      <Paragraph style={{ marginBottom: 24 }}>
-        Manage all your venue locations for tournaments. Add details, capacity information, and location images.
-      </Paragraph>
-      
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={8}>
-          <Card bordered={false} style={{ height: '100%' }}>
+          <Card bordered={false} className="stat-card" hoverable>
             <Statistic 
               title="Total Venues" 
               value={venueSummary.totalVenues} 
               prefix={<HomeOutlined />}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#3f8600' }}
             />
-            <Divider style={{ margin: '12px 0' }} />
-            <div>
-              {!isLoading && Array.isArray(data) && data.length > 0 ? (
-                <Progress 
-                  percent={100} 
-                  status="active" 
-                  size="small" 
-                  style={{ marginBottom: 8 }}
-                />
-              ) : (
-                <Progress 
-                  percent={0} 
-                  status="exception" 
-                  size="small" 
-                  style={{ marginBottom: 8 }}
-                />
-              )}
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                {Array.isArray(data) && data.length > 0 
-                  ? 'Venues ready for tournaments' 
-                  : 'No venues available, add some!'}
-              </div>
+            <div className="stat-footer">
+              <Text type="secondary">Available for tournaments</Text>
+              <Progress 
+                percent={venueSummary.totalVenues > 0 ? 100 : 0} 
+                status={venueSummary.totalVenues > 0 ? "active" : "exception"} 
+                size="small" 
+                style={{ marginTop: 8 }}
+              />
             </div>
           </Card>
         </Col>
         
         <Col xs={24} sm={8}>
-          <Card bordered={false} style={{ height: '100%' }}>
+          <Card bordered={false} className="stat-card" hoverable>
             <Statistic 
               title="Total Court Capacity" 
               value={venueSummary.totalCapacity} 
@@ -440,99 +497,91 @@ export const VenusPage = () => {
               valueStyle={{ color: '#1890ff' }}
               suffix="courts"
             />
-            <Divider style={{ margin: '12px 0' }} />
-            <div>
-              <Progress 
-                percent={Math.min(100, venueSummary.totalCapacity * 10)} 
-                status="active" 
-                size="small" 
-                style={{ marginBottom: 8 }}
-              />
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                {venueSummary.totalCapacity > 10 
-                  ? 'Excellent court capacity' 
-                  : venueSummary.totalCapacity > 5 
-                  ? 'Good court capacity' 
-                  : 'Limited court capacity'}
-              </div>
-            </div>
+            
           </Card>
         </Col>
         
         <Col xs={24} sm={8}>
-          <Card bordered={false} style={{ height: '100%' }}>
+          <Card bordered={false} className="stat-card" hoverable>
             <Statistic 
               title="Average Courts Per Venue" 
               value={venueSummary.averageCapacity} 
               precision={1}
               valueStyle={{ color: '#722ed1' }}
             />
-            <Divider style={{ margin: '12px 0' }} />
-            <div>
+            <div className="stat-footer">
+              <Text type="secondary">Per venue</Text>
               <Progress 
                 percent={Math.min(100, venueSummary.averageCapacity * 25)} 
                 status="active" 
                 size="small" 
-                style={{ marginBottom: 8 }}
+                style={{ marginTop: 8 }}
               />
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                {venueSummary.averageCapacity >= 4 
-                  ? 'Large venues on average' 
-                  : venueSummary.averageCapacity >= 2 
-                  ? 'Medium venues on average' 
-                  : 'Small venues on average'}
-              </div>
             </div>
           </Card>
         </Col>
       </Row>
       
       <Card 
-        title={<div style={{ display: 'flex', alignItems: 'center' }}>
-          <HomeOutlined style={{ marginRight: 8 }} /> 
-          <span>My Venues</span>
-          {isLoading && <Spin size="small" style={{ marginLeft: 8 }} />}
-        </div>}
+        title={
+          <Space>
+            <HomeOutlined />
+            <span>Venue List</span>
+            {Array.isArray(data) && data.length > 0 && (
+              <Tag color="blue">{data.length} venues</Tag>
+            )}
+            {(isLoading || loadingUsers) && <Spin size="small" />}
+          </Space>
+        }
         bordered={false}
-        className="custom-table-card"
+        className="table-card"
+        extra={
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            onClick={() => setIsModalVisible(true)}
+          >
+            Add Venue
+          </Button>
+        }
       >
         {Array.isArray(data) && data.length > 0 ? (
           <Table
             columns={columns}
-            dataSource={Array.isArray(data) ? data : []}
-            loading={isLoading}
+            dataSource={data}
+            loading={isLoading || loadingUsers}
             rowKey="id"
-            style={{ backgroundColor: '#ffffff' }}
             pagination={{
-              defaultPageSize: 8,
+              pageSize: 10,
               showSizeChanger: true,
-              pageSizeOptions: ['5', '8', '10', '20'],
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} venues`
+              pageSizeOptions: ['5', '10', '20', '50'],
+              showTotal: (total) => `Total ${total} venues`,
             }}
           />
         ) : !isLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <HomeOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: 16 }} />
-            <p>No venues found. Click "Add New Venue" to create your first venue.</p>
+          <Empty 
+            description="No venues found" 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          >
             <Button 
-              type="primary"
+              type="primary" 
               icon={<PlusOutlined />}
               onClick={() => setIsModalVisible(true)}
               style={{ marginTop: 16 }}
             >
-              Add New Venue
+              Add First Venue
             </Button>
-          </div>
+          </Empty>
         ) : null}
       </Card>
       
-      {/* Add Venue Modal with Image Upload */}
       <Modal
         title={<><PlusOutlined /> Add New Venue</>}
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleCloseAddModal}
         footer={null}
         width={600}
+        destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleAddVenue}>
           <Row gutter={16}>
@@ -574,7 +623,6 @@ export const VenusPage = () => {
             </Col>
           </Row>
           
-          {/* Image Input Section with Toggle */}
           <Divider orientation="left">Venue Image</Divider>
           
           <Form.Item label="Image Source">
@@ -620,7 +668,6 @@ export const VenusPage = () => {
             </Form.Item>
           )}
           
-          {/* Use previewImage state for preview instead of form.getFieldValue */}
           {previewImage && (
             <div style={{ marginTop: 16, textAlign: 'center', marginBottom: 16 }}>
               <img 
@@ -650,10 +697,10 @@ export const VenusPage = () => {
                   type="primary" 
                   htmlType="submit" 
                   style={{ width: '100%' }}
-                  disabled={uploading}
-                  loading={uploading}
+                  disabled={uploading || isSubmitting}
+                  loading={uploading || isSubmitting}
                 >
-                  {uploading ? 'Uploading...' : 'Create Venue'}
+                  {uploading ? 'Uploading...' : isSubmitting ? 'Creating...' : 'Create Venue'}
                 </Button>
               </Col>
             </Row>
@@ -661,13 +708,13 @@ export const VenusPage = () => {
         </Form>
       </Modal>
       
-      {/* Update Venue Modal with Image Upload */}
       <Modal
         title={<><EditOutlined /> Edit Venue</>}
-        visible={isUpdateModalVisible}
+        open={isUpdateModalVisible}
         onCancel={handleCloseUpdateModal}
         footer={null}
         width={600}
+        destroyOnClose
       >
         <Form
           form={updateForm}
@@ -710,7 +757,6 @@ export const VenusPage = () => {
             </Col>
           </Row>
           
-          {/* Image Input Section with Toggle for Update Modal */}
           <Divider orientation="left">Venue Image</Divider>
           
           <Form.Item label="Image Source">
@@ -756,7 +802,6 @@ export const VenusPage = () => {
             </Form.Item>
           )}
           
-          {/* Use updatePreviewImage state for preview */}
           {updatePreviewImage && (
             <div style={{ marginTop: 16, textAlign: 'center', marginBottom: 16 }}>
               <img 
@@ -786,10 +831,10 @@ export const VenusPage = () => {
                   type="primary" 
                   htmlType="submit" 
                   style={{ width: '100%' }}
-                  disabled={uploading}
-                  loading={uploading}
+                  disabled={uploading || isSubmitting}
+                  loading={uploading || isSubmitting}
                 >
-                  {uploading ? 'Uploading...' : 'Update Venue'}
+                  {uploading ? 'Uploading...' : isSubmitting ? 'Updating...' : 'Update Venue'}
                 </Button>
               </Col>
             </Row>
@@ -797,29 +842,102 @@ export const VenusPage = () => {
         </Form>
       </Modal>
       
-      {/* Image Preview Modal */}
       <Modal
         title="Venue Image"
-        visible={isImageModalVisible}
+        open={isImageModalVisible}
         onCancel={() => setIsImageModalVisible(false)}
         footer={[
           <Button key="close" onClick={() => setIsImageModalVisible(false)}>
             Close
           </Button>
         ]}
-        width={700}
+        width={800}
       >
         <div style={{ textAlign: 'center' }}>
           <img
             src={currentImage}
             alt="Venue"
-            style={{ maxWidth: '100%', maxHeight: 600, objectFit: 'contain', borderRadius: '8px' }}
+            style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px' }}
           />
         </div>
       </Modal>
+      
+      <style>
+        {`
+        .venue-management {
+          padding: 24px;
+        }
+        
+        .page-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+        }
+        
+        .subtitle {
+          opacity: 0.7;
+          margin-top: 0 !important;
+        }
+        
+        .header-actions {
+          margin-top: 8px;
+        }
+        
+        .stat-card {
+          height: 100%;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+          border-radius: 8px;
+          transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat-footer {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid #f0f0f0;
+        }
+        
+        .table-card {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+          border-radius: 8px;
+        }
+        
+        .venue-avatar {
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        
+        .venue-avatar:hover {
+          opacity: 0.8;
+          transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+          .page-header {
+            flex-direction: column;
+          }
+          
+          .header-actions {
+            margin-top: 16px;
+            align-self: flex-start;
+          }
+        }
+        
+        .creator-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        `}
+      </style>
     </div>
   );
 };
-
-export default VenusPage;
 

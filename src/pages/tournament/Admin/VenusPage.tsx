@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Typography, Button, Card, Col, Input, Row, Space, Table, Form, Modal, InputNumber, Statistic, Avatar, Divider, Empty, Tag, Tooltip, message, Popconfirm } from 'antd';
-import { SearchOutlined, PlusOutlined, ReloadOutlined, PictureOutlined, HomeFilled, TeamOutlined, EditOutlined, EnvironmentOutlined, EyeOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, PlusOutlined, ReloadOutlined, PictureOutlined, HomeFilled, TeamOutlined, EditOutlined, EnvironmentOutlined, EyeOutlined, DeleteOutlined, ExclamationCircleOutlined, UserOutlined } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useSelector } from 'react-redux';
@@ -9,6 +9,8 @@ import { useCreateVenue } from '../../../modules/Venues/hooks/useCreateVenus';
 import { useUpdateVenue } from '../../../modules/Venues/hooks/useUpdateVenue';
 import { RootState } from '../../../redux/store';
 import { useGetVenueAll } from '../../../modules/Venues/hooks/useGetAllVenus';
+import { fetchUserById } from '../../../modules/User/hooks/useGetUserById';
+import { User } from '../../../modules/User/models';
 
 const { Title, Paragraph, Text } = Typography;
 const { confirm } = Modal;
@@ -39,6 +41,52 @@ export const VenusPage = () => {
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [userDetails, setUserDetails] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const userCache = useRef(new Map<string, any>());
+  console.log('User Details:', userDetails);
+  
+  useEffect(() => {
+    if (Array.isArray(data) && data.length > 0) {
+      const userIds = data.map(venue => String(venue.createBy)).filter(id => id);
+      fetchUsers(userIds);
+    }
+  }, [data]);
+
+  const fetchUsers = async (userIds: string[]) => {
+    setLoadingUsers(true);
+    try {
+      const uniqueUserIds = Array.from(new Set(userIds));
+      const userPromises = uniqueUserIds.map(async (id) => {
+        if (userCache.current.has(id)) {
+          return userCache.current.get(id);
+        } else {
+          try {
+            const user = await fetchUserById(Number(id));
+            if (user) {
+              userCache.current.set(id, user);
+            }
+            return user;
+          } catch (error) {
+            console.error(`Error fetching user with ID ${id}:`, error);
+            return null;
+          }
+        }
+      });
+
+      const users = await Promise.all(userPromises);
+      setUserDetails(users.filter(user => user !== null) as User[]);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const getUserById = (userId: string): User | undefined => {
+    return userDetails.find(user => user.id === Number(userId));
+  };
 
   const handleCloseAddModal = () => {
     setIsModalVisible(false);
@@ -111,21 +159,6 @@ export const VenusPage = () => {
         }
       }
     );
-  };
-
-  const showDeleteConfirm = (venueId: string, venueName: string) => {
-    confirm({
-      title: 'Are you sure you want to delete this venue?',
-      icon: <ExclamationCircleOutlined />,
-      content: `You are about to delete "${venueName}". This action cannot be undone.`,
-      okText: 'Yes, Delete',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk() {
-       
-   
-      }
-    });
   };
 
   const handleSearch = (
@@ -343,6 +376,19 @@ export const VenusPage = () => {
                 key: 'createBy',
                 align: 'center',
                 width: 150,
+                render: (createBy) => {
+                  const creator = getUserById(createBy);
+                  return (
+                    <Space direction="vertical" size="small" style={{ textAlign: 'center' }}>
+                      <Avatar 
+                        src={creator?.avatarUrl} 
+                        icon={!creator?.avatarUrl && <UserOutlined />}
+                        style={{ backgroundColor: !creator?.avatarUrl ? '#1890ff' : undefined }}
+                      />
+                      <Text strong>{creator?.firstName} {creator?.lastName}</Text>
+                    </Space>
+                  );
+                }
               },
               {
                 title: 'Actions',
@@ -378,7 +424,7 @@ export const VenusPage = () => {
               },
             ]}
             dataSource={data}
-            loading={isLoading}
+            loading={isLoading || loadingUsers}
             rowKey="id"
             pagination={{
               pageSize: 10,
@@ -738,6 +784,13 @@ export const VenusPage = () => {
             margin-top: 16px;
             align-self: flex-start;
           }
+        }
+        
+        .creator-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
         }
         `}
       </style>

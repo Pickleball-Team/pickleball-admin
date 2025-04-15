@@ -79,11 +79,11 @@ const SideNav = ({ ...others }: SiderProps) => {
             ),
           ]),
           getItem('Blog', 'blog', <BookOutlined />, [
-            getItem(<Link to={PATH_BLOG.root}>List</Link>, 'list'),
+            getItem(<Link to={PATH_BLOG.root}>Contents</Link>, 'list'),
           ]),
           getItem('Tournament Admin', 'admin/tournament', <TrophyOutlined />, [
             getItem(
-              <Link to={PATH_ADMIN_TOURNAMENT.overview}>Overview</Link>,
+              <Link to={PATH_ADMIN_TOURNAMENT.overview}>Revenue Management</Link>,
               'overview'
             ),
             getItem(
@@ -96,7 +96,7 @@ const SideNav = ({ ...others }: SiderProps) => {
             ),
           ]),
           getItem('Payments', 'admin/payment', <TrophyOutlined />, [
-            getItem(<Link to={PATH_ADMIN_PAYMENT.root}>List</Link>, 'List'),
+            getItem(<Link to={PATH_ADMIN_PAYMENT.root}>Transactions</Link>, 'List'),
           ]),
         ]
       : user?.roleId === 4
@@ -109,7 +109,7 @@ const SideNav = ({ ...others }: SiderProps) => {
       : [
           getItem('Tournament', 'tournament', <TrophyOutlined />, [
             getItem(
-              <Link to={PATH_TOURNAMENT.overview}>List</Link>,
+              <Link to={PATH_TOURNAMENT.overview}>Revenue Management</Link>,
               'overview'
             ),
             getItem(
@@ -122,7 +122,7 @@ const SideNav = ({ ...others }: SiderProps) => {
             ),
           ]),
           getItem('Payments', 'payment', <TrophyOutlined />, [
-            getItem(<Link to={PATH_PAYMENT.root}>List</Link>, 'List'),
+            getItem(<Link to={PATH_PAYMENT.root}>Transactions</Link>, 'List'),
           ]),
         ]),
   ];

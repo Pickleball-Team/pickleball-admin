@@ -675,7 +675,7 @@ const ListBlog: React.FC = () => {
                           {category.rules.length > 0 ? (
                             <div className="content-cards">
                               <Row gutter={[16, 16]}>
-                                {category.rules.map(rule => (
+                                {category.rules.map((rule:IRule)  => (
                                   <Col xs={24} sm={12} xl={8} key={rule.id}>
                                     <Card 
                                       hoverable 
