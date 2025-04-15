@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Row, Col, Card, Statistic, Table, Button, Tag, Badge, Progress, Tooltip, Tabs, Empty, Spin } from 'antd';
-import { CalendarOutlined, TeamOutlined, TrophyOutlined, DollarOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, Table, Button, Tag, Badge, Progress, Tooltip, Tabs, Empty, Spin, Typography, Space, Divider } from 'antd';
+import { CalendarOutlined, TeamOutlined, TrophyOutlined, DollarOutlined, InfoCircleOutlined, PlusOutlined, RiseOutlined, LineChartOutlined, EnvironmentOutlined, UserOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useGetTournamentsBySponsorId } from '../../../../modules/Tournaments/hooks/useGetTournamentsBySponsorId';
 import { useGetVenueBySponnerId } from '../../../../modules/Venues/hooks/useGetVenueBySponnerId';
@@ -10,6 +10,7 @@ import { useGetAllBillBySponnerId } from '../../../../modules/Payment/hooks/useG
 import { User } from '../../../../modules/User/models';
 
 const { TabPane } = Tabs;
+const { Title, Text } = Typography;
 
 interface SponsorDashboardProps {
   user: User | null;
@@ -155,7 +156,9 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
           color = 'red';
         }
         return (
-          <Badge status={color as any} text={status} />
+          <Tag color={color} style={{ borderRadius: '12px', padding: '0 10px' }}>
+            {status}
+          </Tag>
         );
       },
     },
@@ -163,7 +166,9 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       title: 'Action',
       key: 'action',
       render: (_: unknown, record: any) => (
-        <Link to={`/tournament/${record.key}`}>View Details</Link>
+        <Button type="primary" size="small">
+          <Link to={`/tournament/${record.key}`}>View Details</Link>
+        </Button>
       ),
     },
   ];
@@ -175,8 +180,13 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       xField: 'month',
       yField: 'count',
       seriesField: 'type',
+      color: ['#1890ff', '#faad14'],
+      columnStyle: {
+        radius: [20, 20, 0, 0],
+      },
       label: {
         position: 'top' as const,
+        style: { fill: 'black', opacity: 0.6 },
       },
       legend: {
         position: 'top-right' as 'top-right',
@@ -186,99 +196,192 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
   };
 
   const isLoading = isLoadingTournaments || isLoadingVenues || isLoadingReferees;
+  const totalSpent = sponnerBill?.reduce((sum: number, bill: any) => sum + (bill.amount || 0), 0) || 0;
 
   return (
     <div>
+      {/* Hero Section */}
+      <Card 
+        style={{ marginBottom: '24px', background: 'linear-gradient(135deg, #faad14 0%, #ff7a45 100%)', color: 'white' }}
+        bodyStyle={{ padding: '24px' }}
+        bordered={false}
+      >
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={16}>
+            <Title level={2} style={{ color: 'white', marginBottom: '8px' }}>Sponsor Dashboard</Title>
+            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: '16px' }}>
+              Welcome, {user?.firstName || 'Sponsor'}! Manage your tournaments, venues, and referees all in one place.
+            </Text>
+          </Col>
+          <Col xs={24} md={8} style={{ textAlign: 'right' }}>
+            <Space>
+              <Link to="/tournament/create">
+                <Button type="primary" style={{ background: 'white', color: '#faad14', borderColor: 'white' }} icon={<PlusOutlined />}>
+                  New Tournament
+                </Button>
+              </Link>
+              <Link to="/payment">
+                <Button type="default" ghost>Financial Report</Button>
+              </Link>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Main Stats Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        {/* Tournament Stats Card */}
+        <Col xs={24} sm={12} lg={8}>
+          <Card 
+            style={{ height: '100%', background: 'linear-gradient(to bottom, #fff7e6, #ffffff)' }} 
+            hoverable 
+            bordered={false}
+            bodyStyle={{ padding: '20px' }}
+          >
             <Statistic 
-              title="My Tournaments" 
+              title={<Title level={4} style={{ color: '#faad14' }}>Tournament Management</Title>}
               value={statistics.total} 
-              prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#3f8600' }}
-              loading={isLoadingTournaments}
-              suffix={<Tooltip title="Total tournaments sponsored by you"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8 }} /></Tooltip>}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Progress percent={Math.min(100, statistics.total * 10)} size="small" status="active" showInfo={false} />
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Upcoming Events" 
-              value={statistics.upcoming} 
-              prefix={<CalendarOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-              loading={isLoadingTournaments}
-              suffix={<Tooltip title="Events that haven't started yet"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8 }} /></Tooltip>}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Progress percent={Math.min(100, statistics.upcoming * 20)} size="small" status="active" showInfo={false} />
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Total Prize Money" 
-              value={sponnerBill?.reduce((sum: number, bill: any) => sum + (bill.amount || 0), 0) || 0} 
-              prefix={<DollarOutlined />}
+              prefix={<TrophyOutlined style={{ color: '#faad14' }} />} 
               valueStyle={{ color: '#faad14' }}
+              loading={isLoadingTournaments}
+              suffix={<Tooltip title="Total tournaments sponsored by you"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#faad14' }} /></Tooltip>}
+            />
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge status="processing" text={<Text strong>{statistics.ongoing} Ongoing</Text>} />
+                <Badge status="warning" text={<Text strong>{statistics.upcoming} Upcoming</Text>} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <Badge status="success" text={<Text strong>{statistics.completed} Completed</Text>} />
+                <Text><TeamOutlined /> {statistics.totalPlayers} Players</Text>
+              </div>
+              <Progress 
+                percent={Math.min(100, statistics.total * 10)} 
+                status="active" 
+                strokeColor="#faad14"
+                showInfo={false} 
+                style={{ marginTop: '12px' }}
+              />
+              <Link to="/tournament/create">
+                <Button type="primary" style={{ marginTop: '12px', width: '100%', background: '#faad14', borderColor: '#faad14' }}>
+                  Create Tournament
+                </Button>
+              </Link>
+            </Space>
+          </Card>
+        </Col>
+
+        {/* Financial Stats Card */}
+        <Col xs={24} sm={12} lg={8}>
+          <Card 
+            style={{ height: '100%', background: 'linear-gradient(to bottom, #e6f7ff, #ffffff)' }} 
+            hoverable 
+            bordered={false}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <Statistic 
+              title={<Title level={4} style={{ color: '#1890ff' }}>Financial Overview</Title>}
+              value={totalSpent} 
+              prefix={<DollarOutlined style={{ color: '#1890ff' }} />} 
+              valueStyle={{ color: '#1890ff' }}
               precision={2}
               suffix="$"
               loading={isLoadingTournaments}
             />
-            <div style={{ marginTop: 8 }}>
-              <Progress percent={Math.min(100, statistics.totalPrizeMoney / 200)} size="small" status="active" showInfo={false} />
-            </div>
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text strong>Total Prize Money:</Text>
+                <Text strong>${statistics.totalPrizeMoney.toLocaleString()}</Text>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                {/* <Text><CalendarOutlined /> Last payment: {sponnerBill && sponnerBill.length > 0 ? new Date(sponnerBill[0].createAt).toLocaleDateString() : 'N/A'}</Text> */}
+              </div>
+              <Progress 
+                percent={Math.min(100, totalSpent / 1000)} 
+                status="active" 
+                strokeColor="#1890ff"
+                showInfo={false} 
+                style={{ marginTop: '12px' }}
+              />
+              <Link to="/payment">
+                <Button type="primary" style={{ marginTop: '12px', width: '100%' }}>
+                  View Financial Details
+                </Button>
+              </Link>
+            </Space>
           </Card>
         </Col>
-      </Row>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col span={24}>
-          <Card title="Tournament Activity" extra={<Link to="/payment"><Button type="link">View Financial Details</Button></Link>}>
-            {isLoading ? <div style={{ textAlign: 'center', padding: '20px' }}><Spin /></div> : renderChart()}
+        {/* Resources Card */}
+        <Col xs={24} lg={8}>
+          <Card 
+            style={{ height: '100%', background: 'linear-gradient(to bottom, #f6ffed, #ffffff)' }} 
+            hoverable 
+            bordered={false}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <Statistic 
+              title={<Title level={4} style={{ color: '#52c41a' }}>My Resources</Title>}
+              value={sponsorVenues.length + sponsorReferees.length} 
+              prefix={<EnvironmentOutlined style={{ color: '#52c41a' }} />} 
+              valueStyle={{ color: '#52c41a' }}
+              loading={isLoadingVenues || isLoadingReferees}
+              suffix={<Tooltip title="Total venues and referees"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#52c41a' }} /></Tooltip>}
+            />
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge color="green" text={<Text strong>{sponsorVenues.length} Venues</Text>} />
+                <Badge color="cyan" text={<Text strong>{sponsorReferees.length} Referees</Text>} />
+              </div>
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                <Link to="/tournament/vennues">
+                  <Button type="primary" icon={<PlusOutlined />} style={{ background: '#52c41a', borderColor: '#52c41a' }}>
+                    Add Venue
+                  </Button>
+                </Link>
+                <Link to="/tournament/referees">
+                  <Button type="primary" icon={<PlusOutlined />} style={{ background: '#52c41a', borderColor: '#52c41a' }}>
+                    Add Referee
+                  </Button>
+                </Link>
+              </div>
+            </Space>
           </Card>
         </Col>
       </Row>
       
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col span={12}>
-          <Card 
-            title="My Venues" 
-            extra={<Link to="/tournament/vennues"><Button type="primary" icon={<PlusOutlined />}>Add Venue</Button></Link>}
-          >
-            View all venues
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card 
-            title="My Referees" 
-            extra={<Link to="/tournament/referees"><Button type="primary" icon={<PlusOutlined />}>Add Referee</Button></Link>}
-          >
-            View all referees
-          </Card>
-        </Col>
-      </Row>
-      
+      {/* My Tournaments Table */}
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card 
-            title="My Tournaments" 
-            extra={<Link to="/tournament/create"><Button type="primary" icon={<PlusOutlined />}>Create Tournament</Button></Link>}
+            title={<span style={{ color: '#faad14', fontWeight: 'bold' }}><TrophyOutlined /> My Tournaments</span>}
+            bordered={false}
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
           >
             <Tabs 
               activeKey={activeTab} 
               onChange={setActiveTab}
               style={{ marginBottom: 16 }}
+              type="card"
             >
-              <TabPane tab={`Ongoing (${statistics.ongoing})`} key="ongoing" />
-              <TabPane tab={`Upcoming (${statistics.upcoming})`} key="upcoming" />
-              <TabPane tab={`Completed (${statistics.completed})`} key="completed" />
+              <TabPane tab={
+                <span>
+                  <ClockCircleOutlined /> Ongoing ({statistics.ongoing})
+                </span>
+              } key="ongoing" />
+              <TabPane tab={
+                <span>
+                  <CalendarOutlined /> Upcoming ({statistics.upcoming})
+                </span>
+              } key="upcoming" />
+              <TabPane tab={
+                <span>
+                  <CheckCircleOutlined /> Completed ({statistics.completed})
+                </span>
+              } key="completed" />
               <TabPane tab="All" key="all" />
             </Tabs>
             
@@ -290,7 +393,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
                 dataSource={filteredTournaments} 
                 pagination={{ pageSize: 5 }}
                 rowKey="key"
-                locale={{ emptyText: <Empty description="No tournaments found" /> }}
+                locale={{ emptyText: <Empty description="No tournaments found" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
               />
             )}
           </Card>

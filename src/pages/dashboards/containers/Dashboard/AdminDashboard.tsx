@@ -1,29 +1,25 @@
 import React, { useState, useMemo } from 'react';
-import { Row, Col, Card, Statistic, Table, Tag, Progress, Button, Typography, Tabs, Badge, Tooltip, Space, Avatar } from 'antd';
-import { UserOutlined, TrophyOutlined, TeamOutlined, DollarOutlined, InfoCircleOutlined, FileTextOutlined, LockOutlined, CreditCardOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, Tag, Progress, Button, Typography, Space, Tooltip, Divider, Badge, Spin } from 'antd';
+import { UserOutlined, TrophyOutlined, TeamOutlined, DollarOutlined, InfoCircleOutlined, FileTextOutlined, LockOutlined, CreditCardOutlined, RiseOutlined, CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { Column, Pie } from '@ant-design/charts';
-import type { ColumnsType } from 'antd/es/table';
+import { Link } from 'react-router-dom';
 import { User } from '../../../../modules/User/models';
 import { useGetAllTournaments } from '../../../../modules/Tournaments/hooks/useGetAllTournaments';
 import { useFetchAllUser } from '../../../../modules/User/hooks/useFetchAllUser';
 import { useGetAllSponsors } from '../../../../modules/Sponsor/hooks/useGetAllSponner';
 import { useGetAllReferees } from '../../../../modules/User/hooks/useGetAllReferees';
 import { Tournament } from '../../../../modules/Tournaments/models';
-import { Link } from 'react-router-dom';
 import { useGetAllBill } from '../../../../modules/Payment/hooks/useGetAllBill';
 import { useGetBlogCategories } from '../../../../modules/Category/hooks/useGetAllBlogCategories';
 import { useGetAllRules } from '../../../../modules/Category/hooks/useGetAllRules';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 interface AdminDashboardProps {
   user: any;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = () => {
-  const [activeTab, setActiveTab] = useState('tournaments');
-  
   // Fetch data using hooks
   const { data: tournamentsData = [], isLoading: isLoadingTournaments } = useGetAllTournaments();
   const { data: usersData = [], isLoading: isLoadingUsers } = useFetchAllUser(1, 100, true);
@@ -33,131 +29,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const { data: blogCategoriesData = [] } = useGetBlogCategories();
   const { data: rulesData = [] } = useGetAllRules();
   
-  // Tournament columns for table
-  const tournamentColumns: ColumnsType<Tournament> = [
-    {
-      title: 'Tournament Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text) => <a>{text}</a>,
-    },
-    {
-      title: 'Location',
-      dataIndex: 'address',
-      key: 'location',
-        render: (_, record) => <Text>{record.location}</Text>,
-    },
-    {
-      title: 'Dates',
-      key: 'dates',
-      render: (_, record) => (
-        <span>
-          {record.startDate && new Date(record.startDate).toLocaleDateString()} to {record.endDate && new Date(record.endDate).toLocaleDateString()}
-        </span>
-      ),
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      dataIndex: 'status',
-      render: (status) => {
-        let color = 'blue';
-        if (status === 'Completed') {
-          color = 'green';
-        } else if (status === 'Ongoing') {
-          color = 'orange';
-        } else if (status === 'Pending') {
-          color = 'gold';
-        } else if (status === 'Disable') {
-          color = 'red';
-        }
-        return (
-          <Tag color={color} key={status}>
-            {status}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (_, record) => (
-        <Link to={`/tournament/admin/${record.id}`}>
-          <Button type="link" size="small">View Details</Button>
-        </Link>
-      ),
-    },
-  ];
-
-  // User columns for table
-  const userColumns: ColumnsType<User> = [
-    {
-      title: 'Name',
-      key: 'name',
-      render: (_, record) => <a>{`${record.firstName || ''} ${record.lastName || ''}`}</a>,
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: 'Role',
-      key: 'role',
-      render: (_, record) => {
-        let color = 'blue';
-        let roleName = 'Player';
-        
-        switch (record.roleId) {
-          case 2:
-            color = 'red';
-            roleName = 'Admin';
-            break;
-          case 3:
-            color = 'gold';
-            roleName = 'Sponsor';
-            break;
-          case 4:
-            color = 'purple';
-            roleName = 'Referee';
-            break;
-          case 5:
-            color = 'cyan';
-            roleName = 'Developer';
-            break;
-        }
-        
-        return (
-          <Tag color={color} key={roleName}>
-            {roleName}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      render: (_, record) => (
-        <Badge 
-          status={record.status ? 'success' : 'error'} 
-          text={record.status ? 'Active' : 'Inactive'}
-        />
-      ),
-    },
-    {
-      title: 'Created',
-      key: 'created',
-      render: (_, record) => (
-        record.createAt && new Date(record.createAt).toLocaleDateString()
-      ),
-    },
-  ];
-
   // Calculate statistics
   const statistics = useMemo(() => {
     // Determine blog post count - sum of rules across all categories
@@ -209,16 +80,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                          tournamentsData.filter(t => t.type === 'Doubles').length : 0,
       blogPosts: getBlogPostCount(),
       authUsers: usersData && Array.isArray(usersData) ? usersData.length : 0,
-      payments: billsData && Array.isArray(billsData) ? billsData.length : 0
+      payments: billsData && Array.isArray(billsData) ? billsData.length : 0,
+      activeUsers: usersData && Array.isArray(usersData) ? usersData.filter(u => u.status).length : 0,
+      completedPayments: billsData && Array.isArray(billsData) ? 
+                        billsData.filter(bill => bill && bill.status === 'Completed').length : 0
     };
   }, [tournamentsData, usersData, sponsorsData, refereesData, billsData, blogCategoriesData, rulesData]);
 
   // Prepare data for charts
   const tournamentStatusData = useMemo(() => [
-    { status: 'Completed', value: statistics.completedTournaments },
-    { status: 'Ongoing', value: statistics.ongoingTournaments },
-    { status: 'Pending', value: statistics.pendingTournaments },
-    { status: 'Disabled', value: statistics.disabledTournaments },
+    { status: 'Completed', value: statistics.completedTournaments, color: '#52c41a' },
+    { status: 'Ongoing', value: statistics.ongoingTournaments, color: '#faad14' },
+    { status: 'Pending', value: statistics.pendingTournaments, color: '#1890ff' },
+    { status: 'Disabled', value: statistics.disabledTournaments, color: '#f5222d' },
   ], [statistics]);
 
   const userRoleData = useMemo(() => {
@@ -229,14 +103,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       'Admin': 0,
       'Sponsor': 0,
       'Referee': 0,
-      'Developer': 0
     };
     
     usersData.forEach(user => {
       if (user.roleId === 2) roleCounts['Admin']++;
       else if (user.roleId === 3) roleCounts['Sponsor']++;
       else if (user.roleId === 4) roleCounts['Referee']++;
-      else if (user.roleId === 5) roleCounts['Developer']++;
       else roleCounts['Player']++;
     });
     
@@ -301,6 +173,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       columnStyle: {
         radius: [20, 20, 0, 0],
       },
+      color: ['#1890ff', '#52c41a', '#faad14'],
       label: {
         position: 'top' as const,
         style: { fill: 'black', opacity: 0.6 },
@@ -327,6 +200,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       colorField: 'status',
       radius: 0.8,
       innerRadius: 0.6,
+      color: ['#52c41a', '#faad14', '#1890ff', '#f5222d'],
       label: {
         type: 'inner',
         offset: '-50%',
@@ -334,6 +208,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         style: {
           textAlign: 'center',
           fontSize: '14px',
+          fill: '#fff',
         },
       },
       interactions: [{ type: 'element-active' }],
@@ -372,6 +247,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       colorField: 'role',
       radius: 0.8,
       innerRadius: 0.6,
+      color: ['#1890ff', '#f5222d', '#faad14', '#722ed1'],
       label: {
         type: 'inner',
         offset: '-50%',
@@ -379,6 +255,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         style: {
           textAlign: 'center',
           fontSize: '14px',
+          fill: '#fff',
         },
       },
       interactions: [{ type: 'element-active' }],
@@ -429,207 +306,194 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
 
   // Determine if any data is still loading
   const isLoading = isLoadingTournaments || isLoadingUsers || isLoadingSponsors || isLoadingReferees;
+
+  // Card style for hover effect
+  const cardStyle = {
+    height: '100%',
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    ':hover': {
+      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+      transform: 'translateY(-5px)',
+    }
+  };
   
   return (
     <div>
-      {/* Main Stats Cards */}
+      {/* Hero Section */}
+      <Card 
+        style={{ marginBottom: '24px', background: 'linear-gradient(135deg, #1890ff 0%, #722ed1 100%)', color: 'white' }}
+        bodyStyle={{ padding: '24px' }}
+        bordered={false}
+      >
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={18}>
+            <Title level={2} style={{ color: 'white', marginBottom: '8px' }}>Admin Dashboard</Title>
+            <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: '16px' }}>
+              Welcome to your Pickleball Tournament Management Hub. Monitor tournament status, user activity, and system performance.
+            </Text>
+          </Col>
+         
+        </Row>
+      </Card>
+
+      {/* Main Stats Cards - Consolidated to 4 */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        {/* Tournament Management Card */}
+        <Col xs={24} md={12} lg={6}>
+          <Card style={{ height: '100%', background: 'linear-gradient(to bottom, #f6ffed, #ffffff)' }} 
+                hoverable 
+                bordered={false}
+                bodyStyle={{ padding: '20px' }}>
             <Statistic 
-              title="Total Tournaments" 
+              title={<Title level={4} style={{ color: '#52c41a' }}>Tournament Management</Title>}
               value={statistics.tournaments} 
-              prefix={<TrophyOutlined />} 
+              prefix={<TrophyOutlined style={{ color: '#52c41a' }} />} 
               loading={isLoadingTournaments}
-              suffix={<Tooltip title="Tournaments in the system"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#3f8600' }} /></Tooltip>}
+              suffix={<Tooltip title="Total tournaments in the system"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#52c41a' }} /></Tooltip>}
             />
-            <div style={{ marginTop: 8 }}>
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge status="success" text={<Text strong>{statistics.completedTournaments} Completed</Text>} />
+                <Badge status="processing" text={<Text strong>{statistics.ongoingTournaments} Ongoing</Text>} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <Badge status="warning" text={<Text strong>{statistics.pendingTournaments} Pending</Text>} />
+                <Badge status="error" text={<Text strong>{statistics.disabledTournaments} Disabled</Text>} />
+              </div>
               <Progress 
                 percent={calculateProgressPercent(statistics.tournaments, 'tournament')} 
-                size="small" 
                 status="active" 
+                strokeColor="#52c41a"
                 showInfo={false} 
+                style={{ marginTop: '12px' }}
               />
               <Link to="/tournament/admin/overview">
-                <Button type="link" style={{ padding: '4px 0' }}>View all tournaments</Button>
+                <Button type="primary" style={{ marginTop: '12px', width: '100%', background: '#52c41a', borderColor: '#52c41a' }}>
+                  Tournament Admin
+                </Button>
               </Link>
-            </div>
+            </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+
+        {/* User Management Card */}
+        <Col xs={24} md={12} lg={6}>
+          <Card style={{ height: '100%', background: 'linear-gradient(to bottom, #e6f7ff, #ffffff)' }} 
+                hoverable 
+                bordered={false}
+                bodyStyle={{ padding: '20px' }}>
             <Statistic 
-              title="Active Users" 
+              title={<Title level={4} style={{ color: '#1890ff' }}>User Management</Title>}
               value={statistics.users} 
-              prefix={<UserOutlined />} 
+              prefix={<UserOutlined style={{ color: '#1890ff' }} />} 
               valueStyle={{ color: '#1890ff' }}
-              suffix={<Tooltip title="Total registered users"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#1890ff' }} /></Tooltip>}
               loading={isLoadingUsers}
+              suffix={<Tooltip title="Total registered users"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#1890ff' }} /></Tooltip>}
             />
-            <div style={{ marginTop: 8 }}>
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge status="success" text={<Text strong>{statistics.activeUsers} Active</Text>} />
+                <Badge status="error" text={<Text strong>{statistics.users - statistics.activeUsers} Inactive</Text>} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <Text><TeamOutlined /> {statistics.teams} Teams</Text>
+                <Text><LockOutlined /> {usersData?.filter(u => u.roleId === 2).length || 0} Admins</Text>
+              </div>
               <Progress 
                 percent={calculateProgressPercent(statistics.users, 'user')} 
-                size="small" 
                 status="active" 
+                strokeColor="#1890ff"
                 showInfo={false} 
+                style={{ marginTop: '12px' }}
               />
               <Link to="/authencation/block-user">
-                <Button type="link" style={{ padding: '4px 0' }}>Manage users</Button>
+                <Button type="primary" style={{ marginTop: '12px', width: '100%' }}>
+                  User Admin
+                </Button>
               </Link>
-            </div>
+            </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+
+        {/* Content Management Card */}
+        <Col xs={24} md={12} lg={6}>
+          <Card style={{ height: '100%', background: 'linear-gradient(to bottom, #f9f0ff, #ffffff)' }} 
+                hoverable 
+                bordered={false}
+                bodyStyle={{ padding: '20px' }}>
             <Statistic 
-              title="Blog Posts" 
+              title={<Title level={4} style={{ color: '#722ed1' }}>Content Management</Title>}
               value={statistics.blogPosts}
-              prefix={<FileTextOutlined />} 
+              prefix={<FileTextOutlined style={{ color: '#722ed1' }} />} 
               valueStyle={{ color: '#722ed1' }}
-              suffix={<Tooltip title="Published blog posts"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#722ed1' }} /></Tooltip>}
               loading={false}
+              suffix={<Tooltip title="Total blog posts and rules"><InfoCircleOutlined style={{ fontSize: '16px', marginLeft: 8, color: '#722ed1' }} /></Tooltip>}
             />
-            <div style={{ marginTop: 8 }}>
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge color="purple" text={<Text strong>{Array.isArray(rulesData) ? rulesData.length : 0} Rules</Text>} />
+                <Badge color="cyan" text={<Text strong>{Array.isArray(blogCategoriesData) ? blogCategoriesData.length : 0} Categories</Text>} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <Text><CalendarOutlined /> Last updated: {new Date().toLocaleDateString()}</Text>
+              </div>
               <Progress 
                 percent={calculateProgressPercent(statistics.blogPosts, 'blog')} 
-                size="small" 
                 status="active" 
+                strokeColor="#722ed1"
                 showInfo={false} 
+                style={{ marginTop: '12px' }}
               />
               <Link to="/blog">
-                <Button type="link" style={{ padding: '4px 0' }}>Manage blog</Button>
+                <Button type="primary" style={{ marginTop: '12px', width: '100%', background: '#722ed1', borderColor: '#722ed1' }}>
+                  Content Admin
+                </Button>
               </Link>
-            </div>
+            </Space>
           </Card>
         </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+
+        {/* Financial Management Card */}
+        <Col xs={24} md={12} lg={6}>
+          <Card style={{ height: '100%', background: 'linear-gradient(to bottom, #fffbe6, #ffffff)' }} 
+                hoverable 
+                bordered={false}
+                bodyStyle={{ padding: '20px' }}>
             <Statistic 
-              title="Total Revenue" 
+              title={<Title level={4} style={{ color: '#faad14' }}>Financial Management</Title>}
               value={statistics.revenue} 
-              prefix={<DollarOutlined />} 
+              prefix={<DollarOutlined style={{ color: '#faad14' }} />} 
               valueStyle={{ color: '#faad14' }}
               precision={2}
               suffix="$"
               loading={isLoadingTournaments}
             />
-            <div style={{ marginTop: 8 }}>
+            <Divider style={{ margin: '12px 0' }} />
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Badge color="gold" text={<Text strong>{statistics.payments} Transactions</Text>} />
+                <Badge color="green" text={<Text strong>{statistics.completedPayments} Completed</Text>} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <Text><CheckCircleOutlined /> Success rate: {statistics.payments > 0 ? Math.round((statistics.completedPayments / statistics.payments) * 100) : 0}%</Text>
+              </div>
               <Progress 
                 percent={calculateProgressPercent(statistics.revenue, 'revenue')} 
-                size="small" 
                 status="active" 
+                strokeColor="#faad14"
                 showInfo={false} 
+                style={{ marginTop: '12px' }}
               />
               <Link to="/admin/payment">
-                <Button type="link" style={{ padding: '4px 0' }}>View payments</Button>
+                <Button type="primary" style={{ marginTop: '12px', width: '100%', background: '#faad14', borderColor: '#faad14' }}>
+                  Payment Admin
+                </Button>
               </Link>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-      
-      {/* Additional Stats Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Tournament Admin" 
-              value={statistics.tournaments} 
-              prefix={<TrophyOutlined />} 
-              loading={isLoadingTournaments}
-              valueStyle={{ color: '#52c41a' }}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Tag color="green">{statistics.ongoingTournaments} ongoing</Tag>
-              <Tag color="orange">{statistics.pendingTournaments} pending</Tag>
-              <div style={{ marginTop: 8 }}>
-                <Link to="/tournament/admin/overview">
-                  <Button type="link" style={{ padding: '4px 0' }}>Go to Tournament Admin</Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="User Authentication" 
-              value={statistics.authUsers} 
-              prefix={<LockOutlined />} 
-              valueStyle={{ color: '#1890ff' }}
-              loading={isLoadingUsers}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Tag color="blue">
-                {usersData && Array.isArray(usersData) ? usersData.filter(u => u.status).length : 0} Active
-              </Tag>
-              <Tag color="red">
-                {usersData && Array.isArray(usersData) ? usersData.filter(u => !u.status).length : 0} Inactive
-              </Tag>
-              <div style={{ marginTop: 8 }}>
-                <Link to="/authencation/block-user">
-                  <Button type="link" style={{ padding: '4px 0' }}>Go to User Management</Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Content Management" 
-              value={statistics.blogPosts}
-              prefix={<FileTextOutlined />} 
-              valueStyle={{ color: '#722ed1' }}
-              loading={false}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Tag color="purple">
-                {rulesData && Array.isArray(rulesData) ? rulesData.length : 0} Rules
-              </Tag>
-              <Tag color="cyan">
-                {blogCategoriesData && Array.isArray(blogCategoriesData) ? blogCategoriesData.length : 0} Categories
-              </Tag>
-              <div style={{ marginTop: 8 }}>
-                <Link to="/blog">
-                  <Button type="link" style={{ padding: '4px 0' }}>Go to Blog Admin</Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic 
-              title="Payment Management" 
-              value={statistics.payments} 
-              prefix={<CreditCardOutlined />} 
-              valueStyle={{ color: '#faad14' }}
-              loading={false}
-            />
-            <div style={{ marginTop: 8 }}>
-              <Tag color="gold">
-                {billsData && Array.isArray(billsData) ? billsData.length : 0} Transactions
-              </Tag>
-              <Tag color="green">
-                {billsData && Array.isArray(billsData) ? 
-                  billsData.filter(bill => bill && bill.status === 'Completed').length : 0} Completed
-              </Tag>
-              <div style={{ marginTop: 8 }}>
-                <Link to="/admin/payment">
-                  <Button type="link" style={{ padding: '4px 0' }}>Go to Payment Admin</Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-      
-      {/* Growth Chart */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col span={24}>
-          <Card title="Growth Trends" extra={<Button type="link">Export Data</Button>}>
-            {renderGrowthChart()}
+            </Space>
           </Card>
         </Col>
       </Row>
@@ -637,53 +501,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       {/* Pie Charts */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} md={12}>
-          <Card title="Tournament Status" loading={isLoading}>
+          <Card 
+            title={<span style={{ color: '#52c41a', fontWeight: 'bold' }}><TrophyOutlined /> Tournament Status</span>} 
+            loading={isLoading}
+            hoverable
+            bordered={false}
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+          >
             {!isLoading && renderTournamentStatusChart()}
           </Card>
         </Col>
         <Col xs={24} md={12}>
-          <Card title="User Distribution" loading={isLoading}>
+          <Card 
+            title={<span style={{ color: '#1890ff', fontWeight: 'bold' }}><UserOutlined /> User Distribution</span>} 
+            loading={isLoading}
+            hoverable
+            bordered={false}
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+          >
             {!isLoading && renderUserRoleChart()}
           </Card>
         </Col>
       </Row>
-      
-      {/* Main Tabs */}
+
+      {/* Quick Access Panel */}
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card>
-            <Tabs activeKey={activeTab} onChange={setActiveTab} type="card">
-              <TabPane tab="Tournaments" key="tournaments">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Title level={4}>Recent Tournaments</Title>
-                  <Link to="/tournament/admin/overview">
-                    <Button type="primary">Go to Tournament Admin</Button>
-                  </Link>
-                </div>
-                <Table 
-                  columns={tournamentColumns} 
-                  dataSource={tournamentsData} 
-                  loading={isLoadingTournaments}
-                  rowKey={(record) => record.id?.toString() || ''}
-                  pagination={{ pageSize: 5 }}
-                />
-              </TabPane>
-              <TabPane tab="Users" key="users">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Title level={4}>Recent Users</Title>
-                  <Link to="/authencation/block-user">
-                    <Button type="primary">Manage Users</Button>
-                  </Link>
-                </div>
-                <Table 
-                  columns={userColumns} 
-                  dataSource={usersData} 
-                  loading={isLoadingUsers}
-                  rowKey={(record) => record.id?.toString() || ''}
-                  pagination={{ pageSize: 5 }}
-                />
-              </TabPane>
-            </Tabs>
+          <Card 
+            title={<Title level={4} style={{ margin: 0 }}>Quick Access</Title>}
+            bordered={false}
+            style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={12} sm={8} md={6} lg={4}>
+                <Link to="/tournament/admin/overview">
+                  <Card hoverable style={{ textAlign: 'center' }} bodyStyle={{ padding: '12px' }}>
+                    <TrophyOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
+                    <div style={{ marginTop: '8px' }}>Tournaments</div>
+                  </Card>
+                </Link>
+              </Col>
+              <Col xs={12} sm={8} md={6} lg={4}>
+                <Link to="/authencation/block-user">
+                  <Card hoverable style={{ textAlign: 'center' }} bodyStyle={{ padding: '12px' }}>
+                    <UserOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                    <div style={{ marginTop: '8px' }}>Users</div>
+                  </Card>
+                </Link>
+              </Col>
+              <Col xs={12} sm={8} md={6} lg={4}>
+                <Link to="/blog">
+                  <Card hoverable style={{ textAlign: 'center' }} bodyStyle={{ padding: '12px' }}>
+                    <FileTextOutlined style={{ fontSize: '24px', color: '#722ed1' }} />
+                    <div style={{ marginTop: '8px' }}>Blog</div>
+                  </Card>
+                </Link>
+              </Col>
+              <Col xs={12} sm={8} md={6} lg={4}>
+                <Link to="/admin/payment">
+                  <Card hoverable style={{ textAlign: 'center' }} bodyStyle={{ padding: '12px' }}>
+                    <CreditCardOutlined style={{ fontSize: '24px', color: '#faad14' }} />
+                    <div style={{ marginTop: '8px' }}>Payments</div>
+                  </Card>
+                </Link>
+              </Col>
+              
+            </Row>
           </Card>
         </Col>
       </Row>
