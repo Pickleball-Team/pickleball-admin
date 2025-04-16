@@ -113,10 +113,8 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
 
   const handleEndMatch = async () => {
     try {
-      // Show loading message
       const loadingMessage = message.loading('Submitting match scores...', 0);
-
-      // Filter match scores to only include local records
+  
       const localScores = matchScores.filter(score => score.source === 'local');
       
       if (localScores.length === 0) {
@@ -126,9 +124,11 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
         refetch();
         return;
       }
-
-      // Create an array of promises only for locally created/modified scores
-      const scorePromises = localScores.map((score) => {
+  
+      const failedRequests: any[] = [];
+      const successfulRequests: any[] = [];
+  
+      for (const score of localScores) {
         const scoreData: EndTournamentMatchDTO = {
           matchId: match.id,
           round: score.round,
@@ -136,57 +136,45 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           currentHaft: score.currentHaft,
           team1Score: score.team1Score,
           team2Score: score.team2Score,
-          logs:  JSON.stringify(score.logs),
+          logs: JSON.stringify(score.logs),
         };
-
-        console.log(`Submitting local score for round ${score.round}`);
-        return endMatch(scoreData);
-      });
-
-      // Execute all promises using Promise.allSettled
-      const results = await Promise.allSettled(scorePromises);
-
-      // Handle results
-      const failedRequests = results.filter(
-        (result) => result.status === 'rejected'
-      );
-      const successfulRequests = results.filter(
-        (result) => result.status === 'fulfilled'
-      );
-
-      // Log failed requests for debugging
+  
+        try {
+          console.log(`Submitting local score for round ${score.round}`);
+          const result = await endMatch(scoreData);
+          successfulRequests.push(result);
+        } catch (err) {
+          console.error(`Failed to submit score for round ${score.round}`, err);
+          failedRequests.push({ scoreData, error: err });
+        }
+      }
+  
       if (failedRequests.length > 0) {
-        console.error('Some API calls failed:', failedRequests);
         message.warning(
           `${failedRequests.length} API calls failed. Check the console for details.`
         );
       }
-
-      // If all requests failed, show an error message
+  
       if (successfulRequests.length === 0 && failedRequests.length > 0) {
         throw new Error('All API calls failed.');
       }
-
-      // Close loading message
+  
       loadingMessage();
-
-      // Only clean up the submitted rounds
       cleanupSubmittedRounds();
-
-      // Show success message
+  
       if (successfulRequests.length > 0) {
         message.success(`Match ended successfully. Submitted ${successfulRequests.length} rounds.`);
       } else {
         message.info('No changes were submitted.');
       }
-
-      // Close modal and refresh data
+  
       onClose();
       refetch();
     } catch (error: any) {
       message.error(`Failed to end match: ${error.message}`);
     }
   };
+  
 
   // Add a new summary section on the End Match tab
   const localScoresCount = matchScores.filter(score => score.source === 'local').length;

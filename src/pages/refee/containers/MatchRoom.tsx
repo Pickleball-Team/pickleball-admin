@@ -153,7 +153,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const getVenueById = (id: number) => venues?.find((venue) => venue.id === id);
 
   const getRefereeById = (id: number) =>
-    referees?.find((referee) => referee.id === id);
+    referees?.find((referee) => referee.refreeId === id);
 
   const getResultTagColor = (status: number) => {
     switch (status) {
@@ -341,6 +341,8 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
       render: (venueId: number, record: Match) => {
         const venue = getVenueById(venueId);
         const referee = getRefereeById(record?.refereeId || 0);
+
+        
         return venue ? (
           <Card
             hoverable
@@ -369,14 +371,14 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                     borderRadius: '4px',
                   }}
                 >
-                  <Avatar size="large" src={referee.avatarUrl} />
+                  <Avatar size="large" src={referee.user.avatarUrl} />
                   <div style={{ marginLeft: 12 }}>
                     <Text strong>
-                      {referee.firstName} {referee.lastName}
+                      {referee.user.firstName} {referee.user.lastName}
                     </Text>
                     <div>
                       <Text type="secondary">
-                        <MailFilled /> {referee.email}
+                        <MailFilled /> {referee.user.email}
                       </Text>
                     </div>
                   </div>
