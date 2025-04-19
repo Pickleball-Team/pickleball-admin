@@ -1,32 +1,38 @@
-import { SearchOutlined, PlusCircleOutlined, CalendarOutlined, PieChartOutlined } from '@ant-design/icons';
+import { Pie } from '@ant-design/charts';
+import {
+  CalendarOutlined,
+  MessageOutlined,
+  PieChartOutlined,
+  PlusCircleOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import type { InputRef } from 'antd';
 import {
+  Badge,
   Button,
   Card,
   Col,
+  Descriptions,
+  Empty,
   Input,
+  message,
+  Modal,
   Row,
   Space,
   Table,
   Tag,
   Typography,
-  message,
-  Tooltip,
-  Badge,
-  Empty,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
-import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useGetAllTournaments } from '../../modules/Tournaments/hooks/useGetAllTournaments';
-import { useUpdateTournament } from '../../modules/Tournaments/hooks/useUpdateTournamen';
-import { Pie } from '@ant-design/charts';
-import { useGetTournamentsBySponsorId } from '../../modules/Tournaments/hooks/useGetTournamentsBySponsorId';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
+import { Link } from 'react-router-dom';
 import { useCreateTournament } from '../../modules/Tournaments/hooks/useCreateTournament';
+import { useGetTournamentsBySponsorId } from '../../modules/Tournaments/hooks/useGetTournamentsBySponsorId';
+import { useTournamentNotes } from '../../modules/Tournaments/hooks/useTournamentNotes';
 import { TournamentRequest } from '../../modules/Tournaments/models';
-import { useQueryClient } from '@tanstack/react-query';
+import { RootState } from '../../redux/store';
 import CreateTournamentModal from './containers/CreateTournamentModal';
 
 const { Title } = Typography;
@@ -39,7 +45,18 @@ enum TournamentType {
   SinglesFemale = 2,
   DoublesMale = 3,
   DoublesFemale = 4,
-  DoublesMix = 5
+  DoublesMix = 5,
+}
+
+// Define Tournament interface
+interface Tournament {
+  id: number;
+  name: string;
+  location?: string;
+  type: string;
+  status: string;
+  isAccept: boolean;
+  totalPrize?: number;
 }
 
 export const OverviewPage = () => {
@@ -56,6 +73,32 @@ export const OverviewPage = () => {
 
   // Tournament creation state
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+
+  const { getNoteByTournamentId } = useTournamentNotes();
+  const [tournamentNotes, setTournamentNotes] = useState<Record<number, any>>(
+    {}
+  );
+  const [viewNoteModalOpen, setViewNoteModalOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+
+  // Fetch notes for all tournaments
+  useEffect(() => {
+    const fetchNotes = async () => {
+      if (data && data.length > 0) {
+        const notesMap: Record<number, any> = {};
+        await Promise.all(
+          data.map(async (tournament) => {
+            const noteData = await getNoteByTournamentId(tournament.id);
+            if (noteData) {
+              notesMap[tournament.id] = noteData;
+            }
+          })
+        );
+        setTournamentNotes(notesMap);
+      }
+    };
+    fetchNotes();
+  }, [data, getNoteByTournamentId]);
 
   const handleSearch = (
     selectedKeys: string[],
@@ -146,7 +189,7 @@ export const OverviewPage = () => {
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -154,7 +197,7 @@ export const OverviewPage = () => {
   const getStatusBadge = (status: string) => {
     let color = '';
     let statusColor = '';
-    
+
     switch (status) {
       case 'Scheduled':
         statusColor = 'blue';
@@ -180,16 +223,16 @@ export const OverviewPage = () => {
         statusColor = 'default';
         color = 'default';
     }
-    
+
     return { color, statusColor };
   };
 
   // Helper function to get tournament type name by value and format it for display
   const formatTypeName = (type: string | number) => {
     if (!type) return 'Unknown';
-    
+
     let typeName = '';
-    
+
     if (typeof type === 'number') {
       switch (type) {
         case TournamentType.SinglesMale:
@@ -213,17 +256,18 @@ export const OverviewPage = () => {
     } else {
       typeName = type;
     }
-    
+
     // Insert space before capital letters and capitalize first letter
-    return typeName.replace(/([A-Z])/g, ' $1')
+    return typeName
+      .replace(/([A-Z])/g, ' $1')
       .trim()
-      .replace(/^./, str => str.toUpperCase());
+      .replace(/^./, (str) => str.toUpperCase());
   };
 
   // Helper to get color for tournament type
   const getTypeColor = (type: string | number) => {
     let typeName = '';
-    
+
     if (typeof type === 'number') {
       switch (type) {
         case TournamentType.SinglesMale:
@@ -271,9 +315,13 @@ export const OverviewPage = () => {
       key: 'name',
       ...getColumnSearchProps('name'),
       render: (text: string, record: any) => (
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', padding: '8px 0' }}
+        >
           <span style={{ fontWeight: 'bold' }}>{text}</span>
-          <span style={{ fontSize: '12px', color: '#888' }}>{record.location}</span>
+          <span style={{ fontSize: '12px', color: '#888' }}>
+            {record.location}
+          </span>
         </div>
       ),
       width: 220,
@@ -282,12 +330,16 @@ export const OverviewPage = () => {
       title: 'Period',
       key: 'period',
       render: (_, record) => (
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}
+        >
           <div>
-            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span> {formatDate(record.startDate)}
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>Start:</span>{' '}
+            {formatDate(record.startDate)}
           </div>
           <div style={{ marginTop: 4 }}>
-            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span> {formatDate(record.endDate)}
+            <CalendarOutlined /> <span style={{ fontWeight: 500 }}>End:</span>{' '}
+            {formatDate(record.endDate)}
           </div>
         </div>
       ),
@@ -299,12 +351,18 @@ export const OverviewPage = () => {
       render: (_, record) => {
         // Get type color based on the type value
         const typeColor = getTypeColor(record.type);
-        
+
         // Format display name for better readability
         const displayName = formatTypeName(record.type);
-        
+
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '6px 0',
+            }}
+          >
             <Tag color={typeColor}>{displayName}</Tag>
             <span style={{ fontSize: '12px', marginTop: 4 }}>
               Max: <strong>{record.maxPlayer}</strong> players
@@ -335,10 +393,17 @@ export const OverviewPage = () => {
       render: (_, record) => {
         const { color, statusColor } = getStatusBadge(record.status);
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '6px 0' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '6px 0',
+            }}
+          >
             <Badge color={statusColor} text={record.status} />
             <span style={{ fontSize: '12px', marginTop: 8 }}>
-              Prize: <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
+              Prize:{' '}
+              <strong>${record.totalPrize?.toLocaleString() || 0}</strong>
             </span>
           </div>
         );
@@ -362,13 +427,40 @@ export const OverviewPage = () => {
         { text: 'Pending', value: false },
       ],
       onFilter: (value, record) => record.isAccept === value,
-      render: (isAccept: boolean) => (
-        <div style={{ padding: '6px 0' }}>
-          <Tag color={isAccept ? "success" : "processing"} style={{ margin: 0 }}>
-            {isAccept ? "Approved" : "Pending"}
-          </Tag>
-        </div>
-      ),
+      render: (isAccept: boolean, record: any) => {
+        const hasNote = tournamentNotes[record.id];
+
+        return (
+          <div>
+            <Tag
+              color={
+                isAccept
+                  ? 'green'
+                  : record.status === 'Disable'
+                    ? 'red'
+                    : 'orange'
+              }
+            >
+              {isAccept
+                ? 'Approved'
+                : record.status === 'Disable'
+                  ? 'Rejected'
+                  : 'Pending'}
+            </Tag>
+            {hasNote && (
+              <Button
+                type="link"
+                size="small"
+                icon={<MessageOutlined />}
+                onClick={() => openViewNoteModal(record)}
+                style={{ padding: 0 }}
+              >
+                View Note
+              </Button>
+            )}
+          </div>
+        );
+      },
       width: 120,
     },
     {
@@ -376,9 +468,11 @@ export const OverviewPage = () => {
       key: 'action',
       render: (_, record) => (
         <div style={{ padding: '6px 0' }}>
-          <Button type="link" style={{ padding: '4px 0' }}>
-            <Link to={`/tournament/${record.id}`}>Details</Link>
-          </Button>
+          {record.isAccept ? (
+            <Button type="link" style={{ padding: '4px 0' }}>
+              <Link to={`/tournament/${record.id}`}>Details</Link>
+            </Button>
+          ) : null}
         </div>
       ),
       width: 100,
@@ -395,48 +489,49 @@ export const OverviewPage = () => {
   const disabledTournaments =
     data?.filter((t) => t.status === 'Disable').length || 0;
 
-  const singlesMaleTournaments = data?.filter((t) => 
-    String(t.type) === String(TournamentType.SinglesMale) || 
-    String(t.type) === "1" || 
-    String(t.type) === 'SinglesMale').length || 0;
-  
-  const singleFemaleTournaments = data?.filter((t) => 
-    String(t.type) === String(TournamentType.SinglesFemale) || 
-    String(t.type) === "2" || 
-    String(t.type) === 'SinglesFemale').length || 0;
-  
-  const doublesMaleTournaments = data?.filter((t) => 
-    String(t.type) === String(TournamentType.DoublesMale) || 
-    String(t.type) === "3" || 
-    String(t.type) === 'DoublesMale').length || 0;
-  
-  const doubleFemaleTournaments = data?.filter((t) => 
-    String(t.type) === String(TournamentType.DoublesFemale) || 
-    String(t.type) === "4" || 
-    String(t.type) === 'DoublesFemale').length || 0;
-  
-  const doublesMixTournaments = data?.filter((t) => 
-    String(t.type) === String(TournamentType.DoublesMix) || 
-    String(t.type) === "5" || 
-    String(t.type) === 'DoublesMix').length || 0;
+  const singlesMaleTournaments =
+    data?.filter(
+      (t) =>
+        String(t.type) === String(TournamentType.SinglesMale) ||
+        String(t.type) === '1' ||
+        String(t.type) === 'SinglesMale'
+    ).length || 0;
+
+  const singleFemaleTournaments =
+    data?.filter(
+      (t) =>
+        String(t.type) === String(TournamentType.SinglesFemale) ||
+        String(t.type) === '2' ||
+        String(t.type) === 'SinglesFemale'
+    ).length || 0;
+
+  const doublesMaleTournaments =
+    data?.filter(
+      (t) =>
+        String(t.type) === String(TournamentType.DoublesMale) ||
+        String(t.type) === '3' ||
+        String(t.type) === 'DoublesMale'
+    ).length || 0;
+
+  const doubleFemaleTournaments =
+    data?.filter(
+      (t) =>
+        String(t.type) === String(TournamentType.DoublesFemale) ||
+        String(t.type) === '4' ||
+        String(t.type) === 'DoublesFemale'
+    ).length || 0;
+
+  const doublesMixTournaments =
+    data?.filter(
+      (t) =>
+        String(t.type) === String(TournamentType.DoublesMix) ||
+        String(t.type) === '5' ||
+        String(t.type) === 'DoublesMix'
+    ).length || 0;
 
   const singlesTournaments = singlesMaleTournaments + singleFemaleTournaments;
-  const doublesTournaments = doublesMaleTournaments + doubleFemaleTournaments + doublesMixTournaments;
-
-  const tournamentTypeData = [
-    { type: 'Singles Male', value: singlesMaleTournaments },
-    { type: 'Singles Female', value: singleFemaleTournaments },
-    { type: 'Doubles Male', value: doublesMaleTournaments },
-    { type: 'Doubles Female', value: doubleFemaleTournaments },
-    { type: 'Doubles Mix', value: doublesMixTournaments },
-  ].filter(item => item.value > 0);
-
-  const tournamentStatusData = [
-    { status: 'Pending', value: pendingTournaments },
-    { status: 'Ongoing', value: ongoingTournaments },
-    { status: 'Completed', value: completedTournaments },
-    { status: 'Disable', value: disabledTournaments },
-  ].filter(item => item.value > 0);
+  const doublesTournaments =
+    doublesMaleTournaments + doubleFemaleTournaments + doublesMixTournaments;
 
   // Updated pie chart configuration with smaller size
   const pieConfig = (data: any[], angleField: string, colorField: string) => ({
@@ -444,26 +539,28 @@ export const OverviewPage = () => {
     data,
     angleField,
     colorField,
-    radius: 0.8,
+    radius: 0.85,
     innerRadius: 0.6,
-    width: 200,
-    height: 200,
+    width: 360,
+    height: 360,
     label: {
       type: 'inner',
       offset: '-30%',
       content: (datum: any) => `${(datum.percent * 100).toFixed(0)}%`,
       style: {
-        fontSize: 10,
+        fontSize: 12,
         textAlign: 'center',
         fontWeight: 'bold',
       },
     },
     legend: {
-      visible: false, // Hide the legend from chart itself
+      visible: false,
     },
     interactions: [{ type: 'element-active' }],
-    color: colorField === 'type' ? 
-      ['#1890ff', '#eb2f96', '#722ed1', '#a0d911', '#13c2c2'] : undefined,
+    color:
+      colorField === 'type'
+        ? ['#1890ff', '#eb2f96', '#722ed1', '#a0d911', '#13c2c2']
+        : undefined,
   });
 
   const handleCreateTournament = (tournamentData: TournamentRequest) => {
@@ -479,6 +576,17 @@ export const OverviewPage = () => {
         );
       },
     });
+  };
+
+  // Function to open the view note modal
+  const openViewNoteModal = async (record: any) => {
+    const noteData = tournamentNotes[record.id];
+    if (noteData) {
+      setSelectedNote(noteData);
+      setViewNoteModalOpen(true);
+    } else {
+      console.log('No notes available for this tournament');
+    }
   };
 
   return (
@@ -515,7 +623,13 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                  }}
+                >
                   {totalTournaments}
                 </div>
               </Card>
@@ -526,7 +640,14 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#fa8c16' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#fa8c16',
+                  }}
+                >
                   {ongoingTournaments}
                 </div>
               </Card>
@@ -537,7 +658,14 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#1890ff' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#1890ff',
+                  }}
+                >
                   {singlesTournaments}
                 </div>
               </Card>
@@ -548,7 +676,14 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#722ed1' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#722ed1',
+                  }}
+                >
                   {doublesTournaments}
                 </div>
               </Card>
@@ -559,7 +694,14 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#52c41a' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#52c41a',
+                  }}
+                >
                   {completedTournaments}
                 </div>
               </Card>
@@ -570,104 +712,34 @@ export const OverviewPage = () => {
                 bordered={false}
                 style={{ backgroundColor: '#ffffff', height: '100%' }}
               >
-                <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', color: '#faad14' }}>
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    color: '#faad14',
+                  }}
+                >
                   {pendingTournaments}
                 </div>
               </Card>
             </Col>
           </Row>
         </Col>
-        
+
         {/* Charts Row with Custom Legend Outside */}
-        <Col span={24} style={{ marginTop: 16 }}>
-          <Row gutter={10}>
-            <Col xs={24} md={12}>
-              <Card
-                title={<><PieChartOutlined /> Tournament Types</>}
-                bordered={false}
-                style={{ backgroundColor: '#ffffff', height: '100%' }}
-              >
-                {tournamentTypeData.length > 0 ? (
-                  <Row>
-                    <Col span={12}>
-                      <div style={{ display: 'flex', justifyContent: 'center', height: '140px' }}>
-                        <Pie {...pieConfig(tournamentTypeData, 'value', 'type')} />
-                      </div>
-                    </Col>
-                    <Col span={12}>
-                      <div style={{ padding: '10px' }}>
-                        {tournamentTypeData.map(item => (
-                          <div key={item.type} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ 
-                              width: '10px', 
-                              height: '10px', 
-                              borderRadius: '50%', 
-                              backgroundColor: item.type === 'Singles Male' ? '#1890ff' : 
-                                              item.type === 'Singles Female' ? '#eb2f96' :
-                                              item.type === 'Doubles Male' ? '#722ed1' :
-                                              item.type === 'Doubles Female' ? '#a0d911' : '#13c2c2',
-                              marginRight: '8px'
-                            }} />
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '12px' }}>{item.type}</div>
-                            </div>
-                            <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </Col>
-                  </Row>
-                ) : (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No tournament data available" />
-                )}
-              </Card>
-            </Col>
-            <Col xs={24} md={12}>
-              <Card
-                title={<><PieChartOutlined /> Tournament Status</>}
-                bordered={false}
-                style={{ backgroundColor: '#ffffff', height: '100%' }}
-              >
-                {tournamentStatusData.length > 0 ? (
-                  <Row>
-                    <Col span={12}>
-                      <div style={{ display: 'flex', justifyContent: 'center', height: '140px' }}>
-                        <Pie {...pieConfig(tournamentStatusData, 'value', 'status')} />
-                      </div>
-                    </Col>
-                    <Col span={12}>
-                      <div style={{ padding: '10px' }}>
-                        {tournamentStatusData.map(item => (
-                          <div key={item.status} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ 
-                              width: '10px', 
-                              height: '10px', 
-                              borderRadius: '50%', 
-                              backgroundColor: item.status === 'Pending' ? '#faad14' :
-                                              item.status === 'Ongoing' ? '#52c41a' :
-                                              item.status === 'Completed' ? '#13c2c2' : '#f5222d',
-                              marginRight: '8px'
-                            }} />
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '12px' }}>{item.status}</div>
-                            </div>
-                            <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{item.value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </Col>
-                  </Row>
-                ) : (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No tournament data available" />
-                )}
-              </Card>
-            </Col>
-          </Row>
-        </Col>
+        <Col span={24} style={{ marginTop: 16 }}></Col>
       </Row>
 
       {/* Second half of screen - Table */}
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Button
           type="primary"
           onClick={() => refetch()}
@@ -675,7 +747,7 @@ export const OverviewPage = () => {
         >
           Refresh Data
         </Button>
-        
+
         <Typography.Text type="secondary">
           Showing {data?.length || 0} tournaments
         </Typography.Text>
@@ -686,15 +758,15 @@ export const OverviewPage = () => {
         dataSource={data}
         loading={isLoading}
         rowKey="id"
-        style={{ 
-          backgroundColor: '#ffffff', 
+        style={{
+          backgroundColor: '#ffffff',
           borderRadius: '8px',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
         }}
-        pagination={{ 
+        pagination={{
           pageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} tournaments`
+          showTotal: (total) => `Total ${total} tournaments`,
         }}
         size="middle"
         bordered={false}
@@ -708,7 +780,35 @@ export const OverviewPage = () => {
         isSubmitting={isCreating}
         organizerId={user?.id ?? 0}
       />
-      
+
+      {/* Add View Note Modal */}
+      <Modal
+        title="Tournament Note"
+        open={viewNoteModalOpen}
+        onCancel={() => setViewNoteModalOpen(false)}
+        footer={[
+          <Button key="close" onClick={() => setViewNoteModalOpen(false)}>
+            Close
+          </Button>,
+        ]}
+      >
+        {selectedNote && (
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="Action">
+              <Tag color={selectedNote.action === 'accept' ? 'green' : 'red'}>
+                {selectedNote.action === 'accept' ? 'Approved' : 'Rejected'}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Note">
+              {selectedNote.note}
+            </Descriptions.Item>
+            <Descriptions.Item label="Timestamp">
+              {new Date(selectedNote.timestamp).toLocaleString()}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
+
       <style>
         {`
         .chart-container {

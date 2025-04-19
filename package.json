@@ -29,7 +29,7 @@
     "axios": "^1.8.3",
     "cloudinary-react": "^1.8.1",
     "dayjs": "^1.11.9",
-    "firebase": "^10.8.0",
+    "firebase": "^11.6.0",
     "interactjs": "^1.10.18",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
