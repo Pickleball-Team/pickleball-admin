@@ -219,12 +219,11 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
                   borderColor: '#1890ff',
                   boxShadow: '0 0 0 2px rgba(24,144,255,0.2)',
                 }}
-                disabled
+                disabled={!isEditable}
                 onChange={handleStatusChange}
               >
                 <Option value={1}>Scheduled</Option>
-                <Option value={3}>Ongoing</Option>
-                <Option value={2}>Completed</Option>
+                <Option value={2}>Ongoing</Option>
                 <Option value={4}>Cancelled</Option>
               </Select>
             </Form.Item>
@@ -279,14 +278,14 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
                     disabled={!isEditable}
                   >
                     {referees?.map((referee) => (
-                      <Option key={referee?.id} value={referee?.id}>
+                      <Option key={referee?.user?.id} value={referee?.user?.id}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <img
-                            src={referee?.avatarUrl}
+                            src={referee?.user?.avatarUrl}
                             alt="avatar"
                             style={{ width: 20, height: 20, marginRight: 8 }}
                           />
-                          {referee?.firstName} {referee?.lastName}
+                          {referee?.user?.firstName} {referee?.user?.lastName}
                         </div>
                       </Option>
                     ))}

@@ -279,14 +279,14 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
                     disabled={!isEditable}
                   >
                     {referees?.map((referee) => (
-                      <Option key={referee?.id} value={referee?.id}>
+                      <Option key={referee?.user?.id} value={referee?.user?.id}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                           <img
-                            src={referee?.avatarUrl}
+                            src={referee?.user?.avatarUrl}
                             alt="avatar"
                             style={{ width: 20, height: 20, marginRight: 8 }}
                           />
-                          {referee?.firstName} {referee?.lastName}
+                          {referee?.user?.firstName} {referee?.user?.lastName}
                         </div>
                       </Option>
                     ))}

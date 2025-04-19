@@ -133,7 +133,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const getVenueById = (id: number) => venues?.find((venue) => venue.id === id);
 
   const getRefereeById = (id: number) =>
-    referees?.find((referee) => referee.id === id);
+    referees?.find((referee) => referee.user.id === id);
 
   const getResultTagColor = (status: number) => {
     switch (status) {
@@ -309,12 +309,12 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
                   padding: '8px', 
                   borderRadius: '4px' 
                 }}>
-                  <Avatar size="large" src={referee.avatarUrl} />
+                  <Avatar size="large" src={referee.user.avatarUrl} />
                   <div style={{ marginLeft: 12 }}>
-                    <Text strong>{referee.firstName} {referee.lastName}</Text>
+                    <Text strong>{referee.user.firstName} {referee.user.lastName}</Text>
                     <div>
                       <Text type="secondary">
-                        <MailFilled /> {referee.email}
+                        <MailFilled /> {referee.user.email}
                       </Text>
                     </div>
                   </div>
