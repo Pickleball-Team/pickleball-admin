@@ -181,7 +181,7 @@ const TournamentInfoForm = ({ data, onSave }: TournamentInfoFormProps) => {
               label="Status"
               rules={[{ required: true, message: 'Please select the status!' }]}
             >
-              <Select>
+              <Select disabled={isFieldDisabled}>
                 <Option value="Scheduled">Scheduled</Option>
                 <Option value="Ongoing">Ongoing</Option>
                 <Option value="Completed">Completed</Option>

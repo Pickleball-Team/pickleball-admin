@@ -13,6 +13,8 @@ import {
   UserOutlined,
   TableOutlined,
   ReadOutlined,
+  StarTwoTone,
+  CompressOutlined,
 } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
@@ -34,6 +36,8 @@ import {
   Typography,
   Tabs,
   Progress,
+  message,
+  Modal,
 } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -50,6 +54,9 @@ import AddMatchModal from './AddMatchModal';
 import UpdateMatchModal from './UpdateMatchModal';
 import MatchScoreModal from './MatchScoreModal';
 import Title from 'antd/es/typography/Title';
+import { useUpdateTournament } from '../../../modules/Tournaments/hooks/useUpdateTournamen';
+import { useEndTournament } from '../../../modules/Tournaments/hooks/useEndTourament';
+import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -83,8 +90,14 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const [selectedMatch, setSelectedMatch] = useState<IMatch | null>(null);
   const [isScoreModalVisible, setIsScoreModalVisible] =
     useState<boolean>(false);
+
+  const { data: TournamentData } = useGetTournamentById(id);
   const [selectedMatchForScores, setSelectedMatchForScores] =
     useState<IMatch | null>(null);
+
+  const { mutateAsync: updateTournament } = useUpdateTournament();
+
+  const { mutateAsync: endTourament } = useEndTournament();
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -231,6 +244,46 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     setFilteredDetails(filteredMatches);
   };
 
+  const [startLoading, setStartLoading] = useState(false);
+
+  const handleStartTournament = async () => {
+    try {
+      setStartLoading(true);
+      await updateTournament({
+        id: id,
+        data: {
+          status: 'Ongoing',
+        },
+      });
+      message.success('Tournament has been started successfully!');
+      await refetch();
+    } catch (error) {
+      message.error('Failed to start tournament. Please try again later.');
+      console.error('Error starting tournament:', error);
+    } finally {
+      setStartLoading(false);
+    }
+  };
+
+  const handleEndTournament = async () => {
+    try {
+      setStartLoading(true);
+      await updateTournament({
+        id: id,
+        data: {
+          status: 'Ongoing',
+        },
+      });
+      message.success('Tournament has been started successfully!');
+      await refetch();
+    } catch (error) {
+      message.error('Failed to start tournament. Please try again later.');
+      console.error('Error starting tournament:', error);
+    } finally {
+      setStartLoading(false);
+    }
+  };
+
   const getColumnSearchProps = (dataIndex: DataIndex): ColumnType<any> => ({
     filterDropdown: ({
       setSelectedKeys,
@@ -349,7 +402,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
         const venue = getVenueById(venueId);
         const referee = getRefereeById(record?.refereeId || 0);
         console.log(referee);
-        
+
         return venue ? (
           <Card
             hoverable
@@ -603,6 +656,64 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
     );
   }
 
+  const renderActions = () => {
+    if (TournamentData?.status === 'Scheduled') {
+      return (
+        <Row gutter={4}>
+          <Col>
+            <Button
+              type="primary"
+              icon={<StarTwoTone />}
+              onClick={handleStartTournament}
+              size="large"
+            >
+              Start Tournament
+            </Button>
+          </Col>
+        </Row>
+      );
+    }
+    if (TournamentData?.status === 'Ongoing') {
+      return (
+        <Row gutter={4}>
+          <Col>
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalVisible(true)}
+              size="large"
+            >
+              Add Match
+            </Button>
+          </Col>
+            <Col>
+            <Tooltip title="This will mark the tournament as completed">
+              <Button
+              type="primary"
+              danger
+              icon={<CompressOutlined />}
+              onClick={() => {
+                Modal.confirm({
+                title: 'End Tournament',
+                content: 'Are you sure you want to end this tournament? This action cannot be undone.',
+                okText: 'Yes, End Tournament',
+                okType: 'danger',
+                cancelText: 'No, Cancel',
+                onOk: handleEndTournament,
+                });
+              }}
+              size="large"
+              >
+              End Tournament
+              </Button>
+            </Tooltip>
+            </Col>
+          
+        </Row>
+      );
+    }
+  };
+
   return (
     <div className="match-room-container">
       {/* Statistics Cards */}
@@ -692,16 +803,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
             Match Management
           </Title>
         }
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
-            size="large"
-          >
-            Add Match
-          </Button>
-        }
+        extra={renderActions()}
         style={{ marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
       >
         <Row gutter={[16, 16]} align="middle">

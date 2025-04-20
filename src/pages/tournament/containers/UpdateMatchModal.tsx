@@ -200,8 +200,8 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
             style={{ marginBottom: 16 }}
           />
         )}
-
-        <Row gutter={16}>
+      {
+        match?.status !== 3 && (   <Row gutter={16}>
           <Col span={24}>
             <Form.Item
               name="status"
@@ -228,7 +228,9 @@ const UpdateMatchModal: React.FC<UpdateMatchModalProps> = ({
               </Select>
             </Form.Item>
           </Col>
-        </Row>
+        </Row>)
+      }
+     
 
         <Collapse defaultActiveKey={['1']}>
           <Panel header="Match Details" key="1">
