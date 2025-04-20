@@ -114,9 +114,11 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
   const handleEndMatch = async () => {
     try {
       const loadingMessage = message.loading('Submitting match scores...', 0);
-  
-      const localScores = matchScores.filter(score => score.source === 'local');
-      
+
+      const localScores = matchScores.filter(
+        (score) => score.source === 'local'
+      );
+
       if (localScores.length === 0) {
         message.info('No local score changes to submit.');
         loadingMessage();
@@ -124,10 +126,10 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
         refetch();
         return;
       }
-  
+
       const failedRequests: any[] = [];
       const successfulRequests: any[] = [];
-  
+
       for (const score of localScores) {
         const scoreData: EndTournamentMatchDTO = {
           matchId: match.id,
@@ -138,7 +140,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           team2Score: score.team2Score,
           logs: JSON.stringify(score.logs),
         };
-  
+
         try {
           console.log(`Submitting local score for round ${score.round}`);
           const result = await endMatch(scoreData);
@@ -148,37 +150,42 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
           failedRequests.push({ scoreData, error: err });
         }
       }
-  
+
       if (failedRequests.length > 0) {
         message.warning(
           `${failedRequests.length} API calls failed. Check the console for details.`
         );
       }
-  
+
       if (successfulRequests.length === 0 && failedRequests.length > 0) {
         throw new Error('All API calls failed.');
       }
-  
+
       loadingMessage();
       cleanupSubmittedRounds();
-  
+
       if (successfulRequests.length > 0) {
-        message.success(`Match ended successfully. Submitted ${successfulRequests.length} rounds.`);
+        message.success(
+          `Match ended successfully. Submitted ${successfulRequests.length} rounds.`
+        );
       } else {
         message.info('No changes were submitted.');
       }
-  
+
       onClose();
       refetch();
     } catch (error: any) {
       message.error(`Failed to end match: ${error.message}`);
     }
   };
-  
 
   // Add a new summary section on the End Match tab
-  const localScoresCount = matchScores.filter(score => score.source === 'local').length;
-  const apiScoresCount = matchScores.filter(score => score.source === 'api').length;
+  const localScoresCount = matchScores.filter(
+    (score) => score.source === 'local'
+  ).length;
+  const apiScoresCount = matchScores.filter(
+    (score) => score.source === 'api'
+  ).length;
 
   return (
     <Modal
@@ -196,7 +203,9 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
       {isLoadingMatchDetails && (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16 }}>Loading match details from server...</div>
+          <div style={{ marginTop: 16 }}>
+            Loading match details from server...
+          </div>
         </div>
       )}
 
@@ -262,7 +271,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
               message="No Rounds Available"
               description={
                 isLoadingMatchDetails
-                  ? "Loading match data..."
+                  ? 'Loading match data...'
                   : "This match doesn't have any scored rounds yet. Use the 'Add Round Score' button or 'Referee Scoring' tab to add scores."
               }
               type="info"
@@ -295,7 +304,11 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
                 setActiveTab('addScore');
               }}
               disabled={!canAddMoreRounds()}
-              title={!canAddMoreRounds() ? `Maximum of ${maxRounds} rounds reached` : undefined}
+              title={
+                !canAddMoreRounds()
+                  ? `Maximum of ${maxRounds} rounds reached`
+                  : undefined
+              }
             >
               Add Round Score
             </Button>
@@ -373,6 +386,7 @@ const MatchScoreModal: React.FC<MatchScoreModalProps> = ({
             />
           ) : (
             <RefereeScoringSimple
+              matchId={match.id}
               currentRound={currentRound}
               team1Score={team1Score}
               team2Score={team2Score}

@@ -401,6 +401,7 @@ export const useMatchScoring = (match: IMatch | null) => {
       setCurrentRound(prev => prev + 1);
       setScoringHistory([]);
       
+      resetCurrentScores();
       message.success(`Round ${currentRound} completed! Team ${winner} wins.`);
       return newScore;
     } catch (error) {
