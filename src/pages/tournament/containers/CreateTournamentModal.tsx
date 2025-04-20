@@ -17,7 +17,11 @@ import {
   Switch,
   Tooltip,
 } from 'antd';
-import { PlusCircleOutlined, UploadOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  PlusCircleOutlined,
+  UploadOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import { TournamentRequest } from '../../../modules/Tournaments/models';
 import dayjs from 'dayjs'; // Replace moment with dayjs
 import type { Dayjs } from 'dayjs'; // Import Dayjs type
@@ -43,7 +47,7 @@ const sampleTournamentData = {
   social: 'https://facebook.com/example',
   totalPrize: undefined, // Changed from 5000000 to undefined to let users input
   isFree: true,
-  entryFee: 0,
+  entryFee: 10000,
   type: 1, // Doubles
 };
 
@@ -104,15 +108,14 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
       isMinRanking: values.isMinRanking || 1,
       isMaxRanking: values.isMaxRanking || 9, // Changed default from 10 to 9
       social: values.social || 'No social links provided',
-      isFree: values.isFree === undefined ? true : values.isFree,
-      // Ensure entryFee is consistent with isFree, with new min value of 10000
-      entryFee: values.isFree ? 0 : values.entryFee || 10000,
+      isFree: values.isFree,
+      entryFee: values.entryFee,
     };
 
     // Log the data being sent to help debug
     onSubmit(tournamentData);
   };
-
+  
   const handleUpload = async (file: File) => {
     try {
       const result = await uploadToCloudinary(file);
@@ -262,8 +265,12 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
                 min={0}
                 style={{ width: '100%' }}
                 placeholder="Enter prize amount"
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value: string | undefined) => value ? Number(value.replace(/[^\d]/g, '')) : 0}
+                formatter={(value) =>
+                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                }
+                parser={(value: string | undefined) =>
+                  value ? Number(value.replace(/[^\d]/g, '')) : 0
+                }
               />
             </Form.Item>
           </Col>
@@ -285,7 +292,7 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
             </Form.Item>
           </Col>
         </Row>
-              
+
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
@@ -293,11 +300,21 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               label="Minimum Ranking"
               rules={[
                 { required: true, message: 'Please enter minimum ranking' },
-                { type: 'number', min: 1, max: 9, message: 'Ranking must be between 1 and 9' }
+                {
+                  type: 'number',
+                  min: 1,
+                  max: 9,
+                  message: 'Ranking must be between 1 and 9',
+                },
               ]}
               initialValue={1} // Set minimum ranking to 1
             >
-              <InputNumber min={1} max={9} style={{ width: '100%' }} precision={0} />
+              <InputNumber
+                min={1}
+                max={9}
+                style={{ width: '100%' }}
+                precision={0}
+              />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -306,19 +323,33 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               label="Maximum Ranking"
               rules={[
                 { required: true, message: 'Please enter maximum ranking' },
-                { type: 'number', min: 1, max: 9, message: 'Ranking must be between 1 and 9' },
+                {
+                  type: 'number',
+                  min: 1,
+                  max: 9,
+                  message: 'Ranking must be between 1 and 9',
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue('isMinRanking') <= value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('Max ranking must be greater than or equal to min ranking'));
+                    return Promise.reject(
+                      new Error(
+                        'Max ranking must be greater than or equal to min ranking'
+                      )
+                    );
                   },
                 }),
               ]}
               initialValue={9} // Set maximum ranking to 9
             >
-              <InputNumber min={1} max={9} style={{ width: '100%' }} precision={0} />
+              <InputNumber
+                min={1}
+                max={9}
+                style={{ width: '100%' }}
+                precision={0}
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -407,20 +438,18 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
           valuePropName="checked"
         >
           <Switch
-            checkedChildren="Free"
-            unCheckedChildren="Paid"
+            checked={!isFree}
             onChange={(checked) => {
-              setIsFree(checked);
-              if (checked) {
-                form.setFieldsValue({ entryFee: 0 });
-              } else {
-                // Set default entry fee when switching to paid
-                form.setFieldsValue({ entryFee: 10000 });
-              }
+              const newIsFree = checked;
+              setIsFree(newIsFree);
+              form.setFieldsValue({ entryFee: newIsFree ? 0 : 10000 });
+              form.validateFields(['entryFee']);
             }}
+            checkedChildren="Có phí"
+            unCheckedChildren="Miễn phí"
           />
         </Form.Item>
-        {!isFree && (
+        {isFree && (
           <Form.Item
             name="entryFee"
             label={
@@ -450,8 +479,12 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               min={10000}
               max={1000000}
               style={{ width: '100%' }}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value: string | undefined) => value ? Number(value.replace(/[^\d]/g, '')) : 10000}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
+              parser={(value: string | undefined) =>
+                value ? Number(value.replace(/[^\d]/g, '')) : 10000
+              }
               addonAfter="VND"
             />
           </Form.Item>
