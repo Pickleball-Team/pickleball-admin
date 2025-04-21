@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '../../components';
-import { HomeOutlined } from '@ant-design/icons';
+import { HomeOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Helmet } from 'react-helmet-async';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
@@ -19,6 +19,10 @@ export const DefaultDashboardPage = () => {
   // Get user from Redux store
   const user = useSelector((state: RootState) => state.authencation.user);
   const userRole = user?.roleId;
+
+  if(!user) {
+    return <LoadingOutlined/>
+  }
   
   // Function to determine dashboard title based on role
   const getDashboardTitle = () => {

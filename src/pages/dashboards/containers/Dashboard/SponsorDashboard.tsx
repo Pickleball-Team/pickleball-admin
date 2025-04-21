@@ -25,15 +25,17 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
 
   const statistics = useMemo(() => {
     if (!sponsorTournaments || !Array.isArray(sponsorTournaments)) {
-      return { total: 0, upcoming: 0, ongoing: 0, completed: 0, totalPlayers: 0, totalPrizeMoney: 0 };
+      return { total: 0, upcoming: 0, ongoing: 0, completed: 0, scheduled: 0, disabled: 0, totalPlayers: 0, totalPrizeMoney: 0 };
     }
 
     const currentDate = new Date();
     const upcoming = sponsorTournaments.filter(tournament => 
-      new Date(tournament.startDate) > currentDate && tournament.status !== 'Completed' && tournament.status !== 'Disable'
+      ['Pending'].includes(tournament.status) && new Date(tournament.startDate) > currentDate
     ).length;
     const ongoing = sponsorTournaments.filter(tournament => tournament.status === 'Ongoing').length;
     const completed = sponsorTournaments.filter(tournament => tournament.status === 'Completed').length;
+    const scheduled = sponsorTournaments.filter(tournament => tournament.status === 'Scheduled').length;
+    const disabled = sponsorTournaments.filter(tournament => tournament.status === 'Disable').length;
     const totalPlayers = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.registrationDetails?.length || 0), 0);
     const totalPrizeMoney = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.totalPrize ? Number(tournament.totalPrize) : 0), 0);
 
@@ -42,6 +44,8 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       upcoming,
       ongoing,
       completed,
+      scheduled,
+      disabled,
       totalPlayers,
       totalPrizeMoney
     };
@@ -63,16 +67,27 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
   }, [sponsorTournaments]);
 
   const filteredTournaments = useMemo(() => {
-    const currentDate = new Date();
     switch (activeTab) {
       case 'upcoming':
         return formattedTournaments.filter(tournament => 
-          new Date(tournament.startDate) > currentDate && tournament.status !== 'Completed' && tournament.status !== 'Disable'
+          tournament.status === 'Pending' && new Date(tournament.startDate) > new Date()
         );
       case 'ongoing':
-        return formattedTournaments.filter(tournament => tournament.status === 'Ongoing');
+        return formattedTournaments.filter(tournament => 
+          tournament.status === 'Ongoing'
+        );
       case 'completed':
-        return formattedTournaments.filter(tournament => tournament.status === 'Completed');
+        return formattedTournaments.filter(tournament => 
+          tournament.status === 'Completed'
+        );
+      case 'scheduled':
+        return formattedTournaments.filter(tournament => 
+          tournament.status === 'Scheduled'
+        );
+      case 'disabled':
+        return formattedTournaments.filter(tournament => 
+          tournament.status === 'Disable'
+        );
       case 'all':
       default:
         return formattedTournaments;
@@ -154,6 +169,8 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
           color = 'gold';
         } else if (status === 'Disable') {
           color = 'red';
+        } else if (status === 'Scheduled') {
+          color = 'purple';
         }
         return (
           <Tag color={color} style={{ borderRadius: '12px', padding: '0 10px' }}>
@@ -172,29 +189,6 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       ),
     },
   ];
-
-  const renderChart = () => {
-    const config = {
-      data: chartData,
-      isGroup: true,
-      xField: 'month',
-      yField: 'count',
-      seriesField: 'type',
-      color: ['#1890ff', '#faad14'],
-      columnStyle: {
-        radius: [20, 20, 0, 0],
-      },
-      label: {
-        position: 'top' as const,
-        style: { fill: 'black', opacity: 0.6 },
-      },
-      legend: {
-        position: 'top-right' as 'top-right',
-      },
-    };
-    return <Column {...config} />;
-  };
-
   const isLoading = isLoadingTournaments || isLoadingVenues || isLoadingReferees;
   const totalSpent = sponnerBill?.reduce((sum: number, bill: any) => sum + (bill.amount || 0), 0) || 0;
 
@@ -215,7 +209,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
           </Col>
           <Col xs={24} md={8} style={{ textAlign: 'right' }}>
             <Space>
-              <Link to="/tournament/create">
+              <Link to="/tournament/overview">
                 <Button type="primary" style={{ background: 'white', color: '#faad14', borderColor: 'white' }} icon={<PlusOutlined />}>
                   New Tournament
                 </Button>
@@ -263,7 +257,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
                 showInfo={false} 
                 style={{ marginTop: '12px' }}
               />
-              <Link to="/tournament/create">
+              <Link to="/tournament/overview">
                 <Button type="primary" style={{ marginTop: '12px', width: '100%', background: '#faad14', borderColor: '#faad14' }}>
                   Create Tournament
                 </Button>
@@ -382,6 +376,16 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
                   <CheckCircleOutlined /> Completed ({statistics.completed})
                 </span>
               } key="completed" />
+              <TabPane tab={
+                <span>
+                  <RiseOutlined /> Scheduled ({statistics.scheduled})
+                </span>
+              } key="scheduled" />
+              <TabPane tab={
+                <span>
+                  <LineChartOutlined /> Disabled ({statistics.disabled})
+                </span>
+              } key="disabled" />
               <TabPane tab="All" key="all" />
             </Tabs>
             
