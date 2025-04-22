@@ -268,12 +268,7 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const handleEndTournament = async () => {
     try {
       setStartLoading(true);
-      await updateTournament({
-        id: id,
-        data: {
-          status: 'Ongoing',
-        },
-      });
+      await endTourament(id);
       message.success('Tournament has been started successfully!');
       await refetch();
     } catch (error) {

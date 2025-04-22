@@ -29,9 +29,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
     }
 
     const currentDate = new Date();
-    const upcoming = sponsorTournaments.filter(tournament => 
-      ['Pending'].includes(tournament.status) && new Date(tournament.startDate) > currentDate
-    ).length;
+    const upcoming = sponsorTournaments.filter(tournament => tournament.status === 'Pending').length;;
     const ongoing = sponsorTournaments.filter(tournament => tournament.status === 'Ongoing').length;
     const completed = sponsorTournaments.filter(tournament => tournament.status === 'Completed').length;
     const scheduled = sponsorTournaments.filter(tournament => tournament.status === 'Scheduled').length;
@@ -62,7 +60,8 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       status: tournament.status,
       prize: tournament.totalPrize ? `$${Number(tournament.totalPrize).toLocaleString()}` : 'N/A',
       location: tournament.location || 'N/A',
-      type: tournament.type
+      type: tournament.type,
+      entryFee: tournament.entryFee
     }));
   }, [sponsorTournaments]);
 
@@ -70,7 +69,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
     switch (activeTab) {
       case 'upcoming':
         return formattedTournaments.filter(tournament => 
-          tournament.status === 'Pending' && new Date(tournament.startDate) > new Date()
+          tournament.status === 'Pending'
         );
       case 'ongoing':
         return formattedTournaments.filter(tournament => 
@@ -144,18 +143,25 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       render: (type: string) => (
         <Tag color={type === 'Singles' ? 'green' : 'blue'}>{type}</Tag>
       ),
-    },
-    {
-      title: 'Players',
-      dataIndex: 'players',
-      key: 'players',
-    },
-    {
+        },
+        {
       title: 'Prize',
       dataIndex: 'prize',
       key: 'prize',
-    },
-    {
+      render: (prize: string) => {
+        const value = prize.replace(/[^0-9.]/g, '');
+        return value ? `${Number(value).toLocaleString()} VND` : 'N/A';
+      },
+        },
+        {
+      title: 'EntryFee',
+      dataIndex: 'entryFee',
+      key: 'entryFee',
+      render: (entryFee: number | string) => {
+        return entryFee ? `${Number(entryFee).toLocaleString()} VND` : 'N/A';
+      },
+        },
+        {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',

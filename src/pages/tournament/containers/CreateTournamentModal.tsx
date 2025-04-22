@@ -34,21 +34,21 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const sampleTournamentData = {
-  name: 'Giải Đấu Thể Thao Online 2025',
-  location: 'Hà Nội, Việt Nam',
-  maxPlayer: 16, // Changed from 100 to 16
+  name: 'Pickleball Championship ',
+  location: 'HCM, Việt Nam',
+  maxPlayer: 16,
   description:
-    'Một giải đấu thể thao trực tuyến lớn dành cho tất cả mọi người, nơi các game thủ có thể thể hiện kỹ năng của mình.',
+    'The Pickleball Online Championship 2025 is open to all, giving players a great chance to showcase their skills and compete in a vibrant sports community',
   banner:
     'https://pickleball360.com.vn/wp-content/uploads/2024/08/banner-pickleball-the-thaoPyRa4.webp',
-  note: 'Hãy đăng ký trước ngày 10 tháng 4 để đảm bảo chỗ tham gia!',
+  note: '',
   isMinRanking: 1,
   isMaxRanking: 9, // Changed from 10 to 9
   social: 'https://facebook.com/example',
-  totalPrize: undefined, // Changed from 5000000 to undefined to let users input
+  totalPrize: 100000,
   isFree: true,
   entryFee: 10000,
-  type: 1, // Doubles
+  type: 1, 
 };
 
 interface CreateTournamentModalProps {
@@ -294,62 +294,64 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+            <Col span={12}>
             <Form.Item
               name="isMinRanking"
               label="Minimum Ranking"
               rules={[
-                { required: true, message: 'Please enter minimum ranking' },
-                {
-                  type: 'number',
-                  min: 1,
-                  max: 9,
-                  message: 'Ranking must be between 1 and 9',
+              { required: true, message: 'Please enter minimum ranking' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                if (!value || value <= getFieldValue('isMaxRanking')) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error(
+                  'Min ranking must be less than or equal to max ranking'
+                  )
+                );
                 },
+              }),
               ]}
               initialValue={1} // Set minimum ranking to 1
             >
-              <InputNumber
-                min={1}
-                max={9}
-                style={{ width: '100%' }}
-                precision={0}
-              />
+              <Select style={{ width: '100%' }} placeholder="Select minimum ranking">
+              {Array.from({ length: 9 }, (_, i) => i + 1).map(value => (
+                <Option key={value} value={value}>
+                {value}
+                </Option>
+              ))}
+              </Select>
             </Form.Item>
-          </Col>
+            </Col>
           <Col span={12}>
             <Form.Item
               name="isMaxRanking"
               label="Maximum Ranking"
               rules={[
-                { required: true, message: 'Please enter maximum ranking' },
-                {
-                  type: 'number',
-                  min: 1,
-                  max: 9,
-                  message: 'Ranking must be between 1 and 9',
+              { required: true, message: 'Please enter maximum ranking' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                if (!value || getFieldValue('isMinRanking') <= value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error(
+                  'Max ranking must be greater than or equal to min ranking'
+                  )
+                );
                 },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue('isMinRanking') <= value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(
-                      new Error(
-                        'Max ranking must be greater than or equal to min ranking'
-                      )
-                    );
-                  },
-                }),
+              }),
               ]}
               initialValue={9} // Set maximum ranking to 9
             >
-              <InputNumber
-                min={1}
-                max={9}
-                style={{ width: '100%' }}
-                precision={0}
-              />
+              <Select style={{ width: '100%' }} placeholder="Select maximum ranking">
+              {Array.from({ length: 9 }, (_, i) => i + 1).map(value => (
+                <Option key={value} value={value}>
+                {value}
+                </Option>
+              ))}
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -431,7 +433,7 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
             <span>
               Free Tournament{' '}
               <Tooltip title="Toggle between free and paid tournament">
-                <InfoCircleOutlined style={{ color: '#1890ff' }} />
+          <InfoCircleOutlined style={{ color: '#1890ff' }} />
               </Tooltip>
             </span>
           }
@@ -445,8 +447,8 @@ const CreateTournamentModal: React.FC<CreateTournamentModalProps> = ({
               form.setFieldsValue({ entryFee: newIsFree ? 0 : 10000 });
               form.validateFields(['entryFee']);
             }}
-            checkedChildren="Có phí"
-            unCheckedChildren="Miễn phí"
+            checkedChildren="Paid"
+            unCheckedChildren="Free"
           />
         </Form.Item>
         {isFree && (
