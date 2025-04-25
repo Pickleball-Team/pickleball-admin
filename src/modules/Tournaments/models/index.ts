@@ -133,6 +133,8 @@ export enum TouramentregistrationStatus {
   Rejected = 3, // Ko dong y cho tham gia giai dau
   Waiting = 4, // Cho accept tu partner
   Eliminated = 5, // Bi loai
+  Request = 6, // Nhan duoc loi moi tham gia
+  Winner = 7, // Nguoi thang giai dau
 }
 
 export interface UpdateApprovalDTO {
@@ -140,4 +142,16 @@ export interface UpdateApprovalDTO {
   tournamentId: number,
   playerId: number,
   partnerId?: number;
+}
+
+export interface RankPlayer {
+  userId: number;
+  fullName: string;
+  avatar: string;
+  rankingPoint: number;
+  exeprienceLevel: number;
+  totalMatch: number;
+  totalWins: number;
+  point: number;
+  position: number;
 }

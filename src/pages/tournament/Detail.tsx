@@ -7,6 +7,7 @@ import TournamentInfoForm from './containers/TournamentInfoForm';
 import TournamentMatches from './containers/TournamentMatches';
 import Policy from './containers/Policy';
 import BillTab from './containers/BillTab';
+import Rank from '../../components/Rank';
 
 const { TabPane } = Tabs;
 
@@ -66,9 +67,9 @@ const TournamentDetail = () => {
         <TabPane tab="Bill" key="6">
           <BillTab id={data.id} />
         </TabPane>
-        {/* <TabPane tab="Historys" key="3">
-          <TournamentMatches details={data.registrationDetails} />
-        </TabPane> */}
+        <TabPane tab="Rank" key="7">
+          <Rank tournamentId={data.id}/>
+        </TabPane>
       </Tabs>
     </div>
   );

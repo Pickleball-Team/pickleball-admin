@@ -44,6 +44,8 @@ const statusColors = {
   [TouramentregistrationStatus.Rejected]: 'red',
   [TouramentregistrationStatus.Waiting]: 'blue',
   [TouramentregistrationStatus.Eliminated]: 'black',
+  [TouramentregistrationStatus.Request]: 'purple',
+  [TouramentregistrationStatus.Winner]: 'gold',
 };
 
 const statusLabels = {
@@ -52,15 +54,19 @@ const statusLabels = {
   [TouramentregistrationStatus.Rejected]: 'Rejected',
   [TouramentregistrationStatus.Waiting]: 'Waiting',
   [TouramentregistrationStatus.Eliminated]: 'Eliminated',
+  [TouramentregistrationStatus.Request]: 'Request',
+  [TouramentregistrationStatus.Winner]: 'Winner',
 };
 
 // Vietnamese descriptions for tooltips
 const statusDescriptions = {
-  [TouramentregistrationStatus.Pending]: 'Đã accept từ partner cho payment',
-  [TouramentregistrationStatus.Approved]: 'Đã payment',
-  [TouramentregistrationStatus.Rejected]: 'Không đồng ý cho tham gia giải đấu',
-  [TouramentregistrationStatus.Waiting]: 'Chờ accept từ partner',
-  [TouramentregistrationStatus.Eliminated]: 'Bị loại',
+  [TouramentregistrationStatus.Pending]: 'Accepted from partner for payment',
+  [TouramentregistrationStatus.Approved]: 'Payment completed',
+  [TouramentregistrationStatus.Rejected]: 'Not approved to participate in tournament',
+  [TouramentregistrationStatus.Waiting]: 'Waiting for partner acceptance',
+  [TouramentregistrationStatus.Eliminated]: 'Eliminated',
+  [TouramentregistrationStatus.Request]: 'Received invitation to participate',
+  [TouramentregistrationStatus.Winner]: 'Tournament winner',
 };
 
 const PlayersTable = ({ tournamentId, tournamentName, registrations = [], refetch }: PlayersTableProps) => {
@@ -253,6 +259,8 @@ const PlayersTable = ({ tournamentId, tournamentName, registrations = [], refetc
       [TouramentregistrationStatus.Rejected]: 0,
       [TouramentregistrationStatus.Waiting]: 0,
       [TouramentregistrationStatus.Eliminated]: 0,
+      [TouramentregistrationStatus.Request]: 0,
+      [TouramentregistrationStatus.Winner]: 0,
     };
 
     filteredRegistrations.forEach(registration => {

@@ -34,6 +34,8 @@ const statusColors = {
   [TouramentregistrationStatus.Rejected]: 'red',
   [TouramentregistrationStatus.Waiting]: 'blue',
   [TouramentregistrationStatus.Eliminated]: 'black',
+  [TouramentregistrationStatus.Request]: 'purple',
+  [TouramentregistrationStatus.Winner]: 'gold',
 };
 
 const statusLabels = {
@@ -42,14 +44,18 @@ const statusLabels = {
   [TouramentregistrationStatus.Rejected]: 'Rejected',
   [TouramentregistrationStatus.Waiting]: 'Waiting',
   [TouramentregistrationStatus.Eliminated]: 'Eliminated',
+  [TouramentregistrationStatus.Request]: 'Request',
+  [TouramentregistrationStatus.Winner]: 'Winner',
 };
 
 const statusDescriptions = {
-  [TouramentregistrationStatus.Pending]: 'Đã accept từ partner cho payment',
-  [TouramentregistrationStatus.Approved]: 'Đã payment',
-  [TouramentregistrationStatus.Rejected]: 'Không đồng ý cho tham gia giải đấu',
-  [TouramentregistrationStatus.Waiting]: 'Chờ accept từ partner',
-  [TouramentregistrationStatus.Eliminated]: 'Bị loại',
+  [TouramentregistrationStatus.Pending]: 'Accepted by partner for payment',
+  [TouramentregistrationStatus.Approved]: 'Payment completed',
+  [TouramentregistrationStatus.Rejected]: 'Not allowed to participate in the tournament',
+  [TouramentregistrationStatus.Waiting]: 'Waiting for partner acceptance',
+  [TouramentregistrationStatus.Eliminated]: 'Eliminated',
+  [TouramentregistrationStatus.Request]: 'Received invitation to participate',
+  [TouramentregistrationStatus.Winner]: 'Tournament winner',
 };
 
 const PlayersTable = ({
@@ -213,6 +219,8 @@ const PlayersTable = ({
       Rejected: 0,
       Waiting: 0,
       Eliminated: 0,
+      Request: 0,
+      Winner: 0
     };
     filteredRegistrations.forEach((r) => {
       const status = statusLabels[r.isApproved as TouramentregistrationStatus] || 'Unknown';
@@ -260,6 +268,16 @@ const PlayersTable = ({
         <Col>
           <Tag icon={<StopOutlined />} color={statusColors[TouramentregistrationStatus.Eliminated]}>
             Eliminated: {statusCounts.Eliminated}
+          </Tag>
+        </Col>
+        <Col>
+          <Tag icon={<UserOutlined />} color={statusColors[TouramentregistrationStatus.Request]}>
+            Request: {statusCounts.Request}
+          </Tag>
+        </Col>
+        <Col>
+          <Tag icon={<UserOutlined />} color={statusColors[TouramentregistrationStatus.Winner]}>
+            Winner: {statusCounts.Winner}
           </Tag>
         </Col>
       </Row>

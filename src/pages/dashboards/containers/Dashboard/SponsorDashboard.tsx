@@ -25,15 +25,30 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
 
   const statistics = useMemo(() => {
     if (!sponsorTournaments || !Array.isArray(sponsorTournaments)) {
-      return { total: 0, upcoming: 0, ongoing: 0, completed: 0, scheduled: 0, disabled: 0, totalPlayers: 0, totalPrizeMoney: 0 };
+      return { 
+        total: 0, 
+        upcoming: 0, 
+        ongoing: 0, 
+        completed: 0, 
+        scheduled: 0, 
+        pending: 0, 
+        disabled: 0, 
+        totalPlayers: 0, 
+        totalPrizeMoney: 0 
+      };
     }
 
     const currentDate = new Date();
-    const upcoming = sponsorTournaments.filter(tournament => tournament.status === 'Pending').length;;
     const ongoing = sponsorTournaments.filter(tournament => tournament.status === 'Ongoing').length;
     const completed = sponsorTournaments.filter(tournament => tournament.status === 'Completed').length;
     const scheduled = sponsorTournaments.filter(tournament => tournament.status === 'Scheduled').length;
+    const pending = sponsorTournaments.filter(tournament => tournament.status === 'Pending').length;
     const disabled = sponsorTournaments.filter(tournament => tournament.status === 'Disable').length;
+    const upcoming = sponsorTournaments.filter(tournament => 
+      ['Scheduled', 'Pending'].includes(tournament.status) && 
+      new Date(tournament.startDate) > currentDate
+    ).length;
+    
     const totalPlayers = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.registrationDetails?.length || 0), 0);
     const totalPrizeMoney = sponsorTournaments.reduce((sum, tournament) => sum + (tournament.totalPrize ? Number(tournament.totalPrize) : 0), 0);
 
@@ -43,6 +58,7 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       ongoing,
       completed,
       scheduled,
+      pending,
       disabled,
       totalPlayers,
       totalPrizeMoney
@@ -69,7 +85,8 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
     switch (activeTab) {
       case 'upcoming':
         return formattedTournaments.filter(tournament => 
-          tournament.status === 'Pending'
+          ['Scheduled', 'Pending'].includes(tournament.status) && 
+          new Date(tournament.startDate) > new Date()
         );
       case 'ongoing':
         return formattedTournaments.filter(tournament => 
@@ -82,6 +99,10 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
       case 'scheduled':
         return formattedTournaments.filter(tournament => 
           tournament.status === 'Scheduled'
+        );
+      case 'pending':
+        return formattedTournaments.filter(tournament => 
+          tournament.status === 'Pending'
         );
       case 'disabled':
         return formattedTournaments.filter(tournament => 
@@ -387,6 +408,11 @@ const SponsorDashboard: React.FC<SponsorDashboardProps> = ({ user }) => {
                   <RiseOutlined /> Scheduled ({statistics.scheduled})
                 </span>
               } key="scheduled" />
+              <TabPane tab={
+                <span>
+                  <LineChartOutlined /> Pending ({statistics.pending})
+                </span>
+              } key="pending" />
               <TabPane tab={
                 <span>
                   <LineChartOutlined /> Disabled ({statistics.disabled})

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGetTournamentById } from '../../modules/Tournaments/hooks/useGetTournamentById';
 import MatchRoom from './containers/MatchRoom';
 import PlayersTable from './containers/PlayerRegistration';
+import Rank from '../../components/Rank';
 
 const { TabPane } = Tabs;
 
@@ -49,6 +50,9 @@ const ReefeerDetail = () => {
             registrations={data.registrationDetails}
             refetch={refetch}
           />
+        </TabPane>
+        <TabPane tab="Rank" key="7">
+          <Rank tournamentId={data.id}/>
         </TabPane>
       </Tabs>
     </div>
