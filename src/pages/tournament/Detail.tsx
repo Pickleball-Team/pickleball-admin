@@ -4,7 +4,6 @@ import { useGetTournamentById } from '../../modules/Tournaments/hooks/useGetTour
 import MatchRoom from './containers/MatchRoom';
 import PlayersTable from './containers/PlayerRegistration';
 import TournamentInfoForm from './containers/TournamentInfoForm';
-import TournamentMatches from './containers/TournamentMatches';
 import Policy from './containers/Policy';
 import BillTab from './containers/BillTab';
 import Rank from '../../components/Rank';
