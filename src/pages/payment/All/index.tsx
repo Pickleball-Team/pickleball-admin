@@ -72,9 +72,11 @@ const getStatusText = (status: number) => {
 const getTypeText = (type: number) => {
   switch (type) {
     case 1:
-      return 'Registration';
-    case 2:
       return 'Sponsorship';
+    case 2:
+      return 'Registration';
+    case 3:
+      return 'Reward';
     default:
       return 'Unknown';
   }
@@ -153,16 +155,19 @@ const PaymentAdmin = () => {
         pendingCount: 0,
         registrationAmount: 0,
         sponsorshipAmount: 0,
+        rewardAmount: 0,
         registrationCount: 0,
         sponsorshipCount: 0,
+        rewardCount: 0,
       };
     }
 
     // Ensure consistent type handling - convert status to number if it's a string
     const paid = bills.filter((bill) => Number(bill.status) === 1);
     const pending = bills.filter((bill) => Number(bill.status) === 2);
-    const registrations = bills.filter((bill) => Number(bill.type) === 1);
-    const sponsorships = bills.filter((bill) => Number(bill.type) === 2);
+    const sponsorships = bills.filter((bill) => Number(bill.type) === 1);
+    const registrations = bills.filter((bill) => Number(bill.type) === 2);
+    const rewards = bills.filter((bill) => Number(bill.type) === 3);
 
     return {
       totalAmount: bills.reduce((sum, bill) => sum + bill.amount, 0),
@@ -173,8 +178,10 @@ const PaymentAdmin = () => {
       pendingCount: pending.length,
       registrationAmount: registrations.reduce((sum, bill) => sum + bill.amount, 0),
       sponsorshipAmount: sponsorships.reduce((sum, bill) => sum + bill.amount, 0),
+      rewardAmount: rewards.reduce((sum, bill) => sum + bill.amount, 0),
       registrationCount: registrations.length,
       sponsorshipCount: sponsorships.length,
+      rewardCount: rewards.length,
     };
   }, [bills]);
 
@@ -220,7 +227,7 @@ const PaymentAdmin = () => {
 
     const typeAmounts = bills.reduce(
       (acc, bill) => {
-        const type = Number(bill.type) === 1 ? 'Registration' : 'Sponsorship';
+        const type = Number(bill.type) === 2 ? 'Registration' : Number(bill.type) === 1 ? 'Sponsorship' : 'Reward';
         acc[type] = (acc[type] || 0) + bill.amount;
         return acc;
       },
@@ -244,6 +251,7 @@ const PaymentAdmin = () => {
         monthIndex: i,
         Registration: 0,
         Sponsorship: 0,
+        Reward: 0,
         Total: 0,
       };
     });
@@ -253,7 +261,7 @@ const PaymentAdmin = () => {
       const paymentDate = bill.paymentDate ? new Date(bill.paymentDate) : null;
       if (paymentDate && paymentDate.getFullYear() === yearFilter) {
         const monthIndex = paymentDate.getMonth();
-        const type = Number(bill.type) === 1 ? 'Registration' : 'Sponsorship';
+        const type = Number(bill.type) === 2 ? 'Registration' : Number(bill.type) === 1 ? 'Sponsorship' : 'Reward';
         
         // Add to the specific type
         months[monthIndex][type] += bill.amount;
@@ -275,6 +283,11 @@ const PaymentAdmin = () => {
         month: month.month,
         type: 'Sponsorship',
         amount: month.Sponsorship
+      });
+      chartData.push({
+        month: month.month,
+        type: 'Reward',
+        amount: month.Reward
       });
       chartData.push({
         month: month.month,
@@ -513,11 +526,12 @@ const PaymentAdmin = () => {
       render: (type: number | string) => {
         const typeNum = Number(type);
         const typeText = getTypeText(typeNum);
-        return <Tag color={typeNum === 1 ? 'green' : 'purple'}>{typeText}</Tag>;
+        return <Tag color={typeNum === 2 ? 'green' : typeNum === 1 ? 'purple' : 'gold'}>{typeText}</Tag>;
       },
       filters: [
-        { text: 'Registration', value: 1 },
-        { text: 'Sponsorship', value: 2 },
+        { text: 'Registration', value: 2 },
+        { text: 'Sponsorship', value: 1 },
+        { text: 'Reward', value: 3 },
       ],
       onFilter: (value, record) => Number(record.type) === value,
     },
@@ -539,7 +553,7 @@ const PaymentAdmin = () => {
     const config = {
       ...pieConfig,
       data: paymentTypeData,
-      color: ['#52c41a', '#722ed1'],
+      color: ['#52c41a', '#722ed1', '#faad14'],
       radius: 0.7,
       innerRadius: 0.6,
       label: {
@@ -617,7 +631,7 @@ const PaymentAdmin = () => {
       columnStyle: {
       radius: [40, 40, 0, 0],
       },
-      color: ['#52c41a', '#722ed1', '#1890ff'],
+      color: ['#52c41a', '#722ed1', '#faad14', '#1890ff'],
       label: {
       position: 'top' as const,
       style: { fill: 'black', opacity: 0.6 },
@@ -640,9 +654,11 @@ const PaymentAdmin = () => {
       case 'pending':
         return bills.filter(bill => Number(bill.status) === 2);
       case 'registration':
-        return bills.filter(bill => Number(bill.type) === 1);
-      case 'sponsorship':
         return bills.filter(bill => Number(bill.type) === 2);
+      case 'sponsorship':
+        return bills.filter(bill => Number(bill.type) === 1);
+      case 'reward':
+        return bills.filter(bill => Number(bill.type) === 3);
       case 'all':
       default:
         return bills;
@@ -728,7 +744,7 @@ const PaymentAdmin = () => {
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false} hoverable style={{ height: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
             <Row gutter={8}>
-              <Col span={12}>
+              <Col span={8}>
                 <Statistic
                   title={<Text strong style={{ fontSize: '14px' }}>Registration</Text>}
                   value={statistics.registrationAmount}
@@ -738,7 +754,7 @@ const PaymentAdmin = () => {
                 />
                 <Text type="secondary">{statistics.registrationCount} payments</Text>
               </Col>
-              <Col span={12}>
+              <Col span={8}>
                 <Statistic
                   title={<Text strong style={{ fontSize: '14px' }}>Sponsorship</Text>}
                   value={statistics.sponsorshipAmount}
@@ -747,6 +763,16 @@ const PaymentAdmin = () => {
                   formatter={(value) => `₫${value?.toLocaleString()}`}
                 />
                 <Text type="secondary">{statistics.sponsorshipCount} payments</Text>
+              </Col>
+              <Col span={8}>
+                <Statistic
+                  title={<Text strong style={{ fontSize: '14px' }}>Reward</Text>}
+                  value={statistics.rewardAmount}
+                  precision={0}
+                  valueStyle={{ color: '#faad14', fontSize: '18px' }}
+                  formatter={(value) => `₫${value?.toLocaleString()}`}
+                />
+                <Text type="secondary">{statistics.rewardCount} payments</Text>
               </Col>
             </Row>
           </Card>
@@ -887,6 +913,17 @@ const PaymentAdmin = () => {
               </Tooltip>
             } 
             key="sponsorship" 
+          />
+          <TabPane 
+            tab={
+              <Tooltip title="Reward Payments">
+                <Space>
+                  <span>Reward</span>
+                  <Badge count={statistics.rewardCount} style={{ backgroundColor: '#faad14' }} />
+                </Space>
+              </Tooltip>
+            } 
+            key="reward" 
           />
         </Tabs>
         

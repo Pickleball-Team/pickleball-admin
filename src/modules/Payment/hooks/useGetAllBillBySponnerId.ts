@@ -7,7 +7,7 @@ import { Bill } from '../models';
  * Fetches all payment bills for a specific sponsor
  */
 const fetchSponsorBills = async (sponnerId: number): Promise<Bill[]> => {
-  const response = await Api.get<Bill[]>(`/payment/vn-pay/GetAllBillBySponnerId/${sponnerId}`);
+  const response = await Api.get<Bill[]>(`/payment/vn-pay/GetAllBillByUserId/${sponnerId}`);
   return response.data as Bill[]; // Extract bills array from data property
 };
 

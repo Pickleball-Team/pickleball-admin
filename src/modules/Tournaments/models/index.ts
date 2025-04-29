@@ -139,8 +139,8 @@ export enum TouramentregistrationStatus {
 
 export interface UpdateApprovalDTO {
   isApproved: TouramentregistrationStatus;
-  tournamentId: number,
-  playerId: number,
+  tournamentId: number;
+  playerId: number;
   partnerId?: number;
 }
 
@@ -153,5 +153,17 @@ export interface RankPlayer {
   totalMatch: number;
   totalWins: number;
   point: number;
+  position: number;
+  percentOfPrize?: number;
+  prize?: number;
+}
+
+export interface Reward {
+  tournamentId: number;
+  isReward: boolean;
+}
+export interface RuleOfAward {
+  id: number;
+  percentOfPrize: number;
   position: number;
 }

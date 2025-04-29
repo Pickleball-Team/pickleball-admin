@@ -3,7 +3,9 @@ import {
   RiseOutlined,
   StarOutlined,
   TeamOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  DollarOutlined,
+  PercentageOutlined
 } from '@ant-design/icons';
 import { Avatar, Badge, Card, Col, Empty, Row, Spin, Table, Tag, Tooltip, Typography } from 'antd';
 import React, { useMemo } from 'react';
@@ -11,6 +13,12 @@ import { useGetLeaderboardByTournamentId } from '../modules/Tournaments/hooks/us
 import { RankPlayer } from '../modules/Tournaments/models';
 
 const { Title, Text } = Typography;
+
+// Extend RankPlayer interface with the new fields
+export interface ExtendedRankPlayer extends RankPlayer {
+  percentOfPrize?: number;
+  prize?: number;
+}
 
 interface RankProps {
   tournamentId: number;
@@ -74,6 +82,14 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
       default:
         return '';
     }
+  };
+
+  const hasPrizeData = (player: ExtendedRankPlayer): boolean => {
+    return player.prize !== undefined && player.prize !== null;
+  };
+
+  const hasPercentData = (player: ExtendedRankPlayer): boolean => {
+    return player.percentOfPrize !== undefined && player.percentOfPrize !== null;
   };
 
   const columns = [
@@ -147,7 +163,47 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
         </Text>
       ),
     },
+    {
+      title: 'Prize Money',
+      dataIndex: 'prize',
+      key: 'prize',
+      render: (prize: number | undefined | null) => {
+        if (prize !== undefined && prize !== null) {
+          return (
+            <Tooltip title="Tournament prize money">
+              <Tag color="gold" style={{ fontSize: '14px' }}>
+                <DollarOutlined /> {prize.toLocaleString()} VND
+              </Tag>
+            </Tooltip>
+          );
+        }
+        return '-';
+      },
+      hidden: !leaderboard?.some(player => hasPrizeData(player as ExtendedRankPlayer))
+    },
+    {
+      title: 'Prize   %',
+      dataIndex: 'percentOfPrize',
+      key: 'percentOfPrize',
+      render: (percent: number | undefined | null) => {
+        if (percent !== undefined && percent !== null) {
+          return (
+            <Tooltip title="Percentage of total prize pool">
+              <Tag color="cyan" style={{ fontSize: '14px' }}>
+                <PercentageOutlined /> {percent}%
+              </Tag>
+            </Tooltip>
+          );
+        }
+        return '-';
+      },
+      hidden: !leaderboard?.some(player => hasPercentData(player as ExtendedRankPlayer))
+    },
   ];
+
+  const visibleColumns = useMemo(() => {
+    return columns.filter(column => !column.hidden);
+  }, [leaderboard]);
 
   if (isLoading) {
     return (
@@ -189,11 +245,15 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
           const indexB = topThreePlayers.indexOf(b);
           const order = [1, 0, 2]; 
           return order[indexA] - order[indexB];
-        }).map((player: RankPlayer, index: number) => {
+        }).map((player: ExtendedRankPlayer, index: number) => {
           const actualIndex = topThreePlayers.indexOf(player);
           const rank = actualIndex + 1;
           const isChampion = rank === 1;
           const columnSpan ={ xs: 24, sm: 24, md: 8 };
+          
+          const showPrize = hasPrizeData(player);
+          const showPercent = hasPercentData(player);
+          const shouldAdjustLayout = showPrize || showPercent;
           
           return (
             <Col key={player.userId} {...columnSpan} style={{ 
@@ -333,8 +393,7 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
                     )}
                     
                     <Row gutter={[8, 8]} style={{ textAlign: 'center' }}>
-                      
-                      <Col span={12}>
+                      <Col span={shouldAdjustLayout ? 8 : 12}>
                         <Card size="small" style={{ 
                           background: '#f6ffed', 
                           borderColor: '#b7eb8f',
@@ -345,7 +404,8 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
                           <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'green' }}>{player.totalWins}</div>
                         </Card>
                       </Col>
-                      <Col span={12}>
+                      
+                      <Col span={shouldAdjustLayout ? 8 : 12}>
                         <Card size="small" style={{ 
                           background: isChampion ? 'linear-gradient(120deg, #ffd700, #f8c404)' : '#fff2e8', 
                           borderColor: isChampion ? '#ffd700' : '#ffbb96',
@@ -362,9 +422,55 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
                           </div>
                         </Card>
                       </Col>
+                      
+                      {showPrize && (
+                        <Col span={shouldAdjustLayout ? 8 : 12}>
+                          <Card size="small" style={{ 
+                            background: 'linear-gradient(120deg, #d4b106, #faad14)', 
+                            borderColor: '#d4b106',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                            borderRadius: '8px'
+                          }}>
+                            <Text type="secondary" style={{ color: '#5c3c00' }}>Prize</Text>
+                            <div style={{ 
+                              fontSize: isChampion ? '20px' : '16px', 
+                              fontWeight: 'bold', 
+                              color: '#5c3c00'
+                            }}>
+                              {player.prize?.toLocaleString()} VND
+                            </div>
+                          </Card>
+                        </Col>
+                      )}
                     </Row>
-
-        
+                    
+                    {showPercent && (
+                      <div style={{ 
+                        marginTop: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}>
+                        <Badge 
+                          count={`${player.percentOfPrize}%`} 
+                          style={{ 
+                            backgroundColor: isChampion ? '#d4b106' : '#1890ff',
+                            fontSize: '14px',
+                            padding: '0 8px'
+                          }}
+                        >
+                          <Text strong style={{
+                            fontSize: '14px',
+                            padding: '2px 8px',
+                            background: '#f5f5f5',
+                            borderRadius: '4px'
+                          }}>
+                            Prize Pool Share
+                          </Text>
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </Badge.Ribbon>
@@ -375,10 +481,10 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
 
       <Card bordered style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
         <Table 
-          columns={columns} 
+          columns={visibleColumns} 
           dataSource={leaderboard} 
           rowKey="userId"
-          pagination={{ pageSize: 10 }}
+          pagination={false}
           style={{ marginTop: 16 }}
           rowClassName={(record: RankPlayer, index) => {
             if (index < 3) {
@@ -404,6 +510,12 @@ const Rank: React.FC<RankProps> = ({ tournamentId }) => {
         
         .rank-2-card:hover, .rank-3-card:hover {
           transform: translateY(-10px) scale(1.05);
+        }
+        
+        .ant-tag-gold {
+          background: linear-gradient(120deg, #faad14, #d4b106);
+          color: #5c3c00;
+          border-color: #d4b106;
         }
         `}
       </style>

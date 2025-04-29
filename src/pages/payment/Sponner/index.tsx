@@ -1,4 +1,14 @@
-import { ReloadOutlined, SearchOutlined, DollarOutlined, FileDoneOutlined, ClockCircleOutlined, CalendarOutlined, PieChartOutlined, BarChartOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  ReloadOutlined,
+  SearchOutlined,
+  DollarOutlined,
+  FileDoneOutlined,
+  ClockCircleOutlined,
+  CalendarOutlined,
+  PieChartOutlined,
+  BarChartOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
   Button,
@@ -76,9 +86,11 @@ const getStatusText = (status: number) => {
 const getTypeText = (type: number) => {
   switch (type) {
     case 1:
-      return 'Registration';
-    case 2:
       return 'Sponsorship';
+    case 2:
+      return 'Registration';
+    case 3:
+      return 'Reward';
     default:
       return 'Unknown';
   }
@@ -86,13 +98,20 @@ const getTypeText = (type: number) => {
 
 const PaymentSponner = () => {
   const user = useSelector((state: RootState) => state.authencation.user);
-  const { data: bills, isLoading, error, refetch } = useGetAllBillBySponnerId(user?.id ?? 0);
+  const {
+    data: bills,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllBillBySponnerId(user?.id ?? 0);
 
   const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
   const [searchText, setSearchText] = useState<string>('');
   const [searchedColumn, setSearchedColumn] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('all');
-  const [yearFilter, setYearFilter] = useState<number>(new Date().getFullYear());
+  const [yearFilter, setYearFilter] = useState<number>(
+    new Date().getFullYear()
+  );
   const [userDetails, setUserDetails] = useState<User[]>([]);
   const searchInput = useRef<InputRef>(null);
   const userCache = useRef<Map<number, User>>(new Map());
@@ -105,8 +124,10 @@ const PaymentSponner = () => {
   // Fetch user details
   useEffect(() => {
     if (Array.isArray(bills) && bills.length > 0) {
-      const userIds = bills.map(bill => bill.userId).filter(id => id !== undefined && id !== null);
-      
+      const userIds = bills
+        .map((bill) => bill.userId)
+        .filter((id) => id !== undefined && id !== null);
+
       const fetchUsers = async () => {
         setLoadingUsers(true);
         try {
@@ -129,9 +150,9 @@ const PaymentSponner = () => {
           });
 
           const users = await Promise.all(userPromises);
-          setUserDetails(users.filter(user => user !== null) as User[]);
+          setUserDetails(users.filter((user) => user !== null) as User[]);
         } catch (error) {
-          console.error("Error fetching user details:", error);
+          console.error('Error fetching user details:', error);
         } finally {
           setLoadingUsers(false);
         }
@@ -143,7 +164,7 @@ const PaymentSponner = () => {
 
   // Helper function to get user details by ID
   const getUserById = (userId: number): User | undefined => {
-    return userDetails.find(user => user.id === userId);
+    return userDetails.find((user) => user.id === userId);
   };
 
   // Calculate statistics
@@ -158,16 +179,19 @@ const PaymentSponner = () => {
         pendingCount: 0,
         registrationAmount: 0,
         sponsorshipAmount: 0,
+        rewardAmount: 0,
         registrationCount: 0,
         sponsorshipCount: 0,
+        rewardCount: 0,
       };
     }
 
     // Ensure consistent type handling - convert status to number if it's a string
     const paid = bills.filter((bill) => Number(bill.status) === 1);
     const pending = bills.filter((bill) => Number(bill.status) === 2);
-    const registrations = bills.filter((bill) => Number(bill.type) === 1);
-    const sponsorships = bills.filter((bill) => Number(bill.type) === 2);
+    const sponsorships = bills.filter((bill) => Number(bill.type) === 1);
+    const registrations = bills.filter((bill) => Number(bill.type) === 2);
+    const rewards = bills.filter((bill) => Number(bill.type) === 3);
 
     return {
       totalAmount: bills.reduce((sum, bill) => sum + bill.amount, 0),
@@ -176,10 +200,21 @@ const PaymentSponner = () => {
       billCount: bills.length,
       paidCount: paid.length,
       pendingCount: pending.length,
-      registrationAmount: registrations.reduce((sum, bill) => sum + bill.amount, 0),
-      sponsorshipAmount: sponsorships.reduce((sum, bill) => sum + bill.amount, 0),
+      registrationAmount: registrations.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
+      sponsorshipAmount: sponsorships.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
+      rewardAmount: rewards.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
       registrationCount: registrations.length,
       sponsorshipCount: sponsorships.length,
+      rewardCount: rewards.length,
     };
   }, [bills]);
 
@@ -225,8 +260,9 @@ const PaymentSponner = () => {
 
     const typeAmounts = bills.reduce(
       (acc, bill) => {
-        const type = Number(bill.type) === 1 ? 'Registration' : 'Sponsorship';
-        acc[type] = (acc[type] || 0) + bill.amount;
+        const typeNum = Number(bill.type);
+        const typeName = getTypeText(typeNum); // Using the getTypeText function for consistent mapping
+        acc[typeName] = (acc[typeName] || 0) + bill.amount;
         return acc;
       },
       {} as Record<string, number>
@@ -245,7 +281,9 @@ const PaymentSponner = () => {
     // Create empty data for all months
     const months = Array.from({ length: 12 }, (_, i) => {
       return {
-        month: new Date(yearFilter, i).toLocaleString('default', { month: 'short' }),
+        month: new Date(yearFilter, i).toLocaleString('default', {
+          month: 'short',
+        }),
         monthIndex: i,
         Registration: 0,
         Sponsorship: 0,
@@ -254,15 +292,15 @@ const PaymentSponner = () => {
     });
 
     // Fill data from bills
-    bills.forEach(bill => {
+    bills.forEach((bill) => {
       const paymentDate = bill.paymentDate ? new Date(bill.paymentDate) : null;
       if (paymentDate && paymentDate.getFullYear() === yearFilter) {
         const monthIndex = paymentDate.getMonth();
         const type = Number(bill.type) === 1 ? 'Registration' : 'Sponsorship';
-        
+
         // Add to the specific type
         months[monthIndex][type] += bill.amount;
-        
+
         // Add to total
         months[monthIndex].Total += bill.amount;
       }
@@ -270,21 +308,21 @@ const PaymentSponner = () => {
 
     // Format for chart - create an array of objects for each month/type combination
     const chartData: any[] = [];
-    months.forEach(month => {
+    months.forEach((month) => {
       chartData.push({
         month: month.month,
         type: 'Registration',
-        amount: month.Registration
+        amount: month.Registration,
       });
       chartData.push({
         month: month.month,
         type: 'Sponsorship',
-        amount: month.Sponsorship
+        amount: month.Sponsorship,
       });
       chartData.push({
         month: month.month,
         type: 'Total',
-        amount: month.Total
+        amount: month.Total,
       });
     });
 
@@ -403,10 +441,12 @@ const PaymentSponner = () => {
         if (user) {
           return (
             <Space>
-              <Avatar 
-                icon={<UserOutlined />} 
-                src={user.avatarUrl} 
-                style={{ backgroundColor: user.avatarUrl ? undefined : '#1890ff' }}
+              <Avatar
+                icon={<UserOutlined />}
+                src={user.avatarUrl}
+                style={{
+                  backgroundColor: user.avatarUrl ? undefined : '#1890ff',
+                }}
               />
               <Tooltip title={`${user.email || 'No email'}`}>
                 <span>{`${user.firstName || ''} ${user.lastName || ''}`}</span>
@@ -416,10 +456,15 @@ const PaymentSponner = () => {
         }
         return <span>User ID: {userId}</span>;
       },
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => {
         // Custom filter for user names
-        const users = userDetails.filter(u => u !== null);
-        
+        const users = userDetails.filter((u) => u !== null);
+
         return (
           <div style={{ padding: 8 }}>
             <Select
@@ -428,16 +473,24 @@ const PaymentSponner = () => {
               placeholder="Search by user"
               optionFilterProp="children"
               onChange={(value) => setSelectedKeys(value ? [value] : [])}
-              filterOption={(input, option) => 
-                (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
+              filterOption={(input, option) =>
+                (option?.label as string)
+                  ?.toLowerCase()
+                  .includes(input.toLowerCase())
               }
-              options={users.map(user => ({
+              options={users.map((user) => ({
                 value: user.id,
                 label: `${user.firstName || ''} ${user.lastName || ''}`,
               }))}
               value={selectedKeys[0]}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 8,
+              }}
+            >
               <Button
                 type="primary"
                 onClick={() => confirm()}
@@ -517,12 +570,18 @@ const PaymentSponner = () => {
       key: 'type',
       render: (type: number | string) => {
         const typeNum = Number(type);
+        
         const typeText = getTypeText(typeNum);
-        return <Tag color={typeNum === 1 ? 'green' : 'purple'}>{typeText}</Tag>;
+        let color = 'default';
+        if (typeNum === 1) color = 'green';
+        else if (typeNum === 2) color = 'purple';
+        else if (typeNum === 3) color = 'blue';
+        return <Tag color={color}>{typeText}</Tag>;
       },
       filters: [
-        { text: 'Registration', value: 1 },
-        { text: 'Sponsorship', value: 2 },
+        { text: 'Sponsorship', value: 1 },
+        { text: 'Registration', value: 2 },
+        { text: 'Reward', value: 3 },
       ],
       onFilter: (value, record) => Number(record.type) === value,
     },
@@ -637,13 +696,13 @@ const PaymentSponner = () => {
     if (!bills) return [];
     switch (activeTab) {
       case 'paid':
-        return bills.filter(bill => Number(bill.status) === 1);
+        return bills.filter((bill) => Number(bill.status) === 1);
       case 'pending':
-        return bills.filter(bill => Number(bill.status) === 2);
+        return bills.filter((bill) => Number(bill.status) === 2);
       case 'registration':
-        return bills.filter(bill => Number(bill.type) === 1);
+        return bills.filter((bill) => Number(bill.type) === 1);
       case 'sponsorship':
-        return bills.filter(bill => Number(bill.type) === 2);
+        return bills.filter((bill) => Number(bill.type) === 2);
       case 'all':
       default:
         return bills;
@@ -663,9 +722,15 @@ const PaymentSponner = () => {
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <Title level={4} type="danger">Error loading payment data</Title>
+          <Title level={4} type="danger">
+            Error loading payment data
+          </Title>
           <p>{(error as Error).message}</p>
-          <Button type="primary" onClick={() => refetch()} icon={<ReloadOutlined />}>
+          <Button
+            type="primary"
+            onClick={() => refetch()}
+            icon={<ReloadOutlined />}
+          >
             Try Again
           </Button>
         </div>
@@ -675,13 +740,24 @@ const PaymentSponner = () => {
 
   return (
     <div className="payment-sponsor-container">
-
       {/* Summary Cards */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} hoverable style={{ height: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
+          <Card
+            bordered={false}
+            hoverable
+            style={{
+              height: '100%',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
+          >
             <Statistic
-              title={<Text strong style={{ fontSize: '16px' }}>Total Spend</Text>}
+              title={
+                <Text strong style={{ fontSize: '16px' }}>
+                  Total Spend
+                </Text>
+              }
               value={statistics.totalAmount}
               precision={0}
               valueStyle={{ color: '#faad14', fontSize: '24px' }}
@@ -690,14 +766,33 @@ const PaymentSponner = () => {
               formatter={(value) => value?.toLocaleString()}
             />
             <div style={{ marginTop: '8px' }}>
-              <Badge status="processing" text={<Text type="secondary">{statistics.billCount} transactions</Text>} />
+              <Badge
+                status="processing"
+                text={
+                  <Text type="secondary">
+                    {statistics.billCount} transactions
+                  </Text>
+                }
+              />
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} hoverable style={{ height: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
+          <Card
+            bordered={false}
+            hoverable
+            style={{
+              height: '100%',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
+          >
             <Statistic
-              title={<Text strong style={{ fontSize: '16px' }}>Completed Payments</Text>}
+              title={
+                <Text strong style={{ fontSize: '16px' }}>
+                  Completed Payments
+                </Text>
+              }
               value={statistics.totalPaid}
               precision={0}
               valueStyle={{ color: '#52c41a', fontSize: '24px' }}
@@ -706,14 +801,31 @@ const PaymentSponner = () => {
               formatter={(value) => value?.toLocaleString()}
             />
             <div style={{ marginTop: '8px' }}>
-              <Badge status="success" text={<Text type="secondary">{statistics.paidCount} payments</Text>} />
+              <Badge
+                status="success"
+                text={
+                  <Text type="secondary">{statistics.paidCount} payments</Text>
+                }
+              />
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} hoverable style={{ height: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
+          <Card
+            bordered={false}
+            hoverable
+            style={{
+              height: '100%',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
+          >
             <Statistic
-              title={<Text strong style={{ fontSize: '16px' }}>Pending Payments</Text>}
+              title={
+                <Text strong style={{ fontSize: '16px' }}>
+                  Pending Payments
+                </Text>
+              }
               value={statistics.totalPending}
               precision={0}
               valueStyle={{ color: '#faad14', fontSize: '24px' }}
@@ -722,32 +834,75 @@ const PaymentSponner = () => {
               formatter={(value) => value?.toLocaleString()}
             />
             <div style={{ marginTop: '8px' }}>
-              <Badge status="warning" text={<Text type="secondary">{statistics.pendingCount} payments</Text>} />
+              <Badge
+                status="warning"
+                text={
+                  <Text type="secondary">
+                    {statistics.pendingCount} payments
+                  </Text>
+                }
+              />
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} hoverable style={{ height: '100%', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
+          <Card
+            bordered={false}
+            hoverable
+            style={{
+              height: '100%',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
+          >
             <Row gutter={8}>
-              <Col span={12}>
+              <Col span={8}>
                 <Statistic
-                  title={<Text strong style={{ fontSize: '14px' }}>Registration</Text>}
+                  title={
+                    <Text strong style={{ fontSize: '14px' }}>
+                      Registration
+                    </Text>
+                  }
                   value={statistics.registrationAmount}
                   precision={0}
-                  valueStyle={{ color: '#52c41a', fontSize: '18px' }}
+                  valueStyle={{ color: '#52c41a', fontSize: '16px' }}
                   formatter={(value) => `₫${value?.toLocaleString()}`}
                 />
-                <Text type="secondary">{statistics.registrationCount} payments</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {statistics.registrationCount} payments
+                </Text>
               </Col>
-              <Col span={12}>
+              <Col span={8}>
                 <Statistic
-                  title={<Text strong style={{ fontSize: '14px' }}>Sponsorship</Text>}
+                  title={
+                    <Text strong style={{ fontSize: '14px' }}>
+                      Sponsorship
+                    </Text>
+                  }
                   value={statistics.sponsorshipAmount}
                   precision={0}
-                  valueStyle={{ color: '#722ed1', fontSize: '18px' }}
+                  valueStyle={{ color: '#722ed1', fontSize: '16px' }}
                   formatter={(value) => `₫${value?.toLocaleString()}`}
                 />
-                <Text type="secondary">{statistics.sponsorshipCount} payments</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {statistics.sponsorshipCount} payments
+                </Text>
+              </Col>
+              <Col span={8}>
+                <Statistic
+                  title={
+                    <Text strong style={{ fontSize: '14px' }}>
+                      Reward
+                    </Text>
+                  }
+                  value={statistics.rewardAmount}
+                  precision={0}
+                  valueStyle={{ color: '#1890ff', fontSize: '16px' }}
+                  formatter={(value) => `₫${value?.toLocaleString()}`}
+                />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  {statistics.rewardCount} payments
+                </Text>
               </Col>
             </Row>
           </Card>
@@ -757,8 +912,8 @@ const PaymentSponner = () => {
       {/* Charts Section */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col xs={24} md={24} lg={16}>
-          <Card 
-            bordered={false} 
+          <Card
+            bordered={false}
             title={
               <Space>
                 <BarChartOutlined style={{ color: '#faad14' }} />
@@ -768,28 +923,39 @@ const PaymentSponner = () => {
                   onChange={(value) => setYearFilter(value)}
                   style={{ marginLeft: 16, width: 100 }}
                 >
-                  {[2023, 2024, 2025].map(year => (
-                    <Option key={year} value={year}>{year}</Option>
+                  {[2023, 2024, 2025].map((year) => (
+                    <Option key={year} value={year}>
+                      {year}
+                    </Option>
                   ))}
                 </Select>
               </Space>
             }
-            style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+            style={{
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
           >
             {bills && bills.length > 0 ? (
-              <div style={{ height: 300 }}>
-                {renderMonthlyChart()}
-              </div>
+              <div style={{ height: 300 }}>{renderMonthlyChart()}</div>
             ) : (
               <Empty description="No payment data available for monthly analysis" />
             )}
           </Card>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Card 
-            bordered={false} 
-            title={<Space><PieChartOutlined style={{ color: '#faad14' }} /><span>Payment Distribution</span></Space>}
-            style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+          <Card
+            bordered={false}
+            title={
+              <Space>
+                <PieChartOutlined style={{ color: '#faad14' }} />
+                <span>Payment Distribution</span>
+              </Space>
+            }
+            style={{
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+            }}
           >
             {bills && bills.length > 0 ? (
               <Row gutter={16}>
@@ -816,8 +982,8 @@ const PaymentSponner = () => {
       </Row>
 
       {/* Payment Records */}
-      <Card 
-        bordered={false} 
+      <Card
+        bordered={false}
         title={
           <Space>
             <DollarOutlined style={{ color: '#faad14' }} />
@@ -825,9 +991,13 @@ const PaymentSponner = () => {
             {loadingUsers && <Spin size="small" />}
           </Space>
         }
-        style={{ borderRadius: '8px', marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+        style={{
+          borderRadius: '8px',
+          marginBottom: 24,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.09)',
+        }}
         extra={
-          <Button 
+          <Button
             type="primary"
             icon={<ReloadOutlined />}
             onClick={() => refetch()}
@@ -837,69 +1007,84 @@ const PaymentSponner = () => {
           </Button>
         }
       >
-        <Tabs 
-          activeKey={activeTab} 
+        <Tabs
+          activeKey={activeTab}
           onChange={setActiveTab}
           style={{ marginBottom: 16 }}
           tabBarStyle={{ marginBottom: 16 }}
         >
-          <TabPane 
+          <TabPane
             tab={
               <Tooltip title="All Payments">
                 <Space>
                   <span>All</span>
-                  <Badge count={statistics.billCount} style={{ backgroundColor: '#faad14' }} /> 
+                  <Badge
+                    count={statistics.billCount}
+                    style={{ backgroundColor: '#faad14' }}
+                  />
                 </Space>
               </Tooltip>
-            } 
-            key="all" 
+            }
+            key="all"
           />
-          <TabPane 
+          <TabPane
             tab={
               <Tooltip title="Paid Payments">
                 <Space>
                   <span>Paid</span>
-                  <Badge count={statistics.paidCount} style={{ backgroundColor: '#52c41a' }} />
+                  <Badge
+                    count={statistics.paidCount}
+                    style={{ backgroundColor: '#52c41a' }}
+                  />
                 </Space>
               </Tooltip>
-            } 
-            key="paid" 
+            }
+            key="paid"
           />
-          <TabPane 
+          <TabPane
             tab={
               <Tooltip title="Pending Payments">
                 <Space>
                   <span>Pending</span>
-                  <Badge count={statistics.pendingCount} style={{ backgroundColor: '#faad14' }} />
+                  <Badge
+                    count={statistics.pendingCount}
+                    style={{ backgroundColor: '#faad14' }}
+                  />
                 </Space>
               </Tooltip>
-            } 
-            key="pending" 
+            }
+            key="pending"
           />
-          <TabPane 
+          <TabPane
             tab={
               <Tooltip title="Registration Payments">
                 <Space>
                   <span>Registration</span>
-                  <Badge count={statistics.registrationCount} style={{ backgroundColor: '#52c41a' }} />
+                  <Badge
+                    count={statistics.registrationCount}
+                    style={{ backgroundColor: '#52c41a' }}
+                  />
                 </Space>
               </Tooltip>
-            } 
-            key="registration" 
+            }
+            key="registration"
           />
-          <TabPane 
+          <TabPane
             tab={
               <Tooltip title="Sponsorship Payments">
                 <Space>
                   <span>Sponsorship</span>
-                  <Badge count={statistics.sponsorshipCount} style={{ backgroundColor: '#722ed1' }} />
+                  <Badge
+                    count={statistics.sponsorshipCount}
+                    style={{ backgroundColor: '#722ed1' }}
+                  />
                 </Space>
               </Tooltip>
-            } 
-            key="sponsorship" 
+            }
+            key="sponsorship"
           />
         </Tabs>
-        
+
         <Table
           columns={columns}
           dataSource={filterBillsByTab()}
@@ -929,12 +1114,17 @@ const PaymentSponner = () => {
                       ₫{totalAmount.toLocaleString()}
                     </Text>
                   </Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} colSpan={5}></Table.Summary.Cell>
+                  <Table.Summary.Cell
+                    index={2}
+                    colSpan={5}
+                  ></Table.Summary.Cell>
                 </Table.Summary.Row>
               </>
             );
           }}
-          locale={{ emptyText: <Empty description="No payment records found" /> }}
+          locale={{
+            emptyText: <Empty description="No payment records found" />,
+          }}
         />
       </Card>
 
@@ -957,6 +1147,6 @@ const PaymentSponner = () => {
       </style>
     </div>
   );
-}
+};
 
 export default PaymentSponner;

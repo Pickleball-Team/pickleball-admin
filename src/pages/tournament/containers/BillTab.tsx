@@ -45,6 +45,19 @@ const getStatusText = (status: number) => {
   }
 };
 
+const getTypeText = (type: number) => {
+  switch (type) {
+    case 1:
+      return 'Sponsorship';
+    case 2:
+      return 'Registration';
+    case 3:
+      return 'Reward';
+    default:
+      return 'Unknown';
+  }
+};
+
 const BillTab = ({ id }: BillTabProps) => {
   const {
     data: bills,
@@ -72,12 +85,21 @@ const BillTab = ({ id }: BillTabProps) => {
         billCount: 0,
         paidCount: 0,
         pendingCount: 0,
+        registrationAmount: 0,
+        sponsorshipAmount: 0,
+        rewardAmount: 0,
+        registrationCount: 0,
+        sponsorshipCount: 0,
+        rewardCount: 0,
       };
     }
 
     // Ensure consistent type handling - convert status to number if it's a string
     const paid = bills.filter(bill => Number(bill.status) === 1);
     const pending = bills.filter(bill => Number(bill.status) === 2);
+    const sponsorships = bills.filter(bill => Number(bill.type) === 1);
+    const registrations = bills.filter(bill => Number(bill.type) === 2);
+    const rewards = bills.filter(bill => Number(bill.type) === 3);
 
     return {
       totalAmount: bills.reduce((sum, bill) => sum + bill.amount, 0),
@@ -86,6 +108,21 @@ const BillTab = ({ id }: BillTabProps) => {
       billCount: bills.length,
       paidCount: paid.length,
       pendingCount: pending.length,
+      registrationAmount: registrations.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
+      sponsorshipAmount: sponsorships.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
+      rewardAmount: rewards.reduce(
+        (sum, bill) => sum + bill.amount,
+        0
+      ),
+      registrationCount: registrations.length,
+      sponsorshipCount: sponsorships.length,
+      rewardCount: rewards.length,
     };
   }, [bills]);
 
@@ -124,8 +161,9 @@ const BillTab = ({ id }: BillTabProps) => {
     if (!bills) return [];
     
     const typeAmounts = bills.reduce((acc, bill) => {
-      const type = Number(bill.type) === 1 ? 'Registration' : 'Other';
-      acc[type] = (acc[type] || 0) + bill.amount;
+      const typeNum = Number(bill.type);
+      const typeName = getTypeText(typeNum); // Using getTypeText function for consistent mapping
+      acc[typeName] = (acc[typeName] || 0) + bill.amount;
       return acc;
     }, {} as Record<string, number>);
 
@@ -293,12 +331,17 @@ const BillTab = ({ id }: BillTabProps) => {
       key: 'type',
       render: (type: number | string) => {
         const typeNum = Number(type);
-        const typeText = typeNum === 1 ? 'Registration' : 'Other';
-        return <Tag color={typeNum === 1 ? 'green' : 'blue'}>{typeText}</Tag>;
+        const typeText = getTypeText(typeNum);
+        let color = 'blue';
+        if (typeNum === 1) color = 'green';
+        else if (typeNum === 2) color = 'purple';
+        else if (typeNum === 3) color = '#1890ff';
+        return <Tag color={color}>{typeText}</Tag>;
       },
       filters: [
-        { text: 'Registration', value: 1 },
-        { text: 'Other', value: 2 },
+        { text: 'Sponsorship', value: 1 },
+        { text: 'Registration', value: 2 },
+        { text: 'Reward', value: 3 },
       ],
       onFilter: (value, record) => Number(record.type) === value,
     }
@@ -363,6 +406,49 @@ const BillTab = ({ id }: BillTabProps) => {
               valueStyle={{ color: '#faad14' }}
               prefix="₫"
               suffix={`(${statistics.pendingCount} bills)`}
+              formatter={(value) => value?.toLocaleString()}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Payment Type Statistics */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={8}>
+          <Card bordered={false} className="summary-card">
+            <Statistic
+              title="Registration Payments"
+              value={statistics.registrationAmount}
+              precision={0}
+              valueStyle={{ color: '#52c41a' }}
+              prefix="₫"
+              suffix={`(${statistics.registrationCount})`}
+              formatter={(value) => value?.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card bordered={false} className="summary-card">
+            <Statistic
+              title="Sponsorship Payments"
+              value={statistics.sponsorshipAmount}
+              precision={0}
+              valueStyle={{ color: '#722ed1' }}
+              prefix="₫"
+              suffix={`(${statistics.sponsorshipCount})`}
+              formatter={(value) => value?.toLocaleString()}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card bordered={false} className="summary-card">
+            <Statistic
+              title="Reward Payments"
+              value={statistics.rewardAmount}
+              precision={0}
+              valueStyle={{ color: '#1890ff' }}
+              prefix="₫"
+              suffix={`(${statistics.rewardCount})`}
               formatter={(value) => value?.toLocaleString()}
             />
           </Card>

@@ -1,25 +1,46 @@
-import { Button, Card, Spin, Tabs } from 'antd';
+import { Button, Card, Spin, Tabs, message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
+import Rank from '../../components/Rank';
+import { useCheckRewardTournament } from '../../modules/Tournaments/hooks/useCheckRewardTournament';
 import { useGetTournamentById } from '../../modules/Tournaments/hooks/useGetTournamentById';
+import BillTab from './containers/BillTab';
 import MatchRoom from './containers/MatchRoom';
 import PlayersTable from './containers/PlayerRegistration';
-import TournamentInfoForm from './containers/TournamentInfoForm';
 import Policy from './containers/Policy';
-import BillTab from './containers/BillTab';
-import Rank from '../../components/Rank';
+import TournamentInfoForm from './containers/TournamentInfoForm';
+
+import { useRankRewardTournament } from '../../modules/Tournaments/hooks/useRankRewardTournament';
 
 const { TabPane } = Tabs;
 
 const TournamentDetail = () => {
   const { id } = useParams<{ id: string }>();
+
   const { data, isLoading, error, refetch } = useGetTournamentById(
     Number(id || 0)
   );
-  const navigate = useNavigate();
 
+  const {mutateAsync} = useRankRewardTournament()
+  
+  const {data: Reward} = useCheckRewardTournament(id || "0");
+  
+  const navigate = useNavigate();
+  
   const handleSave = (values: any) => {
     console.log('Saved values:', values);
     // Implement save logic here, e.g., send a request to the server
+  };
+
+  const handleGiveReward = async () => {
+    try {
+      mutateAsync(id || "0");
+      message.success("Rewards distributed successfully!");
+      // Refresh the reward status
+      refetch();
+    } catch (error) {
+      message.error("Failed to distribute rewards. Please try again.");
+      console.error("Error giving rewards:", error);
+    }
   };
 
   if (isLoading) {
@@ -34,15 +55,43 @@ const TournamentDetail = () => {
     return <div>No tournament data found</div>;
   }
 
+  // Check if tournament is completed and rewards not yet given
+  const showRewardButton = Boolean(data.status === 'Completed' && 
+    Reward &&
+    Reward.isReward === false);
+    console.log("show",showRewardButton,data.status,Reward);
+    
   return (
     <div>
-      <Button
-        type="primary"
-        onClick={() => navigate(-1)}
-        style={{ marginBottom: 16 }}
-      >
-        Back
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Button
+          type="primary"
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </Button>
+        
+        {showRewardButton && (
+            <Button
+              type="primary"
+              danger
+              size="large"
+              icon={<i className="fas fa-trophy" style={{ marginRight: 8 }} />}
+              style={{ 
+                backgroundColor: '#faad14', 
+                borderColor: '#d48806', 
+                fontWeight: 'bold',
+                boxShadow: '0 4px 12px rgba(250, 173, 20, 0.5)',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              onClick={handleGiveReward}
+            >
+              Distribute Rewards
+            </Button>
+        )}
+      </div>
+      
       <Tabs defaultActiveKey="1">
         <TabPane tab="Room" key="1">
           <MatchRoom id={data.id} />

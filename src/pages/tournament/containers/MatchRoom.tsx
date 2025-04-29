@@ -15,6 +15,8 @@ import {
   ReadOutlined,
   StarTwoTone,
   CompressOutlined,
+  PlayCircleOutlined,
+  StopOutlined,
 } from '@ant-design/icons';
 import type { InputRef } from 'antd';
 import {
@@ -57,6 +59,7 @@ import Title from 'antd/es/typography/Title';
 import { useUpdateTournament } from '../../../modules/Tournaments/hooks/useUpdateTournamen';
 import { useEndTournament } from '../../../modules/Tournaments/hooks/useEndTourament';
 import { useGetTournamentById } from '../../../modules/Tournaments/hooks/useGetTournamentById';
+import { useCheckRewardTournament } from '../../../modules/Tournaments/hooks/useCheckRewardTournament';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -253,6 +256,25 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
         id: id,
         data: {
           status: 'Ongoing',
+        },
+      });
+      message.success('Tournament has been started successfully!');
+      await refetch();
+    } catch (error) {
+      message.error('Failed to start tournament. Please try again later.');
+      console.error('Error starting tournament:', error);
+    } finally {
+      setStartLoading(false);
+    }
+  };
+
+  const handleRejectTournament = async () => {
+    try {
+      setStartLoading(true);
+      await updateTournament({
+        id: id,
+        data: {
+          status: 'Disable',
         },
       });
       message.success('Tournament has been started successfully!');
@@ -654,16 +676,50 @@ const MatchRoom = ({ id }: MatchRoomProps) => {
   const renderActions = () => {
     if (TournamentData?.status === 'Scheduled') {
       return (
-        <Row gutter={4}>
+        <Row gutter={16}>
           <Col>
-            <Button
-              type="primary"
-              icon={<StarTwoTone />}
-              onClick={handleStartTournament}
-              size="large"
-            >
-              Start Tournament
-            </Button>
+            <Tooltip title="Start this tournament and allow matches to begin">
+              <Button
+                type="primary"
+                icon={<PlayCircleOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Start Tournament',
+                    content: 'Are you sure you want to start this tournament? This will change its status to "Ongoing".',
+                    okText: 'Yes, Start Tournament',
+                    cancelText: 'Cancel',
+                    onOk: handleStartTournament,
+                  });
+                }}
+                loading={startLoading}
+                size="large"
+              >
+                Start Tournament
+              </Button>
+            </Tooltip>
+          </Col>
+          <Col>
+            <Tooltip title="Disable this tournament">
+              <Button
+                type="primary"
+                danger
+                icon={<StopOutlined />}
+                onClick={() => {
+                  Modal.confirm({
+                    title: 'Disable Tournament',
+                    content: 'Are you sure you want to disable this tournament? This action can be reversed later.',
+                    okText: 'Yes, Disable Tournament',
+                    okType: 'danger',
+                    cancelText: 'Cancel',
+                    onOk: handleRejectTournament,
+                  });
+                }}
+                loading={startLoading}
+                size="large"
+              >
+                Disable Tournament
+              </Button>
+            </Tooltip>
           </Col>
         </Row>
       );

@@ -39,13 +39,13 @@ import { Tournament } from '../../../../modules/Tournaments/models';
 import { useGetAllBill } from '../../../../modules/Payment/hooks/useGetAllBill';
 import { useGetBlogCategories } from '../../../../modules/Category/hooks/useGetAllBlogCategories';
 import { useGetAllRules } from '../../../../modules/Category/hooks/useGetAllRules';
+import RuleOfAwardTable from '../../../../components/RuleOfAwardTable';
 
 const { Title, Text } = Typography;
 
 interface AdminDashboardProps {
   user: any;
 }
-
 const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   // Fetch data using hooks
   const { data: tournamentsData = [], isLoading: isLoadingTournaments } =
@@ -848,6 +848,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
         </Col>
       </Row>
 
+      <div style={{
+        margin:'20px'
+      }}>
+      <RuleOfAwardTable />
+      </div>
       {/* Quick Access Panel */}
       <Row gutter={[16, 16]}>
         <Col span={24}>
@@ -921,6 +926,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           </Card>
         </Col>
       </Row>
+
     </div>
   );
 };
