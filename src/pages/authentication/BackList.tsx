@@ -248,7 +248,7 @@ const BackList: React.FC = () => {
       title: 'Name',
       key: 'fullName',
       render: (_, record) => (
-        <span>{`${record.firstName} ${record.lastName}`}</span>
+        <span>{`${record?.firstName} ${record.lastName}`}</span>
       ),
       ...getColumnSearchProps('firstName'),
     },
